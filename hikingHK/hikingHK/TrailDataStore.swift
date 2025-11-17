@@ -27,10 +27,17 @@ final class TrailDataStore {
                 id: record.id,
                 trail: trail,
                 scheduledDate: record.scheduledDate,
-                note: record.note
+                note: record.note,
+                isCompleted: record.isCompleted,
+                completedAt: record.completedAt
             )
         }
-        .sorted { $0.scheduledDate < $1.scheduledDate }
+        .sorted { lhs, rhs in
+            if lhs.isCompleted == rhs.isCompleted {
+                return lhs.scheduledDate < rhs.scheduledDate
+            }
+            return !lhs.isCompleted && rhs.isCompleted
+        }
     }
 
     func loadFavoriteTrailIds() throws -> Set<UUID> {
@@ -43,12 +50,16 @@ final class TrailDataStore {
         if let record = try savedHikeRecord(for: hike.id) {
             record.scheduledDate = hike.scheduledDate
             record.note = hike.note
+            record.isCompleted = hike.isCompleted
+            record.completedAt = hike.completedAt
         } else {
             let record = SavedHikeRecord(
                 id: hike.id,
                 trailId: hike.trail.id,
                 scheduledDate: hike.scheduledDate,
-                note: hike.note
+                note: hike.note,
+                isCompleted: hike.isCompleted,
+                completedAt: hike.completedAt
             )
             context.insert(record)
         }

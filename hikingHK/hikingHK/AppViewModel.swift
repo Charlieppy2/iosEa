@@ -44,6 +44,7 @@ final class AppViewModel: ObservableObject {
         do {
             try applyFavorites(ids: store.loadFavoriteTrailIds())
             savedHikes = try store.loadSavedHikes(trails: trails)
+            sortSavedHikes()
         } catch {
             print("Trail data load error: \(error)")
         }
@@ -62,6 +63,7 @@ final class AppViewModel: ObservableObject {
     func addSavedHike(for trail: Trail, scheduledDate: Date, note: String = "") {
         let newHike = SavedHike(trail: trail, scheduledDate: scheduledDate, note: note)
         savedHikes.insert(newHike, at: 0)
+        sortSavedHikes()
         do {
             try trailDataStore?.save(newHike)
         } catch {
@@ -69,10 +71,19 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    func updateSavedHike(_ hike: SavedHike, scheduledDate: Date, note: String) {
+    func updateSavedHike(
+        _ hike: SavedHike,
+        scheduledDate: Date,
+        note: String,
+        isCompleted: Bool,
+        completedAt: Date?
+    ) {
         guard let index = savedHikes.firstIndex(where: { $0.id == hike.id }) else { return }
         savedHikes[index].scheduledDate = scheduledDate
         savedHikes[index].note = note
+        savedHikes[index].isCompleted = isCompleted
+        savedHikes[index].completedAt = isCompleted ? (completedAt ?? savedHikes[index].completedAt ?? Date()) : nil
+        sortSavedHikes()
         do {
             try trailDataStore?.save(savedHikes[index])
         } catch {
@@ -115,6 +126,15 @@ final class AppViewModel: ObservableObject {
             return mutableTrail
         }
         featuredTrail = trails.first
+    }
+
+    private func sortSavedHikes() {
+        savedHikes.sort { lhs, rhs in
+            if lhs.isCompleted == rhs.isCompleted {
+                return lhs.scheduledDate < rhs.scheduledDate
+            }
+            return !lhs.isCompleted && rhs.isCompleted
+        }
     }
 }
 

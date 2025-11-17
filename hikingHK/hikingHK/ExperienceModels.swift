@@ -32,12 +32,23 @@ struct SavedHike: Identifiable, Equatable {
     let trail: Trail
     var scheduledDate: Date
     var note: String
+    var isCompleted: Bool
+    var completedAt: Date?
 
-    init(id: UUID = UUID(), trail: Trail, scheduledDate: Date, note: String = "") {
+    init(
+        id: UUID = UUID(),
+        trail: Trail,
+        scheduledDate: Date,
+        note: String = "",
+        isCompleted: Bool = false,
+        completedAt: Date? = nil
+    ) {
         self.id = id
         self.trail = trail
         self.scheduledDate = scheduledDate
         self.note = note
+        self.isCompleted = isCompleted
+        self.completedAt = completedAt
     }
 
     static let sampleData: [SavedHike] = [
@@ -45,6 +56,13 @@ struct SavedHike: Identifiable, Equatable {
             trail: Trail.sampleData[1],
             scheduledDate: Date().addingTimeInterval(60 * 60 * 24 * 3),
             note: "Sunrise hike with film crew"
+        ),
+        SavedHike(
+            trail: Trail.sampleData[0],
+            scheduledDate: Date().addingTimeInterval(-60 * 60 * 24 * 2),
+            note: "Paced climb with club",
+            isCompleted: true,
+            completedAt: Date().addingTimeInterval(-60 * 60 * 24 * 2)
         )
     ]
 }

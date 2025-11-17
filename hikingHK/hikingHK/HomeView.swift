@@ -67,8 +67,14 @@ struct HomeView: View {
             .sheet(item: $selectedSavedHike) { hike in
                 SavedHikeDetailSheet(
                     hike: hike,
-                    onUpdate: { date, note in
-                        viewModel.updateSavedHike(hike, scheduledDate: date, note: note)
+                    onUpdate: { date, note, isCompleted, completedAt in
+                        viewModel.updateSavedHike(
+                            hike,
+                            scheduledDate: date,
+                            note: note,
+                            isCompleted: isCompleted,
+                            completedAt: completedAt
+                        )
                     },
                     onDelete: {
                         viewModel.removeSavedHike(hike)
@@ -290,8 +296,23 @@ struct SavedHikeRow: View {
                 }
             }
             Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundStyle(.tertiary)
+            VStack(alignment: .trailing, spacing: 6) {
+                if hike.isCompleted, let completedAt = hike.completedAt {
+                    Label {
+                        Text(completedAt, style: .date)
+                    } icon: {
+                        Image(systemName: "checkmark.seal.fill")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                } else {
+                    Label("Upcoming", systemImage: "clock.badge.checkmark")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.tertiary)
+            }
         }
         .padding()
         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -329,20 +350,28 @@ struct SafetyChecklistView: View {
 
 struct SavedHikeDetailSheet: View {
     let hike: SavedHike
-    var onUpdate: (Date, String) -> Void
+    var onUpdate: (Date, String, Bool, Date?) -> Void
     var onDelete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var plannedDate: Date
     @State private var note: String
+    @State private var isCompleted: Bool
+    @State private var completedDate: Date
     @State private var isShowingDeleteConfirmation = false
 
-    init(hike: SavedHike, onUpdate: @escaping (Date, String) -> Void, onDelete: @escaping () -> Void) {
+    init(
+        hike: SavedHike,
+        onUpdate: @escaping (Date, String, Bool, Date?) -> Void,
+        onDelete: @escaping () -> Void
+    ) {
         self.hike = hike
         self.onUpdate = onUpdate
         self.onDelete = onDelete
         _plannedDate = State(initialValue: hike.scheduledDate)
         _note = State(initialValue: hike.note)
+        _isCompleted = State(initialValue: hike.isCompleted)
+        _completedDate = State(initialValue: hike.completedAt ?? Date())
     }
 
     var body: some View {
@@ -362,9 +391,15 @@ struct SavedHikeDetailSheet: View {
                     DatePicker("Date", selection: $plannedDate, displayedComponents: .date)
                     TextField("Note", text: $note)
                 }
+                Section("Status") {
+                    Toggle("Mark as completed", isOn: $isCompleted.animation())
+                    if isCompleted {
+                        DatePicker("Completed on", selection: $completedDate, displayedComponents: .date)
+                    }
+                }
                 Section {
                     Button("Update plan") {
-                        onUpdate(plannedDate, note)
+                        onUpdate(plannedDate, note, isCompleted, isCompleted ? completedDate : nil)
                         dismiss()
                     }
                     .buttonStyle(.borderedProminent)
@@ -385,6 +420,11 @@ struct SavedHikeDetailSheet: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("This hike will be removed from your planner.")
+            }
+            .onChange(of: isCompleted) { newValue in
+                if newValue && hike.completedAt == nil {
+                    completedDate = Date()
+                }
             }
         }
     }

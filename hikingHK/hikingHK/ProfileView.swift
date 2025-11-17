@@ -5,8 +5,19 @@ struct ProfileView: View {
     @EnvironmentObject private var sessionManager: SessionManager
     @State private var showSignOutConfirmation = false
 
-    private var completedCount: Int {
-        viewModel.savedHikes.count
+    private var plannedCount: Int {
+        viewModel.savedHikes.filter { !$0.isCompleted }.count
+    }
+
+    private var favoritesCount: Int {
+        viewModel.trails.filter { $0.isFavorite }.count
+    }
+
+    private var loggedDistance: Double {
+        viewModel.savedHikes
+            .filter { $0.isCompleted }
+            .map(\.trail.lengthKm)
+            .reduce(0, +)
     }
 
     var body: some View {
@@ -62,9 +73,9 @@ struct ProfileView: View {
     private var statsSection: some View {
         Section("Journey") {
             HStack {
-                stat(value: "\(completedCount)", label: "planned")
-                stat(value: "\(viewModel.trails.filter { $0.isFavorite }.count)", label: "favorites")
-                stat(value: "\(totalDistance().formatted(.number.precision(.fractionLength(1)))) km", label: "logged")
+                stat(value: "\(plannedCount)", label: "planned")
+                stat(value: "\(favoritesCount)", label: "favorites")
+                stat(value: "\(loggedDistance.formatted(.number.precision(.fractionLength(1)))) km", label: "logged")
             }
         }
     }
@@ -80,11 +91,6 @@ struct ProfileView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func totalDistance() -> Double {
-        viewModel.savedHikes
-            .map(\.trail.lengthKm)
-            .reduce(0, +)
-    }
 }
 
 #Preview {

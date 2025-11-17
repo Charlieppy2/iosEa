@@ -12,6 +12,7 @@ struct PlannerView: View {
     @State private var selectedTrail: Trail?
     @State private var plannedDate = Date().addingTimeInterval(60 * 60 * 24)
     @State private var note = ""
+    @State private var showSaveSuccess = false
 
     var body: some View {
         NavigationStack {
@@ -51,12 +52,20 @@ struct PlannerView: View {
                     Button("Save") {
                         if let trail = selectedTrail {
                             viewModel.addSavedHike(for: trail, scheduledDate: plannedDate, note: note)
+                            // Reset form after saving
                             note = ""
                             selectedTrail = nil
+                            plannedDate = Date().addingTimeInterval(60 * 60 * 24)
+                            showSaveSuccess = true
                         }
                     }
                     .disabled(selectedTrail == nil)
                 }
+            }
+            .alert("Plan saved", isPresented: $showSaveSuccess) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your hike has been added to your plans.")
             }
         }
     }
