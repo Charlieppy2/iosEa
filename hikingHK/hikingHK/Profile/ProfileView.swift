@@ -141,72 +141,94 @@ struct ProfileView: View {
     }
 
     private func stat(value: String, label: String) -> some View {
-        VStack {
+        VStack(spacing: 6) {
             Text(value)
-                .font(.title3.weight(.bold))
+                .font(.title2.weight(.bold))
+                .foregroundStyle(Color.hikingDarkGreen)
             Text(label.uppercased())
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(Color.hikingBrown)
         }
         .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.hikingTan.opacity(0.2))
+        )
     }
     
     private func goalRow(goal: Goal) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Label(goal.title, systemImage: goal.icon)
-                    .font(.subheadline.weight(.medium))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
                 Spacer()
                 if goal.isCompleted {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color.hikingGreen)
                 }
             }
             
             // Progress bar
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(.systemGray5))
-                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.hikingTan.opacity(0.3))
+                        .frame(height: 8)
                     
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(goal.isCompleted ? Color.green : Color.accentColor)
-                        .frame(width: geometry.size.width * goal.progress, height: 6)
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(
+                            LinearGradient(
+                                colors: goal.isCompleted ? 
+                                    [Color.hikingGreen, Color.hikingDarkGreen] :
+                                    [Color.hikingGreen.opacity(0.7), Color.hikingGreen],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: geometry.size.width * goal.progress, height: 8)
                         .animation(.spring(response: 0.3), value: goal.progress)
                 }
             }
-            .frame(height: 6)
+            .frame(height: 8)
             
             Text(goal.progressText)
-                .font(.caption)
-                .foregroundStyle(goal.isCompleted ? .green : .secondary)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(goal.isCompleted ? Color.hikingGreen : Color.hikingBrown)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
     
     private func serviceStatusRow(title: String, icon: String, status: ServicesStatusViewModel.ServiceStatus) -> some View {
         HStack {
             Label(title, systemImage: icon)
-                .font(.subheadline)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Color.hikingDarkGreen)
             Spacer()
             HStack(spacing: 6) {
                 Image(systemName: status.icon)
                     .foregroundStyle(statusColor(for: status))
                     .font(.caption)
                 Text(statusText(for: status))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(statusColor(for: status))
             }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(statusColor(for: status).opacity(0.1))
+            )
         }
     }
     
     private func statusColor(for status: ServicesStatusViewModel.ServiceStatus) -> Color {
         switch status {
-        case .connected: return .green
+        case .connected: return Color.hikingGreen
         case .disconnected: return .red
         case .unavailable: return .orange
-        case .unknown: return .gray
+        case .unknown: return Color.hikingStone
         }
     }
     

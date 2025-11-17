@@ -38,6 +38,7 @@ struct HomeView: View {
                         Task { await viewModel.refreshWeather() }
                     } label: {
                         Image(systemName: "arrow.clockwise")
+                            .foregroundStyle(Color.hikingGreen)
                     }
                     .disabled(viewModel.isLoadingWeather)
                     .accessibilityLabel("Refresh weather")
@@ -46,7 +47,8 @@ struct HomeView: View {
                     Button {
                         isShowingSafetySheet.toggle()
                     } label: {
-                        Label("Safety", systemImage: "cross.case")
+                        Label("Safety", systemImage: "cross.case.fill")
+                            .foregroundStyle(Color.hikingGreen)
                     }
                 }
             }
@@ -98,20 +100,27 @@ struct HomeView: View {
     private var weatherCard: some View {
         let snapshot = viewModel.weatherSnapshot
         return VStack(alignment: .leading, spacing: 12) {
-            Label(snapshot.location, systemImage: "location")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            HStack {
+                Label(snapshot.location, systemImage: "location.fill")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Color.hikingDarkGreen)
+                Spacer()
+                Image(systemName: "sun.max.fill")
+                    .foregroundStyle(Color.hikingBrown)
+            }
             if viewModel.isLoadingWeather {
                 ProgressView()
                     .progressViewStyle(.circular)
+                    .tint(Color.hikingGreen)
             }
             HStack(alignment: .top, spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(String(format: "%.1f", snapshot.temperature))°C")
-                        .font(.system(size: 46, weight: .semibold))
+                        .font(.system(size: 46, weight: .bold))
+                        .foregroundStyle(Color.hikingDarkGreen)
                     Text("Feels good for ridge walks")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.hikingBrown)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 6) {
@@ -120,78 +129,95 @@ struct HomeView: View {
                 }
             }
             Divider()
+                .background(Color.hikingBrown.opacity(0.2))
             if let warning = snapshot.warningMessage {
                 Label(warning, systemImage: "exclamationmark.triangle.fill")
-                    .font(.subheadline)
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.orange)
             } else if let error = viewModel.weatherError {
-                Label(error, systemImage: "wifi.slash")
+                    Label(error, systemImage: "wifi.slash")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.hikingStone)
             } else {
                 Text(snapshot.suggestion)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.hikingBrown)
             }
         }
         .padding()
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .hikingCard()
     }
 
     private func label(value: String, caption: String) -> some View {
         VStack(alignment: .trailing, spacing: 2) {
             Text(value)
                 .font(.title3.weight(.semibold))
+                .foregroundStyle(Color.hikingDarkGreen)
             Text(caption)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.hikingBrown)
         }
     }
 
     private func featuredTrailCard(_ trail: Trail) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Featured Trail")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "mountain.2.fill")
+                            .foregroundStyle(Color.hikingGreen)
+                        Text("Featured Trail")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.hikingDarkGreen)
+                    }
                     Text(trail.name)
                         .font(.title2.bold())
-                    Text(trail.district)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.hikingDarkGreen)
+                    Label(trail.district, systemImage: "mappin.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.hikingBrown)
                 }
                 Spacer()
-                Image(systemName: trail.isFavorite ? "heart.fill" : "heart")
-                    .foregroundStyle(.pink)
-                    .onTapGesture {
-                        viewModel.markFavorite(trail)
-                    }
+                Button {
+                    viewModel.markFavorite(trail)
+                } label: {
+                    Image(systemName: trail.isFavorite ? "heart.fill" : "heart")
+                        .font(.title3)
+                        .foregroundStyle(trail.isFavorite ? .red : Color.hikingStone)
+                }
             }
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 statBadge(value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km", caption: "Distance")
                 statBadge(value: "\(trail.elevationGain) m", caption: "Elev gain")
                 statBadge(value: "\(trail.estimatedDurationMinutes / 60) h", caption: "Duration")
             }
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
+                HStack(spacing: 8) {
                     ForEach(trail.highlights, id: \.self) { highlight in
                         Text(highlight)
-                            .font(.caption)
+                            .font(.caption.weight(.medium))
                             .padding(.vertical, 6)
                             .padding(.horizontal, 12)
-                            .background(Color.blue.opacity(0.1), in: Capsule())
+                            .hikingBadge(color: Color.hikingGreen)
                     }
                 }
             }
             NavigationLink {
                 TrailDetailView(trail: trail)
             } label: {
-                Label("View trail plan", systemImage: "arrow.right")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 16))
-                    .foregroundStyle(.white)
+                HStack {
+                    Text("View trail plan")
+                        .font(.headline.weight(.semibold))
+                    Spacer()
+                    Image(systemName: "arrow.right.circle.fill")
+                }
+                .foregroundStyle(.white)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.hikingGradient)
+                        .shadow(color: Color.hikingGreen.opacity(0.4), radius: 8, x: 0, y: 4)
+                )
             }
         }
         .padding()
@@ -200,39 +226,62 @@ struct HomeView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.accentColor.opacity(0.18),
-                            Color.blue.opacity(0.12)
+                            Color(red: 0.96, green: 0.98, blue: 0.95),
+                            Color(red: 0.94, green: 0.97, blue: 0.93)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .shadow(color: .black.opacity(0.05), radius: 25, y: 10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.hikingGreen.opacity(0.3), Color.hikingDarkGreen.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: Color.hikingDarkGreen.opacity(0.15), radius: 20, x: 0, y: 8)
         )
     }
 
     private func statBadge(value: String, caption: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
-                .font(.headline)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(Color.hikingDarkGreen)
             Text(caption)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.hikingBrown)
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.hikingTan.opacity(0.3))
+        )
     }
 
     private var quickActions: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Quick actions")
-                .font(.headline)
-            HStack(spacing: 16) {
-                quickAction(icon: "dot.radiowaves.left.and.right", title: "Trail Alerts", color: .orange.opacity(0.2)) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 6) {
+                Image(systemName: "bolt.fill")
+                    .foregroundStyle(Color.hikingGreen)
+                Text("Quick actions")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
+            }
+            HStack(spacing: 12) {
+                quickAction(icon: "exclamationmark.triangle.fill", title: "Trail Alerts", color: .orange) {
                     isShowingTrailAlerts = true
                 }
-                quickAction(icon: "arrow.down.circle.dotted", title: "Offline Maps", color: .green.opacity(0.2)) {
+                quickAction(icon: "map.fill", title: "Offline Maps", color: Color.hikingGreen) {
                     isShowingOfflineMaps = true
                 }
-                quickAction(icon: "camera.viewfinder", title: "AR Identify", color: .purple.opacity(0.2)) {
+                quickAction(icon: "camera.viewfinder", title: "AR Identify", color: Color.hikingSky) {
                     isShowingARIdentify = true
                 }
             }
@@ -241,16 +290,31 @@ struct HomeView: View {
 
     private func quickAction(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.title3)
-                    .padding()
-                    .background(color, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .font(.title2)
+                    .foregroundStyle(color)
+                    .frame(width: 56, height: 56)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(color.opacity(0.15))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(color.opacity(0.3), lineWidth: 1.5)
+                            )
+                    )
                 Text(title)
-                    .font(.caption)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Color.hikingDarkGreen)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color.hikingCardGradient)
+                    .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 3)
+            )
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
@@ -258,22 +322,41 @@ struct HomeView: View {
     }
 
     private var savedHikesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Next plans")
-                    .font(.headline)
-                Spacer()
-                Button("Add") {
-                    isShowingTrailPicker = true
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar.badge.clock")
+                        .foregroundStyle(Color.hikingGreen)
+                    Text("Next plans")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(Color.hikingDarkGreen)
                 }
-                .font(.subheadline)
+                Spacer()
+                Button {
+                    isShowingTrailPicker = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Add")
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.hikingGreen)
+                }
             }
             if viewModel.savedHikes.isEmpty {
-                Text("No hikes scheduled. Tap Add to plan your first walk.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding()
+                VStack(spacing: 12) {
+                    Image(systemName: "mountain.2")
+                        .font(.system(size: 40))
+                        .foregroundStyle(Color.hikingStone.opacity(0.5))
+                    Text("No hikes scheduled")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Color.hikingBrown)
+                    Text("Tap Add to plan your first walk")
+                        .font(.caption)
+                        .foregroundStyle(Color.hikingStone)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 32)
             } else {
                 ForEach(viewModel.savedHikes) { hike in
                     SavedHikeRow(hike: hike)
@@ -291,40 +374,52 @@ struct SavedHikeRow: View {
     let hike: SavedHike
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(hike.trail.name)
-                    .font(.headline)
-                Text(hike.scheduledDate, style: .date)
-                    .foregroundStyle(.secondary)
-                if !hike.note.isEmpty {
-                    Text(hike.note)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 6) {
-                if hike.isCompleted, let completedAt = hike.completedAt {
-                    Label {
-                        Text(completedAt, style: .date)
-                    } icon: {
-                        Image(systemName: "checkmark.seal.fill")
+        HStack(spacing: 12) {
+            // Status indicator
+            RoundedRectangle(cornerRadius: 4)
+                .fill(hike.isCompleted ? Color.hikingGreen : Color.hikingBrown)
+                .frame(width: 4)
+            
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(hike.trail.name)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(Color.hikingDarkGreen)
+                    Spacer()
+                    if hike.isCompleted {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(Color.hikingGreen)
                     }
-                    .font(.caption)
-                    .foregroundStyle(.green)
-                } else {
-                    Label("Upcoming", systemImage: "clock.badge.checkmark")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
                 }
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.tertiary)
+                HStack(spacing: 8) {
+                    Text(hike.scheduledDate, style: .date)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.hikingBrown)
+                    if !hike.note.isEmpty {
+                        Text("•")
+                            .foregroundStyle(Color.hikingStone)
+                        Text(hike.note)
+                            .font(.caption)
+                            .foregroundStyle(Color.hikingStone)
+                            .lineLimit(1)
+                    }
+                }
             }
+            
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(Color.hikingStone)
         }
         .padding()
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.hikingCardGradient)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.hikingGreen.opacity(0.1), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+        )
     }
 }
 

@@ -57,28 +57,30 @@ struct TrailRow: View {
     let trail: Trail
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(trail.name)
-                    .font(.headline)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
                 Spacer()
                 Label(trail.difficulty.rawValue, systemImage: trail.difficulty.icon)
                     .labelStyle(.iconOnly)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.hikingGreen)
+                    .font(.title3)
             }
             Text(trail.summary)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.hikingBrown)
                 .lineLimit(2)
             HStack(spacing: 16) {
-                metricLabel(icon: "ruler", text: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km")
+                metricLabel(icon: "ruler.fill", text: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km")
                 metricLabel(icon: "arrow.up.right", text: "\(trail.elevationGain) m")
-                metricLabel(icon: "clock", text: "\(trail.estimatedDurationMinutes / 60)h")
+                metricLabel(icon: "clock.fill", text: "\(trail.estimatedDurationMinutes / 60)h")
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(.caption.weight(.medium))
+            .foregroundStyle(Color.hikingStone)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 
     private func metricLabel(icon: String, text: String) -> some View {

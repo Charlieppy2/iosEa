@@ -16,21 +16,22 @@ struct ContentView: View {
         TabView {
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "sparkle")
+                    Label("Home", systemImage: "house.fill")
                 }
             TrailListView()
                 .tabItem {
-                    Label("Trails", systemImage: "map")
+                    Label("Trails", systemImage: "map.fill")
                 }
             PlannerView()
                 .tabItem {
-                    Label("Planner", systemImage: "calendar")
+                    Label("Planner", systemImage: "calendar.badge.plus")
                 }
             ProfileView()
                 .tabItem {
-                    Label("Profile", systemImage: "person.circle")
+                    Label("Profile", systemImage: "person.circle.fill")
                 }
         }
+        .tint(Color.hikingGreen)
     }
 }
 
