@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct HomeView: View {
     @EnvironmentObject private var viewModel: AppViewModel
@@ -14,6 +15,7 @@ struct HomeView: View {
     @State private var isShowingOfflineMaps = false
     @State private var isShowingARIdentify = false
     @State private var selectedSavedHike: SavedHike?
+    @State private var isShowingTrailPicker = false
 
     var body: some View {
         NavigationStack {
@@ -80,6 +82,15 @@ struct HomeView: View {
                         viewModel.removeSavedHike(hike)
                     }
                 )
+            }
+            .sheet(isPresented: $isShowingTrailPicker) {
+                QuickAddTrailPickerView(
+                    onTrailSelected: { trail in
+                        viewModel.addSavedHike(for: trail, scheduledDate: Date().addingTimeInterval(60 * 60 * 24))
+                        isShowingTrailPicker = false
+                    }
+                )
+                .environmentObject(viewModel)
             }
         }
     }
@@ -253,9 +264,7 @@ struct HomeView: View {
                     .font(.headline)
                 Spacer()
                 Button("Add") {
-                    if let first = viewModel.trails.first {
-                        viewModel.addSavedHike(for: first, scheduledDate: Date().addingTimeInterval(60 * 60 * 24))
-                    }
+                    isShowingTrailPicker = true
                 }
                 .font(.subheadline)
             }
@@ -321,19 +330,56 @@ struct SavedHikeRow: View {
 
 struct SafetyChecklistView: View {
     @Environment(\.dismiss) private var dismiss
-    private let items = [
-        ("location.fill", "Enable Live Location"),
-        ("drop.fill", "Pack 2L of water"),
-        ("bolt.heart", "Check heat stroke signal"),
-        ("antenna.radiowaves.left.and.right", "Download offline map"),
-        ("person.2.wave.2", "Share hike plan with buddies")
-    ]
-
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var viewModel = SafetyChecklistViewModel()
+    
     var body: some View {
         NavigationStack {
             List {
-                ForEach(items, id: \.0) { item in
-                    Label(item.1, systemImage: item.0)
+                if !viewModel.items.isEmpty {
+                    Section {
+                        HStack {
+                            Text("Progress")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text("\(viewModel.completedCount) / \(viewModel.totalCount)")
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                
+                Section {
+                    ForEach(viewModel.items) { item in
+                        HStack(spacing: 12) {
+                            Image(systemName: item.iconName)
+                                .foregroundStyle(item.isCompleted ? .green : .secondary)
+                                .frame(width: 24)
+                            
+                            Text(item.title)
+                                .strikethrough(item.isCompleted)
+                                .foregroundStyle(item.isCompleted ? .secondary : .primary)
+                            
+                            Spacer()
+                            
+                            if item.isCompleted {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            viewModel.toggleItem(item)
+                        }
+                    }
+                } footer: {
+                    if viewModel.isAllCompleted {
+                        Text("Great! You're all set for a safe hike.")
+                            .foregroundStyle(.green)
+                    } else {
+                        Text("Complete all items before heading out.")
+                    }
                 }
             }
             .navigationTitle("Safety checklist")
@@ -343,6 +389,12 @@ struct SafetyChecklistView: View {
                         dismiss()
                     }
                 }
+            }
+            .task {
+                viewModel.configureIfNeeded(context: modelContext)
+            }
+            .onAppear {
+                viewModel.refreshItems()
             }
         }
     }
@@ -431,122 +483,616 @@ struct SavedHikeDetailSheet: View {
 }
 
 struct TrailAlertsView: View {
-    private let alerts: [TrailAlert] = [
-        TrailAlert(title: "Strong Monsoon Signal", detail: "Gale force northeasterlies along Sai Kung coast. Avoid exposed ridge lines."),
-        TrailAlert(title: "Heat Advisory", detail: "High humidity expected after 2pm. Pack extra fluids for long distance hikes."),
-        TrailAlert(title: "Route Maintenance", detail: "Section 2 of MacLehose is partially closed near Long Ke due to slope works.")
-    ]
-
+    @StateObject private var viewModel = TrailAlertsViewModel()
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
         NavigationStack {
-            List(alerts) { alert in
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(alert.title)
-                        .font(.headline)
+            Group {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if viewModel.alerts.isEmpty {
+                    ContentUnavailableView(
+                        "No Active Alerts",
+                        systemImage: "checkmark.shield.fill",
+                        description: Text("All trails are clear. Enjoy your hike!")
+                    )
+                } else {
+                    List {
+                        if !viewModel.criticalAlerts.isEmpty {
+                            Section {
+                                ForEach(viewModel.criticalAlerts) { alert in
+                                    alertRow(alert: alert)
+                                }
+                            } header: {
+                                Text("Critical")
+                            }
+                        }
+                        
+                        Section {
+                            ForEach(viewModel.alerts.filter { $0.severity != .critical }) { alert in
+                                alertRow(alert: alert)
+                            }
+                        } header: {
+                            Text("Active Alerts")
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Trail Alerts")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        Task {
+                            await viewModel.fetchAlerts()
+                        }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .disabled(viewModel.isLoading)
+                }
+            }
+            .task {
+                await viewModel.fetchAlerts()
+            }
+        }
+    }
+    
+    private func alertRow(alert: TrailAlert) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: alert.category.icon)
+                    .foregroundStyle(severityColor(for: alert.severity))
+                    .font(.title3)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(alert.title)
+                            .font(.headline)
+                        Spacer()
+                        severityBadge(alert.severity)
+                    }
+                    
                     Text(alert.detail)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                    
+                    HStack(spacing: 12) {
+                        Label(alert.category.rawValue, systemImage: "tag.fill")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("•")
+                            .foregroundStyle(.secondary)
+                        Text(alert.timeAgo)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .padding(.vertical, 4)
             }
-            .navigationTitle("Trail Alerts")
+        }
+        .padding(.vertical, 4)
+    }
+    
+    private func severityBadge(_ severity: TrailAlert.Severity) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: severity.icon)
+                .font(.caption2)
+            Text(severity.rawValue)
+                .font(.caption2.bold())
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(severityColor(for: severity).opacity(0.2), in: Capsule())
+        .foregroundStyle(severityColor(for: severity))
+    }
+    
+    private func severityColor(for severity: TrailAlert.Severity) -> Color {
+        switch severity {
+        case .low: return .blue
+        case .medium: return .orange
+        case .high: return .red
+        case .critical: return .purple
         }
     }
 }
 
-private struct TrailAlert: Identifiable {
-    let id = UUID()
-    let title: String
-    let detail: String
-}
-
 struct OfflineMapsView: View {
-    @State private var selectedRegion = "Hong Kong Island"
-    private let regions = ["Hong Kong Island", "Kowloon Ridge", "Sai Kung East", "Lantau North"]
-
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var viewModel = OfflineMapsViewModel()
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
         NavigationStack {
             Form {
-                Picker("Region", selection: $selectedRegion) {
-                    ForEach(regions, id: \.self) { region in
-                        Text(region)
-                    }
-                }
-                Section("Download status") {
-                    Label("Topographic tiles", systemImage: "arrow.down.circle.fill")
-                        .foregroundStyle(.green)
-                    Label("Trail overlays", systemImage: "arrow.down.circle")
-                        .foregroundStyle(.yellow)
-                    Label("3D terrain", systemImage: "clock.arrow.circlepath")
-                        .foregroundStyle(.orange)
-                }
                 Section {
-                    Button {
-                        // Placeholder action
-                    } label: {
-                        Label("Download latest package", systemImage: "tray.and.arrow.down")
+                    if viewModel.regions.isEmpty {
+                        Text("No regions available")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(viewModel.regions) { region in
+                            regionRow(region: region)
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                } header: {
+                    Text("Available Regions")
+                } footer: {
+                    if viewModel.hasDownloadedMaps {
+                        Text("Total downloaded: \(formatSize(viewModel.totalDownloadedSize))")
+                            .font(.caption)
+                    }
+                }
+                
+                if viewModel.hasDownloadedMaps {
+                    Section {
+                        Button(role: .destructive) {
+                            // Delete all downloaded maps
+                            for region in viewModel.regions.filter({ $0.downloadStatus == .downloaded }) {
+                                viewModel.deleteRegion(region)
+                            }
+                        } label: {
+                            Label("Clear All Downloads", systemImage: "trash")
+                        }
+                    }
                 }
             }
             .navigationTitle("Offline Maps")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .task {
+                viewModel.configureIfNeeded(context: modelContext)
+            }
+            .onAppear {
+                viewModel.refreshRegions()
+            }
+            .alert("Download Error", isPresented: Binding(
+                get: { viewModel.error != nil },
+                set: { if !$0 { viewModel.error = nil } }
+            )) {
+                Button("OK") {
+                    viewModel.error = nil
+                }
+            } message: {
+                if let error = viewModel.error {
+                    Text(error)
+                }
+            }
         }
+    }
+    
+    private func regionRow(region: OfflineMapRegion) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(region.name)
+                        .font(.headline)
+                    
+                    HStack(spacing: 12) {
+                        statusBadge(region.downloadStatus)
+                        if region.downloadStatus == .downloaded {
+                            Text(region.formattedSize)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("~\(region.formattedTotalSize)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                if region.downloadStatus == .downloading {
+                    Button {
+                        viewModel.cancelDownload(region)
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                    }
+                } else if region.downloadStatus == .downloaded {
+                    Button(role: .destructive) {
+                        viewModel.deleteRegion(region)
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                } else {
+                    Button {
+                        viewModel.downloadRegion(region)
+                    } label: {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .foregroundStyle(.blue)
+                    }
+                }
+            }
+            
+            if region.downloadStatus == .downloading {
+                ProgressView(value: region.downloadProgress) {
+                    HStack {
+                        Text("Downloading...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(Int(region.downloadProgress * 100))%")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+    
+    private func statusBadge(_ status: OfflineMapRegion.DownloadStatus) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: statusIcon(for: status))
+                .font(.caption2)
+            Text(status.rawValue)
+                .font(.caption2)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(statusColor(for: status).opacity(0.2), in: Capsule())
+        .foregroundStyle(statusColor(for: status))
+    }
+    
+    private func statusIcon(for status: OfflineMapRegion.DownloadStatus) -> String {
+        switch status {
+        case .notDownloaded: return "arrow.down.circle"
+        case .downloading: return "arrow.down.circle.fill"
+        case .downloaded: return "checkmark.circle.fill"
+        case .failed: return "exclamationmark.triangle.fill"
+        case .updating: return "arrow.clockwise.circle.fill"
+        }
+    }
+    
+    private func statusColor(for status: OfflineMapRegion.DownloadStatus) -> Color {
+        switch status {
+        case .notDownloaded: return .gray
+        case .downloading: return .blue
+        case .downloaded: return .green
+        case .failed: return .red
+        case .updating: return .orange
+        }
+    }
+    
+    private func formatSize(_ bytes: Int64) -> String {
+        let mb = Double(bytes) / (1024 * 1024)
+        return String(format: "%.1f MB", mb)
     }
 }
 
 struct ARIdentifyView: View {
-    @State private var isScanning = false
-    @State private var selectedLandmark = "Lion Rock"
-    private let landmarks = ["Lion Rock", "Sharp Peak", "Skyline Ridge", "Tai Mo Shan"]
-
+    @StateObject private var locationManager = LocationManager()
+    @StateObject private var identifier: ARLandmarkIdentifier
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedLandmark: ARLandmarkIdentifier.IdentifiedLandmark?
+    
+    init() {
+        let locationManager = LocationManager()
+        _locationManager = StateObject(wrappedValue: locationManager)
+        _identifier = StateObject(wrappedValue: ARLandmarkIdentifier(locationManager: locationManager))
+    }
+    
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.black.opacity(0.1))
-                    .overlay {
-                        VStack(spacing: 12) {
-                            Image(systemName: isScanning ? "camera.metering.center.weighted" : "camera.viewfinder")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                            Text(isScanning ? "Scanning skyline…" : "Point your camera at a ridge to identify peaks.")
+            VStack(spacing: 20) {
+                // Camera preview area (simulated)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.black.opacity(0.3),
+                                    Color.black.opacity(0.1)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .overlay {
+                            if identifier.isScanning {
+                                VStack(spacing: 16) {
+                                    ProgressView()
+                                        .tint(.white)
+                                    Text("Scanning skyline…")
+                                        .font(.headline)
+                                        .foregroundStyle(.white)
+                                    if let closest = identifier.closestLandmark {
+                                        Text("Found: \(closest.landmark.name)")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.white.opacity(0.8))
+                                    }
+                                }
+                            } else {
+                                VStack(spacing: 12) {
+                                    Image(systemName: "camera.viewfinder")
+                                        .font(.system(size: 48))
+                                        .foregroundStyle(.white.opacity(0.8))
+                                    Text("Point your camera at a ridge to identify peaks")
+                                        .font(.subheadline)
+                                        .multilineTextAlignment(.center)
+                                        .foregroundStyle(.white.opacity(0.9))
+                                        .padding(.horizontal)
+                                }
+                            }
+                        }
+                    
+                    // Compass overlay
+                    if identifier.isScanning, let closest = identifier.closestLandmark {
+                        VStack {
+                            HStack {
+                                Spacer()
+                                VStack(spacing: 4) {
+                                    Image(systemName: "location.north.circle.fill")
+                                        .font(.title2)
+                                        .foregroundStyle(.white)
+                                    Text("\(Int(closest.bearing))°")
+                                        .font(.caption.bold())
+                                        .foregroundStyle(.white)
+                                }
+                                .padding()
+                                .background(.ultraThinMaterial, in: Circle())
+                            }
+                            Spacer()
+                        }
+                    }
+                }
+                .frame(height: 300)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                
+                if identifier.isScanning {
+                    if identifier.identifiedLandmarks.isEmpty {
+                        VStack(spacing: 8) {
+                            ProgressView()
+                            Text("Searching for landmarks...")
                                 .font(.subheadline)
-                                .multilineTextAlignment(.center)
                                 .foregroundStyle(.secondary)
                         }
                         .padding()
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 12) {
+                                ForEach(identifier.identifiedLandmarks) { identified in
+                                    landmarkCard(identified: identified)
+                                        .onTapGesture {
+                                            selectedLandmark = identified
+                                        }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
                     }
-                    .frame(height: 250)
-
-                Picker("Latest identification", selection: $selectedLandmark) {
-                    ForEach(landmarks, id: \.self) { landmark in
-                        Text(landmark).tag(landmark)
+                } else {
+                    if !identifier.identifiedLandmarks.isEmpty {
+                        ScrollView {
+                            VStack(spacing: 12) {
+                                Text("Recent Identifications")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal)
+                                
+                                ForEach(identifier.identifiedLandmarks.prefix(3)) { identified in
+                                    landmarkCard(identified: identified)
+                                        .onTapGesture {
+                                            selectedLandmark = identified
+                                        }
+                                }
+                            }
+                            .padding(.vertical)
+                        }
+                    } else {
+                        VStack(spacing: 12) {
+                            Image(systemName: "mountain.2.fill")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.secondary)
+                            Text("No landmarks identified yet")
+                                .font(.headline)
+                            Text("Start scanning to identify nearby peaks")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding()
                     }
                 }
-                .pickerStyle(.segmented)
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Lion Rock")
-                        .font(.title3.bold())
-                    Label("Height 495m", systemImage: "ruler")
-                    Label("Distance 2.4 km", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
-                    Label("Time to reach 40 min", systemImage: "clock")
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-
+                
                 Button {
-                    isScanning.toggle()
+                    if identifier.isScanning {
+                        identifier.stopScanning()
+                    } else {
+                        // Request location permission if needed
+                        if locationManager.authorizationStatus == .notDetermined {
+                            locationManager.requestPermission()
+                        } else if locationManager.authorizationStatus == .authorizedAlways || locationManager.authorizationStatus == .authorizedWhenInUse {
+                            locationManager.startUpdates()
+                            identifier.startScanning()
+                        }
+                    }
                 } label: {
-                    Text(isScanning ? "Stop Scan" : "Start Scan")
-                        .frame(maxWidth: .infinity)
+                    HStack {
+                        Image(systemName: identifier.isScanning ? "stop.circle.fill" : "play.circle.fill")
+                        Text(identifier.isScanning ? "Stop Scan" : "Start Scan")
+                    }
+                    .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(locationManager.authorizationStatus == .denied || locationManager.authorizationStatus == .restricted)
             }
             .padding()
             .navigationTitle("AR Identify")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        identifier.stopScanning()
+                        dismiss()
+                    }
+                }
+            }
+            .sheet(item: $selectedLandmark) { identified in
+                LandmarkDetailView(identified: identified)
+            }
+        }
+    }
+    
+    private func landmarkCard(identified: ARLandmarkIdentifier.IdentifiedLandmark) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(identified.landmark.name)
+                        .font(.headline)
+                    if !identified.landmark.description.isEmpty {
+                        Text(identified.landmark.description)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "location.north.circle.fill")
+                            .font(.caption)
+                        Text("\(Int(identified.bearing))°")
+                            .font(.caption.bold())
+                    }
+                    .foregroundStyle(.blue)
+                }
+            }
+            
+            HStack(spacing: 16) {
+                Label("\(identified.landmark.elevation) m", systemImage: "ruler")
+                Label("\(identified.distance.formatted(.number.precision(.fractionLength(1)))) km", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                Label("\(Int(identified.distance * 12)) min", systemImage: "clock")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+struct LandmarkDetailView: View {
+    let identified: ARLandmarkIdentifier.IdentifiedLandmark
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(identified.landmark.name)
+                            .font(.largeTitle.bold())
+                        if !identified.landmark.description.isEmpty {
+                            Text(identified.landmark.description)
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Details")
+                            .font(.headline)
+                        
+                        detailRow(icon: "ruler", title: "Elevation", value: "\(identified.landmark.elevation) m")
+                        detailRow(icon: "point.topleft.down.curvedto.point.bottomright.up", title: "Distance", value: "\(identified.distance.formatted(.number.precision(.fractionLength(2)))) km")
+                        detailRow(icon: "location.north.circle.fill", title: "Bearing", value: "\(Int(identified.bearing))°")
+                        detailRow(icon: "clock", title: "Estimated time", value: "\(Int(identified.distance * 12)) minutes")
+                    }
+                    .padding()
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .padding()
+            }
+            .navigationTitle("Landmark")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func detailRow(icon: String, title: String, value: String) -> some View {
+        HStack {
+            Label(title, systemImage: icon)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .font(.headline)
+        }
+    }
+}
+
+struct QuickAddTrailPickerView: View {
+    @EnvironmentObject private var viewModel: AppViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+    
+    var onTrailSelected: (Trail) -> Void
+    
+    private var filteredTrails: [Trail] {
+        guard !searchText.isEmpty else { return viewModel.trails }
+        return viewModel.trails.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText) ||
+            $0.district.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(filteredTrails) { trail in
+                    Button {
+                        onTrailSelected(trail)
+                    } label: {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(trail.name)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                Text(trail.district)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                HStack(spacing: 12) {
+                                    Label("\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km", systemImage: "ruler")
+                                    Label("\(trail.estimatedDurationMinutes / 60)h", systemImage: "clock")
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Label(trail.difficulty.rawValue, systemImage: trail.difficulty.icon)
+                                .labelStyle(.iconOnly)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+            .navigationTitle("Choose Trail")
+            .searchable(text: $searchText, prompt: "Search trails")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }

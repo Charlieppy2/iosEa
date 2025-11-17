@@ -18,7 +18,9 @@ struct hikingHKApp: App {
             for: [
                 UserCredential.self,
                 SavedHikeRecord.self,
-                FavoriteTrailRecord.self
+                FavoriteTrailRecord.self,
+                SafetyChecklistItem.self,
+                OfflineMapRegion.self
             ]
         )
     }
