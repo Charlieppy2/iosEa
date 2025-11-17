@@ -50,8 +50,9 @@ struct PlannerView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         if let trail = selectedTrail {
-                            viewModel.addSavedHike(for: trail, scheduledDate: plannedDate)
+                            viewModel.addSavedHike(for: trail, scheduledDate: plannedDate, note: note)
                             note = ""
+                            selectedTrail = nil
                         }
                     }
                     .disabled(selectedTrail == nil)

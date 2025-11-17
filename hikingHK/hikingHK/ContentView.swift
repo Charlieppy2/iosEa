@@ -1,3 +1,11 @@
+//
+//  ContentView.swift
+//  hikingHK
+//
+//  Created by user on 17/11/2025.
+//
+
+
 import SwiftUI
 
 struct ContentView: View {
@@ -31,10 +39,3 @@ struct ContentView: View {
         .environmentObject(AppViewModel())
         .environmentObject(SessionManager.previewSignedIn())
 }
-//
-//  ContentView.swift
-//  hikingHK
-//
-//  Created by user on 17/11/2025.
-//
-

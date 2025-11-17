@@ -87,6 +87,7 @@ final class SessionManager: ObservableObject {
     func signOut() {
         currentUser = nil
         storedEmail = ""
+        authError = nil
     }
 
     private func restoreSession() {

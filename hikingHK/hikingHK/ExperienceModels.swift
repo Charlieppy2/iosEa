@@ -27,13 +27,14 @@ struct WeatherSnapshot {
     )
 }
 
-struct SavedHike: Identifiable {
-    let id = UUID()
+struct SavedHike: Identifiable, Equatable {
+    let id: UUID
     let trail: Trail
-    let scheduledDate: Date
-    let note: String
+    var scheduledDate: Date
+    var note: String
 
-    init(trail: Trail, scheduledDate: Date, note: String = "") {
+    init(id: UUID = UUID(), trail: Trail, scheduledDate: Date, note: String = "") {
+        self.id = id
         self.trail = trail
         self.scheduledDate = scheduledDate
         self.note = note

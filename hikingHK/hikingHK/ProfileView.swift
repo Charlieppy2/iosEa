@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject private var viewModel: AppViewModel
     @EnvironmentObject private var sessionManager: SessionManager
+    @State private var showSignOutConfirmation = false
 
     private var completedCount: Int {
         viewModel.savedHikes.count
@@ -24,6 +25,14 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("Profile")
+            .confirmationDialog("Sign Out", isPresented: $showSignOutConfirmation, titleVisibility: .visible) {
+                Button("Sign Out", role: .destructive) {
+                    sessionManager.signOut()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Are you sure you want to sign out?")
+            }
         }
     }
 
@@ -45,7 +54,7 @@ struct ProfileView: View {
                 }
             }
             Button("Sign out", role: .destructive) {
-                sessionManager.signOut()
+                showSignOutConfirmation = true
             }
         }
     }

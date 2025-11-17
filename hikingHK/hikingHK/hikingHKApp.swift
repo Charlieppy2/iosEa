@@ -14,6 +14,12 @@ struct hikingHKApp: App {
         WindowGroup {
             RootView()
         }
-        .modelContainer(for: UserCredential.self)
+        .modelContainer(
+            for: [
+                UserCredential.self,
+                SavedHikeRecord.self,
+                FavoriteTrailRecord.self
+            ]
+        )
     }
 }

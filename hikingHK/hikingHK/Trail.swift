@@ -143,6 +143,7 @@ extension Trail {
 extension Trail {
     static let sampleData: [Trail] = [
         Trail(
+            id: UUID(uuidString: "0C8C0A67-9B84-4D4E-8F1C-2B7B4E3EB7A0")!,
             name: "MacLehose Section 4",
             district: "Sai Kung",
             difficulty: .challenging,
@@ -177,6 +178,7 @@ extension Trail {
             ]
         ),
         Trail(
+            id: UUID(uuidString: "7D62F08B-24AF-4DA4-95BB-818E0C1CD2B5")!,
             name: "Dragon's Back",
             district: "Hong Kong Island",
             difficulty: .moderate,
@@ -211,6 +213,7 @@ extension Trail {
             ]
         ),
         Trail(
+            id: UUID(uuidString: "B0F98FDF-2F2F-4C19-A032-654B2C73E0B7")!,
             name: "Tai Mo Shan Waterfalls",
             district: "Tsuen Wan",
             difficulty: .easy,

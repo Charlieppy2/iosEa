@@ -28,6 +28,7 @@ struct RootView: View {
         .task {
             guard !didConfigure else { return }
             await sessionManager.configureIfNeeded(context: modelContext)
+            appViewModel.configurePersistenceIfNeeded(context: modelContext)
             didConfigure = true
         }
     }
@@ -35,6 +36,13 @@ struct RootView: View {
 
 #Preview {
     RootView()
-        .modelContainer(for: UserCredential.self, inMemory: true)
+        .modelContainer(
+            for: [
+                UserCredential.self,
+                SavedHikeRecord.self,
+                FavoriteTrailRecord.self
+            ],
+            inMemory: true
+        )
 }
 
