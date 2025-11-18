@@ -64,14 +64,14 @@ struct ProfileView: View {
             List {
                 accountSection
                 statsSection
-                Section("Achievements") {
+                Section(languageManager.localizedString(for: "profile.achievements")) {
                     NavigationLink {
                         AchievementView()
                     } label: {
                         HStack {
                             Image(systemName: "trophy.fill")
                                 .foregroundStyle(Color.hikingGreen)
-                            Text("Achievements & Badges")
+                            Text(languageManager.localizedString(for: "profile.achievements.badges"))
                                 .foregroundStyle(Color.hikingDarkGreen)
                             Spacer()
                             HStack(spacing: 4) {
@@ -155,7 +155,7 @@ struct ProfileView: View {
                 }
                 .ignoresSafeArea()
             )
-            .navigationTitle("Profile")
+            .navigationTitle(languageManager.localizedString(for: "profile.title"))
             .onAppear {
                 servicesStatus.refreshAllStatuses(
                     weatherError: viewModel.weatherError,
