@@ -18,7 +18,7 @@ final class GearChecklistViewModel: ObservableObject {
     private var store: GearChecklistStore?
     private let gearService: SmartGearServiceProtocol
     
-    init(gearService: SmartGearServiceProtocol = SmartGearService()) {
+    nonisolated init(gearService: SmartGearServiceProtocol = SmartGearService()) {
         self.gearService = gearService
     }
     
