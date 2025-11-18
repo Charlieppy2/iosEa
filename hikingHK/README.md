@@ -19,8 +19,15 @@ HikingHK is a feature-rich mobile application designed to help hikers discover, 
 - **Safety Checklist**: Pre-hike safety preparation
 
 ### 🗺️ Trails
-- **Trail Browser**: Browse all available hiking trails
+- **Trail Browser**: Browse 17+ hiking trails across Hong Kong
 - **Search & Filter**: Find trails by name, district, or difficulty
+- **Trail Database**: Includes major trails from:
+  - MacLehose Trail (Sections 1, 2, 3, 4, 5, 8)
+  - Wilson Trail (Sections 1, 2)
+  - Lantau Trail (Sections 2, 3)
+  - Hong Kong Trail (Sections 1, 4)
+  - Famous peaks: Lion Rock, Sunset Peak, Sharp Peak, Tai Mo Shan
+  - Popular routes: Dragon's Back, Peak Circle Walk, Tai Tam Reservoir
 - **Trail Details**: 
   - Interactive maps with route visualization
   - Checkpoints and route information
@@ -44,6 +51,7 @@ HikingHK is a feature-rich mobile application designed to help hikers discover, 
   - Log 50 km this month
   - Progress visualization with progress bars
 - **Service Status**: Monitor connection status for weather API, GPS, and offline maps
+- **API Connection Checker**: Real-time API connection status monitoring
 
 ## Technical Stack
 
@@ -172,11 +180,12 @@ All user data is persisted using SwiftData:
 - Automatic refresh capability
 
 ### 🗺️ Trail Management
-- Comprehensive trail database
+- **17+ hiking trails** covering major Hong Kong routes
 - Difficulty levels (Easy, Moderate, Challenging)
 - Interactive maps with route visualization
 - Checkpoints and elevation profiles
 - Transportation and facility information
+- Coverage of four major long-distance trails (MacLehose, Wilson, Lantau, Hong Kong Trail)
 
 ### 📱 Offline Maps
 - Download maps for offline use
@@ -202,6 +211,12 @@ All user data is persisted using SwiftData:
 - Landmark information display
 - Real-time scanning
 
+### 🎨 UI/UX Design
+- **Hiking Theme**: Natural color palette (forest green, earth brown, sky blue)
+- **Pattern Backgrounds**: Subtle mountain, tree, cloud, and path patterns
+- **Card-based Design**: Modern card layouts with gradients and shadows
+- **Responsive Layout**: Adapts to different screen sizes
+
 ## Development
 
 ### Adding New Features
@@ -219,14 +234,26 @@ xcodebuild test -scheme hikingHK -destination 'platform=iOS Simulator,name=iPhon
 
 ## API Integration
 
-### Weather API
-- **Endpoint**: Hong Kong Observatory Open Data API
+### Weather API ✅
+- **Endpoint**: `https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en`
+- **Status**: Connected
 - **Data Type**: Real-time weather readings
+- **Features**: Temperature, humidity, UV index, weather warnings
 - **Update Frequency**: Manual refresh or on app launch
+- **Connection Check**: Available in Profile → API Status
 
-### Mapbox (Optional)
-- Route calculation for trails
-- Requires access token in environment variables
+### Mapbox API ⚠️
+- **Endpoint**: `https://api.mapbox.com/directions/v5/mapbox/walking/`
+- **Status**: Optional configuration
+- **Requirement**: `MAPBOX_ACCESS_TOKEN` environment variable
+- **Features**: Route calculation and navigation
+- **Connection Check**: Available in Profile → Data & services
+
+### API Connection Monitoring
+- Real-time API status checking
+- Connection status display in Profile page
+- Manual refresh capability
+- Last check time tracking
 
 ## Data Privacy
 
@@ -236,8 +263,23 @@ xcodebuild test -scheme hikingHK -destination 'platform=iOS Simulator,name=iPhon
   - Mapbox API (route calculation, optional)
 - User credentials are encrypted and stored securely
 
+## Trail Database
+
+The app currently includes **17 hiking trails** covering:
+- **MacLehose Trail**: Sections 1, 2, 3, 4, 5, 8
+- **Wilson Trail**: Sections 1, 2
+- **Lantau Trail**: Sections 2, 3
+- **Hong Kong Trail**: Sections 1, 4
+- **Famous Peaks**: Lion Rock, Sunset Peak, Sharp Peak, Tai Mo Shan
+- **Popular Routes**: Dragon's Back, Peak Circle Walk, Tai Tam Reservoir
+
+> **Note**: Hong Kong has over 300 hiking trails. The app currently includes major routes. More trails can be added in future updates.
+
+See [TRAILS_LIST.md](TRAILS_LIST.md) for complete trail details.
+
 ## Future Enhancements
 
+- [ ] Expand trail database to include all 300+ Hong Kong trails
 - [ ] Real AR camera integration with ARKit
 - [ ] Social features (share hikes, photos)
 - [ ] Advanced route planning with waypoints
@@ -246,6 +288,7 @@ xcodebuild test -scheme hikingHK -destination 'platform=iOS Simulator,name=iPhon
 - [ ] Community reviews and ratings
 - [ ] Photo gallery for trails
 - [ ] Export hike data
+- [ ] Connect to official trail database API
 
 ## Contributing
 
@@ -262,4 +305,14 @@ Created with ❤️ for Hong Kong hikers
 ---
 
 **Note**: This app is designed specifically for Hong Kong's hiking trails and uses local APIs and services. Some features may require location permissions and internet connectivity.
+
+## Related Documentation
+
+- [FILE_STRUCTURE.md](FILE_STRUCTURE.md) - Project file structure
+- [FEATURE_STATUS.md](FEATURE_STATUS.md) - Feature implementation status and API connection checks
+- [TRAILS_LIST.md](TRAILS_LIST.md) - Complete trail list
+
+---
+
+**Language**: [English](README.md) | [繁體中文](README_zh_TW.md)
 
