@@ -92,22 +92,22 @@ struct ProfileView: View {
                 }
                 Section(languageManager.localizedString(for: "profile.data.services")) {
                     serviceStatusRow(
-                        title: "HK Weather API",
+                        title: languageManager.localizedString(for: "service.weather.api"),
                         icon: "cloud.sun",
                         status: servicesStatus.weatherServiceStatus
                     )
                     serviceStatusRow(
-                        title: "GPS tracking",
+                        title: languageManager.localizedString(for: "service.gps.tracking"),
                         icon: "location",
                         status: servicesStatus.gpsStatus
                     )
                     serviceStatusRow(
-                        title: "Offline maps",
+                        title: languageManager.localizedString(for: "service.offline.maps"),
                         icon: "arrow.down.circle",
                         status: servicesStatus.offlineMapsStatus
                     )
                     apiStatusRow(
-                        title: "Mapbox API",
+                        title: languageManager.localizedString(for: "service.mapbox.api"),
                         icon: "map",
                         status: apiChecker.mapboxAPIStatus
                     )
@@ -115,9 +115,9 @@ struct ProfileView: View {
                 Section(languageManager.localizedString(for: "profile.language")) {
                     languageSelectionRow
                 }
-                Section("API Status") {
+                Section(languageManager.localizedString(for: "api.status.title")) {
                     HStack {
-                        Text("Last checked")
+                        Text(languageManager.localizedString(for: "api.status.last.checked"))
                             .font(.subheadline)
                             .foregroundStyle(Color.hikingBrown)
                         Spacer()
@@ -126,7 +126,7 @@ struct ProfileView: View {
                                 .font(.caption)
                                 .foregroundStyle(Color.hikingStone)
                         } else {
-                            Text("Never")
+                            Text(languageManager.localizedString(for: "api.status.never"))
                                 .font(.caption)
                                 .foregroundStyle(Color.hikingStone)
                         }
@@ -138,7 +138,7 @@ struct ProfileView: View {
                     } label: {
                         HStack {
                             Image(systemName: "arrow.clockwise")
-                            Text("Check API Connection")
+                            Text(languageManager.localizedString(for: "api.status.check.connection"))
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -228,11 +228,11 @@ struct ProfileView: View {
     }
 
     private var statsSection: some View {
-        Section("Journey") {
+        Section(languageManager.localizedString(for: "profile.stats")) {
             HStack {
-                stat(value: "\(plannedCount)", label: "planned")
-                stat(value: "\(favoritesCount)", label: "favorites")
-                stat(value: "\(loggedDistance.formatted(.number.precision(.fractionLength(1)))) km", label: "logged")
+                stat(value: "\(plannedCount)", label: languageManager.localizedString(for: "stats.planned"))
+                stat(value: "\(favoritesCount)", label: languageManager.localizedString(for: "stats.favorites"))
+                stat(value: "\(loggedDistance.formatted(.number.precision(.fractionLength(1)))) km", label: languageManager.localizedString(for: "stats.logged"))
             }
         }
     }
@@ -257,7 +257,7 @@ struct ProfileView: View {
     private func goalRow(goal: Goal) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Label(goal.title, systemImage: goal.icon)
+                Label(goal.localizedTitle(languageManager: languageManager), systemImage: goal.icon)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.hikingDarkGreen)
                 Spacer()
@@ -290,7 +290,7 @@ struct ProfileView: View {
             }
             .frame(height: 8)
             
-            Text(goal.progressText)
+            Text(goal.progressText(languageManager: languageManager))
                 .font(.caption.weight(.medium))
                 .foregroundStyle(goal.isCompleted ? Color.hikingGreen : Color.hikingBrown)
         }
@@ -330,7 +330,7 @@ struct ProfileView: View {
                 Image(systemName: status.icon)
                     .foregroundStyle(getColorForAPIConnectionStatus(status))
                     .font(.caption)
-                Text(status.description)
+                Text(status.localizedDescription(languageManager: languageManager))
                     .font(.caption.weight(.medium))
                     .foregroundStyle(getColorForAPIConnectionStatus(status))
             }
@@ -364,10 +364,10 @@ struct ProfileView: View {
     
     private func statusText(for status: ServicesStatusViewModel.ServiceStatus) -> String {
         switch status {
-        case .connected: return "Connected"
-        case .disconnected: return "Disconnected"
-        case .unavailable: return "Unavailable"
-        case .unknown: return "Unknown"
+        case .connected: return languageManager.localizedString(for: "service.status.connected")
+        case .disconnected: return languageManager.localizedString(for: "service.status.disconnected")
+        case .unavailable: return languageManager.localizedString(for: "service.status.unavailable")
+        case .unknown: return languageManager.localizedString(for: "service.status.unknown")
         }
     }
     

@@ -23,14 +23,21 @@ struct Goal: Identifiable {
         return min(current / target, 1.0)
     }
     
-    var progressText: String {
+    func progressText(languageManager: LanguageManager) -> String {
         if isCompleted {
-            return "Completed"
+            return languageManager.localizedString(for: "goal.completed")
         }
+        let unitKey = unit == "km" ? "goal.unit.km" : "goal.unit.lines"
+        let localizedUnit = languageManager.localizedString(for: unitKey)
         if unit == "km" {
-            return "\(current.formatted(.number.precision(.fractionLength(1)))) / \(Int(target)) \(unit)"
+            return "\(current.formatted(.number.precision(.fractionLength(1)))) / \(Int(target)) \(localizedUnit)"
         }
-        return "\(Int(current)) / \(Int(target)) \(unit)"
+        return "\(Int(current)) / \(Int(target)) \(localizedUnit)"
+    }
+    
+    func localizedTitle(languageManager: LanguageManager) -> String {
+        let key = "goal.\(id)"
+        return languageManager.localizedString(for: key)
     }
 }
 

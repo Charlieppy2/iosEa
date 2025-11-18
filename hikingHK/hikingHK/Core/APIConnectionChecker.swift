@@ -31,6 +31,16 @@ class APIConnectionChecker: ObservableObject {
             }
         }
         
+        func localizedDescription(languageManager: LanguageManager) -> String {
+            switch self {
+            case .checking: return languageManager.localizedString(for: "api.status.checking")
+            case .connected: return languageManager.localizedString(for: "api.status.connected")
+            case .disconnected: return languageManager.localizedString(for: "api.status.disconnected")
+            case .notConfigured: return languageManager.localizedString(for: "api.status.not.configured")
+            case .error(let message): return "\(languageManager.localizedString(for: "api.status.error")): \(message)"
+            }
+        }
+        
         var icon: String {
             switch self {
             case .checking: return "hourglass"

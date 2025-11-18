@@ -64,6 +64,34 @@ struct LocalizedStrings {
         "stats.favorites": "favorites",
         "stats.logged": "logged",
         
+        // Goals
+        "goal.ridge_lines": "Complete 4 Ridge Lines",
+        "goal.monthly_distance": "Log 50 km this month",
+        "goal.completed": "Completed",
+        "goal.unit.km": "km",
+        "goal.unit.lines": "lines",
+        
+        // Services
+        "service.weather.api": "HK Weather API",
+        "service.gps.tracking": "GPS tracking",
+        "service.offline.maps": "Offline maps",
+        "service.mapbox.api": "Mapbox API",
+        "service.status.connected": "Connected",
+        "service.status.disconnected": "Disconnected",
+        "service.status.unavailable": "Unavailable",
+        "service.status.unknown": "Unknown",
+        
+        // API Status
+        "api.status.title": "API Status",
+        "api.status.last.checked": "Last checked",
+        "api.status.never": "Never",
+        "api.status.check.connection": "Check API Connection",
+        "api.status.checking": "Checking...",
+        "api.status.connected": "Connected",
+        "api.status.disconnected": "Disconnected",
+        "api.status.not.configured": "Not Configured",
+        "api.status.error": "Error",
+        
         // Home
         "home.title": "Home",
         "home.quick.actions": "Quick Actions",
@@ -387,6 +415,34 @@ struct LocalizedStrings {
         "stats.planned": "已計劃",
         "stats.favorites": "收藏",
         "stats.logged": "已記錄",
+        
+        // Goals
+        "goal.ridge_lines": "完成4條山脊線",
+        "goal.monthly_distance": "本月記錄50公里",
+        "goal.completed": "已完成",
+        "goal.unit.km": "公里",
+        "goal.unit.lines": "條",
+        
+        // Services
+        "service.weather.api": "香港天文台天氣API",
+        "service.gps.tracking": "GPS追蹤",
+        "service.offline.maps": "離線地圖",
+        "service.mapbox.api": "Mapbox API",
+        "service.status.connected": "已連接",
+        "service.status.disconnected": "未連接",
+        "service.status.unavailable": "不可用",
+        "service.status.unknown": "未知",
+        
+        // API Status
+        "api.status.title": "API狀態",
+        "api.status.last.checked": "最後檢查",
+        "api.status.never": "從未",
+        "api.status.check.connection": "檢查API連接",
+        "api.status.checking": "檢查中...",
+        "api.status.connected": "已連接",
+        "api.status.disconnected": "未連接",
+        "api.status.not.configured": "未配置",
+        "api.status.error": "錯誤",
         
         // Home
         "home.title": "首頁",
