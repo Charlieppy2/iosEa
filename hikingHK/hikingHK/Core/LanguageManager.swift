@@ -51,8 +51,10 @@ final class LanguageManager: ObservableObject {
         }
     }
     
-    func localizedString(for key: String) -> String {
-        return LocalizedStrings.shared.getString(for: key, language: currentLanguage)
+    nonisolated func localizedString(for key: String) -> String {
+        // Access currentLanguage safely - it's only read, not modified
+        let language = MainActor.assumeIsolated { currentLanguage }
+        return LocalizedStrings.shared.getString(for: key, language: language)
     }
 }
 
