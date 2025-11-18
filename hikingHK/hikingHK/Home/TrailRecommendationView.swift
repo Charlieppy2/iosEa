@@ -11,6 +11,7 @@ import SwiftData
 struct TrailRecommendationView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var appViewModel: AppViewModel
+    @EnvironmentObject private var languageManager: LanguageManager
     @StateObject private var viewModel: TrailRecommendationViewModel
     @State private var isShowingPreferenceSettings = false
     @State private var availableHours: Double = 4.0
@@ -28,7 +29,7 @@ struct TrailRecommendationView: View {
                     
                     // 推薦結果
                     if viewModel.isLoading {
-                        ProgressView("正在生成推薦...")
+                        ProgressView(languageManager.localizedString(for: "recommendations.generating"))
                             .frame(maxWidth: .infinity)
                             .padding()
                     } else if viewModel.recommendations.isEmpty {
@@ -39,7 +40,7 @@ struct TrailRecommendationView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Trail Recommendations")
+            .navigationTitle(languageManager.localizedString(for: "home.recommendations"))
             .background(
                 ZStack {
                     Color.hikingBackgroundGradient
@@ -77,12 +78,12 @@ struct TrailRecommendationView: View {
     
     private var recommendationSettingsCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Recommendation Settings")
+            Text(languageManager.localizedString(for: "recommendations.settings"))
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
             
             VStack(alignment: .leading, spacing: 12) {
-                Text("Available Time: \(Int(availableHours)) hours")
+                Text("\(languageManager.localizedString(for: "recommendations.available.time")): \(Int(availableHours)) \(languageManager.localizedString(for: "recommendations.hours"))")
                     .font(.subheadline)
                     .foregroundStyle(Color.hikingBrown)
                 
@@ -103,7 +104,7 @@ struct TrailRecommendationView: View {
             } label: {
                 HStack {
                     Image(systemName: "arrow.clockwise")
-                    Text("Regenerate Recommendations")
+                    Text(languageManager.localizedString(for: "recommendations.regenerate"))
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -121,10 +122,10 @@ struct TrailRecommendationView: View {
             Image(systemName: "sparkles")
                 .font(.system(size: 64))
                 .foregroundStyle(Color.hikingGreen)
-            Text("No Recommendations")
+            Text(languageManager.localizedString(for: "recommendations.none"))
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
-            Text("Please adjust your preferences or available time")
+            Text(languageManager.localizedString(for: "recommendations.adjust.preferences"))
                 .font(.subheadline)
                 .foregroundStyle(Color.hikingBrown)
                 .multilineTextAlignment(.center)
@@ -135,7 +136,7 @@ struct TrailRecommendationView: View {
     
     private var recommendationsList: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Recommended for You")
+            Text(languageManager.localizedString(for: "recommendations.for.you"))
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
             
@@ -151,6 +152,7 @@ struct TrailRecommendationView: View {
 struct RecommendationCard: View {
     let recommendation: TrailRecommendation
     let onAction: (RecommendationRecord.UserAction) -> Void
+    @EnvironmentObject private var languageManager: LanguageManager
     @State private var isShowingDetail = false
     
     var body: some View {
@@ -170,7 +172,7 @@ struct RecommendationCard: View {
                     Text("\(recommendation.matchPercentage)%")
                         .font(.title2.bold())
                         .foregroundStyle(Color.hikingGreen)
-                    Text("Match")
+                    Text(languageManager.localizedString(for: "recommendations.match"))
                         .font(.caption)
                         .foregroundStyle(Color.hikingStone)
                 }
@@ -224,7 +226,7 @@ struct RecommendationCard: View {
                     isShowingDetail = true
                     onAction(.viewed)
                 } label: {
-                    Text("View Details")
+                    Text(languageManager.localizedString(for: "recommendations.view.details"))
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -257,21 +259,22 @@ struct RecommendationCard: View {
 
 struct PreferenceSettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var languageManager: LanguageManager
     @State var preference: UserPreference
     let onSave: (UserPreference) -> Void
     
     var body: some View {
         NavigationStack {
             Form {
-                Section("體能水平") {
-                    Picker("體能水平", selection: $preference.fitnessLevel) {
+                Section(languageManager.localizedString(for: "preferences.fitness.level")) {
+                    Picker(languageManager.localizedString(for: "preferences.fitness.level"), selection: $preference.fitnessLevel) {
                         ForEach(UserPreference.FitnessLevel.allCases, id: \.self) { level in
-                            Text(level.rawValue).tag(level)
+                            Text(level.localizedRawValue(languageManager: languageManager)).tag(level)
                         }
                     }
                 }
                 
-                Section("偏好風景") {
+                Section(languageManager.localizedString(for: "preferences.scenery")) {
                     ForEach(UserPreference.SceneryType.allCases, id: \.self) { scenery in
                         Toggle(isOn: Binding(
                             get: { preference.preferredScenery.contains(scenery) },
@@ -283,45 +286,42 @@ struct PreferenceSettingsView: View {
                                 }
                             }
                         )) {
-                            Label(scenery.rawValue, systemImage: scenery.icon)
+                            Label(scenery.localizedRawValue(languageManager: languageManager), systemImage: scenery.icon)
                         }
                     }
                 }
                 
-                Section("Preferred Difficulty") {
-                    Picker("Difficulty", selection: $preference.preferredDifficulty) {
-                        Text("No Preference").tag(Trail.Difficulty?.none)
+                Section(languageManager.localizedString(for: "preferences.difficulty")) {
+                    Picker(languageManager.localizedString(for: "preferences.difficulty"), selection: $preference.preferredDifficulty) {
+                        Text(languageManager.localizedString(for: "preferences.no.preference")).tag(Trail.Difficulty?.none)
                         ForEach(Trail.Difficulty.allCases, id: \.self) { difficulty in
-                            Text(difficulty.rawValue).tag(Trail.Difficulty?.some(difficulty))
+                            Text(difficulty.localizedRawValue(languageManager: languageManager)).tag(Trail.Difficulty?.some(difficulty))
                         }
                     }
                 }
                 
-                Section("Preferred Distance") {
+                Section(languageManager.localizedString(for: "preferences.distance")) {
                     VStack {
                         HStack {
-                            Text("Min: \(Int(preference.preferredDistance?.minKm ?? 0)) km")
+                            Text("\(languageManager.localizedString(for: "preferences.min")): \(Int(preference.preferredDistance?.minKm ?? 0)) km")
                             Spacer()
-                            Text("Max: \(Int(preference.preferredDistance?.maxKm ?? 20)) km")
+                            Text("\(languageManager.localizedString(for: "preferences.max")): \(Int(preference.preferredDistance?.maxKm ?? 20)) km")
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        
-                        // 簡化版：使用滑塊設置距離範圍
-                        // 實際應用中可以更精細地設置
                     }
                 }
             }
-            .navigationTitle("Preferences")
+            .navigationTitle(languageManager.localizedString(for: "preferences.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button(languageManager.localizedString(for: "cancel")) {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(languageManager.localizedString(for: "save")) {
                         onSave(preference)
                         dismiss()
                     }

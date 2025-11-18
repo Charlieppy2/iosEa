@@ -14,6 +14,7 @@ struct HikeTrackingView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appViewModel: AppViewModel
+    @EnvironmentObject private var languageManager: LanguageManager
     @StateObject private var viewModel: HikeTrackingViewModel
     @State private var selectedTrail: Trail?
     @State private var isShowingTrailPicker = false
@@ -40,7 +41,7 @@ struct HikeTrackingView: View {
                         }
                         
                         // 顯示當前位置
-                        Annotation("當前位置", coordinate: location.coordinate) {
+                        Annotation(languageManager.localizedString(for: "hike.tracking.current.location"), coordinate: location.coordinate) {
                             Circle()
                                 .fill(Color.red)
                                 .frame(width: 12, height: 12)
@@ -62,11 +63,11 @@ struct HikeTrackingView: View {
                         .padding()
                 }
             }
-            .navigationTitle("Hike Tracking")
+            .navigationTitle(languageManager.localizedString(for: "hike.tracking.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button(languageManager.localizedString(for: "cancel")) {
                         if viewModel.isTracking {
                             viewModel.pauseTracking()
                         }
@@ -75,13 +76,13 @@ struct HikeTrackingView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if viewModel.isTracking {
-                        Button("Stop") {
+                        Button(languageManager.localizedString(for: "stop")) {
                             viewModel.stopTracking()
                             dismiss()
                         }
                         .foregroundStyle(.red)
                     } else {
-                        Button("Start") {
+                        Button(languageManager.localizedString(for: "start")) {
                             if let trail = selectedTrail {
                                 viewModel.startTracking(trailId: trail.id, trailName: trail.name)
                             } else {
@@ -115,19 +116,19 @@ struct HikeTrackingView: View {
                 StatItem(
                     icon: "clock.fill",
                     value: viewModel.formattedElapsedTime,
-                    label: "Time",
+                    label: languageManager.localizedString(for: "hike.tracking.time"),
                     color: Color.hikingGreen
                 )
                 StatItem(
                     icon: "ruler.fill",
                     value: viewModel.formattedDistance,
-                    label: "Distance",
+                    label: languageManager.localizedString(for: "hike.tracking.distance"),
                     color: Color.hikingSky
                 )
                 StatItem(
                     icon: "speedometer",
                     value: String(format: "%.1f km/h", viewModel.currentSpeedKmh),
-                    label: "Speed",
+                    label: languageManager.localizedString(for: "hike.tracking.speed"),
                     color: Color.hikingBrown
                 )
             }
@@ -139,13 +140,13 @@ struct HikeTrackingView: View {
                 StatItem(
                     icon: "mountain.2.fill",
                     value: String(format: "%.0f m", viewModel.currentAltitude),
-                    label: "Altitude",
+                    label: languageManager.localizedString(for: "hike.tracking.altitude"),
                     color: Color.hikingDarkGreen
                 )
                 StatItem(
                     icon: "arrow.up.circle.fill",
                     value: "\(viewModel.trackPoints.count)",
-                    label: "Track Points",
+                    label: languageManager.localizedString(for: "hike.tracking.track.points"),
                     color: Color.hikingTan
                 )
             }
@@ -158,7 +159,7 @@ struct HikeTrackingView: View {
                     } label: {
                         HStack {
                             Image(systemName: "pause.fill")
-                            Text("Pause")
+                            Text(languageManager.localizedString(for: "pause"))
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -172,7 +173,7 @@ struct HikeTrackingView: View {
                     } label: {
                         HStack {
                             Image(systemName: "stop.fill")
-                            Text("Stop")
+                            Text(languageManager.localizedString(for: "stop"))
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -186,7 +187,7 @@ struct HikeTrackingView: View {
                 } label: {
                     HStack {
                         Image(systemName: "play.fill")
-                        Text("Resume")
+                        Text(languageManager.localizedString(for: "resume"))
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -213,6 +214,7 @@ struct StatItem: View {
     let value: String
     let label: String
     let color: Color
+    @EnvironmentObject private var languageManager: LanguageManager
     
     var body: some View {
         VStack(spacing: 8) {

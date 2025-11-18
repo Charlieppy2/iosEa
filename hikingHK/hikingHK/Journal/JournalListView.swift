@@ -10,6 +10,7 @@ import SwiftData
 
 struct JournalListView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var languageManager: LanguageManager
     @StateObject private var viewModel: JournalViewModel
     @State private var isShowingCreateJournal = false
     @State private var selectedJournal: HikeJournal?
@@ -27,7 +28,7 @@ struct JournalListView: View {
                     timelineView
                 }
             }
-            .navigationTitle("Hiking Journal")
+            .navigationTitle(languageManager.localizedString(for: "journal.list.title"))
             .background(
                 ZStack {
                     Color.hikingBackgroundGradient
@@ -64,12 +65,12 @@ struct JournalListView: View {
                 .font(.system(size: 64))
                 .foregroundStyle(Color.hikingStone)
             
-            Text("No Journal Entries")
+            Text(languageManager.localizedString(for: "journal.no.entries"))
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundStyle(Color.hikingDarkGreen)
             
-            Text("Start documenting your hiking adventures!")
+            Text(languageManager.localizedString(for: "journal.start.documenting"))
                 .font(.subheadline)
                 .foregroundStyle(Color.hikingBrown)
                 .multilineTextAlignment(.center)
@@ -77,7 +78,7 @@ struct JournalListView: View {
             Button {
                 isShowingCreateJournal = true
             } label: {
-                Label("Create First Entry", systemImage: "plus.circle.fill")
+                Label(languageManager.localizedString(for: "journal.create.first.entry"), systemImage: "plus.circle.fill")
                     .padding()
                     .frame(maxWidth: .infinity)
                     .background(Color.hikingGreen, in: RoundedRectangle(cornerRadius: 12))

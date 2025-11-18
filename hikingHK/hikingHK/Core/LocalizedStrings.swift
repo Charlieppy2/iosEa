@@ -450,7 +450,108 @@ struct LocalizedStrings {
         "gear.category.safety": "Safety",
         "gear.category.food": "Food",
         "gear.category.tools": "Tools",
-        "gear.category.optional": "Optional"
+        "gear.category.optional": "Optional",
+        
+        // Offline Maps
+        "offline.maps.no.regions": "No regions available",
+        "offline.maps.available.regions": "Available Regions",
+        "offline.maps.total.downloaded": "Total downloaded",
+        "offline.maps.clear.all": "Clear All Downloads",
+        "offline.maps.downloading": "Downloading...",
+        "offline.maps.download.error": "Download Error",
+        
+        // AR Identify
+        "ar.scanning.skyline": "Scanning skyline…",
+        "ar.found": "Found",
+        "ar.point.camera": "Point your camera at a ridge to identify peaks",
+        "ar.searching.landmarks": "Searching for landmarks...",
+        "ar.recent.identifications": "Recent Identifications",
+        "ar.no.landmarks": "No landmarks identified yet",
+        "ar.start.scanning": "Start scanning to identify nearby peaks",
+        "ar.start.scan": "Start Scan",
+        "ar.stop.scan": "Stop Scan",
+        
+        // Location Sharing (additional)
+        "location.share.confirm.sos": "Confirm Emergency SOS",
+        "location.share.sos.message": "This will send your location and SOS message to all emergency contacts. Please confirm this is an emergency.",
+        "location.share.sharing.description": "Your real-time location is being shared with emergency contacts",
+        "location.share.start.description": "Tap the button below to start sharing location",
+        "location.share.anomaly.detection": "Anomaly Detection",
+        "location.share.detected.at": "Detected at",
+        "location.share.current.location": "Current Location",
+        "location.share.latitude": "Latitude",
+        "location.share.longitude": "Longitude",
+        "location.share.altitude": "Altitude",
+        "location.share.share.link": "Share Link",
+        "location.share.copy.link": "Copy Link",
+        "location.share.emergency.sos": "Emergency SOS",
+        "location.share.emergency.contacts": "Emergency Contacts",
+        "location.share.no.emergency.contacts": "No Emergency Contacts",
+        "location.share.add.contact.description": "Please add at least one emergency contact to use location sharing and emergency SOS features",
+        "location.share.add.emergency.contact": "Add Emergency Contact",
+        "location.share.contact.information": "Contact Information",
+        "location.share.contact.name": "Name",
+        "location.share.contact.phone": "Phone Number",
+        "location.share.contact.email": "Email (Optional)",
+        "location.share.primary": "Primary",
+        "error": "Error",
+        
+        // Hike Records (additional)
+        "hike.records.none": "No Hike Records",
+        "hike.records.start.tracking": "Start tracking your hiking activities to create records",
+        "hike.records.unnamed.trail": "Unnamed Trail",
+        
+        // Hike Tracking (additional)
+        "hike.tracking.title": "Hike Tracking",
+        "hike.tracking.time": "Time",
+        "hike.tracking.distance": "Distance",
+        "hike.tracking.speed": "Speed",
+        "hike.tracking.altitude": "Altitude",
+        "hike.tracking.track.points": "Track Points",
+        "hike.tracking.current.location": "Current Location",
+        
+        // Recommendations (additional)
+        "recommendations.generating": "Generating recommendations...",
+        
+        // Preferences
+        "preferences.title": "Preferences",
+        "preferences.fitness.level": "Fitness Level",
+        "preferences.scenery": "Preferred Scenery",
+        "preferences.difficulty": "Preferred Difficulty",
+        "preferences.distance": "Preferred Distance",
+        "preferences.min": "Min",
+        "preferences.max": "Max",
+        "preferences.no.preference": "No Preference",
+        "preferences.fitness.level.初學者": "Beginner",
+        "preferences.fitness.level.中級": "Intermediate",
+        "preferences.fitness.level.高級": "Advanced",
+        "preferences.fitness.level.專家": "Expert",
+        "preferences.scenery.海景": "Sea View",
+        "preferences.scenery.山景": "Mountain View",
+        "preferences.scenery.森林": "Forest",
+        "preferences.scenery.水庫": "Reservoir",
+        "preferences.scenery.城市景觀": "City View",
+        "preferences.scenery.日落": "Sunset",
+        "preferences.scenery.日出": "Sunrise",
+        
+        // Species Identification (additional)
+        "species.identification.title": "Species Identification",
+        "species.identification.identifying": "Identifying...",
+        "species.identification.take.photo": "Take Photo",
+        "species.identification.photo.library": "Photo Library",
+        "species.identification.habitat": "Habitat",
+        
+        // Journal (additional)
+        "journal.list.title": "Hiking Journal",
+        "journal.no.entries": "No Journal Entries",
+        "journal.start.documenting": "Start documenting your hiking adventures!",
+        "journal.create.first.entry": "Create First Entry",
+        
+        // Anomaly Severity
+        "anomaly.severity.low": "Low",
+        "anomaly.severity.medium": "Medium",
+        "anomaly.severity.high": "High",
+        "anomaly.severity.critical": "Critical"
     ]
     
     private static let traditionalChineseStrings: [String: String] = [
@@ -874,7 +975,108 @@ struct LocalizedStrings {
         "gear.category.safety": "安全",
         "gear.category.food": "食物",
         "gear.category.tools": "工具",
-        "gear.category.optional": "可選"
+        "gear.category.optional": "可選",
+        
+        // Offline Maps
+        "offline.maps.no.regions": "暫無可用區域",
+        "offline.maps.available.regions": "可用區域",
+        "offline.maps.total.downloaded": "總下載量",
+        "offline.maps.clear.all": "清除所有下載",
+        "offline.maps.downloading": "下載中...",
+        "offline.maps.download.error": "下載錯誤",
+        
+        // AR Identify
+        "ar.scanning.skyline": "正在掃描天際線…",
+        "ar.found": "找到",
+        "ar.point.camera": "將相機對準山脊以識別山峰",
+        "ar.searching.landmarks": "正在搜索地標...",
+        "ar.recent.identifications": "最近識別",
+        "ar.no.landmarks": "尚未識別地標",
+        "ar.start.scanning": "開始掃描以識別附近的山峰",
+        "ar.start.scan": "開始掃描",
+        "ar.stop.scan": "停止掃描",
+        
+        // Location Sharing (additional)
+        "location.share.confirm.sos": "確認發送緊急求救",
+        "location.share.sos.message": "這將向所有緊急聯繫人發送您的位置和求救信息。請確認這是緊急情況。",
+        "location.share.sharing.description": "您的實時位置正在與緊急聯繫人分享",
+        "location.share.start.description": "點擊下方按鈕開始分享位置",
+        "location.share.anomaly.detection": "異常檢測",
+        "location.share.detected.at": "檢測時間",
+        "location.share.current.location": "當前位置",
+        "location.share.latitude": "緯度",
+        "location.share.longitude": "經度",
+        "location.share.altitude": "海拔",
+        "location.share.share.link": "分享鏈接",
+        "location.share.copy.link": "複製鏈接",
+        "location.share.emergency.sos": "緊急求救",
+        "location.share.emergency.contacts": "緊急聯繫人",
+        "location.share.no.emergency.contacts": "尚未添加緊急聯繫人",
+        "location.share.add.contact.description": "請添加至少一個緊急聯繫人以使用位置分享和緊急求救功能",
+        "location.share.add.emergency.contact": "添加緊急聯繫人",
+        "location.share.contact.information": "聯繫人信息",
+        "location.share.contact.name": "姓名",
+        "location.share.contact.phone": "電話號碼",
+        "location.share.contact.email": "電子郵件（可選）",
+        "location.share.primary": "主要",
+        "error": "錯誤",
+        
+        // Hike Records (additional)
+        "hike.records.none": "尚無行山記錄",
+        "hike.records.start.tracking": "開始追蹤您的行山活動以創建記錄",
+        "hike.records.unnamed.trail": "未命名路線",
+        
+        // Hike Tracking (additional)
+        "hike.tracking.title": "行山追蹤",
+        "hike.tracking.time": "時間",
+        "hike.tracking.distance": "距離",
+        "hike.tracking.speed": "速度",
+        "hike.tracking.altitude": "海拔",
+        "hike.tracking.track.points": "軌跡點",
+        "hike.tracking.current.location": "當前位置",
+        
+        // Recommendations (additional)
+        "recommendations.generating": "正在生成推薦...",
+        
+        // Preferences
+        "preferences.title": "偏好設置",
+        "preferences.fitness.level": "體能水平",
+        "preferences.scenery": "偏好風景",
+        "preferences.difficulty": "偏好難度",
+        "preferences.distance": "偏好距離",
+        "preferences.min": "最小",
+        "preferences.max": "最大",
+        "preferences.no.preference": "無偏好",
+        "preferences.fitness.level.初學者": "初學者",
+        "preferences.fitness.level.中級": "中級",
+        "preferences.fitness.level.高級": "高級",
+        "preferences.fitness.level.專家": "專家",
+        "preferences.scenery.海景": "海景",
+        "preferences.scenery.山景": "山景",
+        "preferences.scenery.森林": "森林",
+        "preferences.scenery.水庫": "水庫",
+        "preferences.scenery.城市景觀": "城市景觀",
+        "preferences.scenery.日落": "日落",
+        "preferences.scenery.日出": "日出",
+        
+        // Species Identification (additional)
+        "species.identification.title": "物種識別",
+        "species.identification.identifying": "正在識別...",
+        "species.identification.take.photo": "拍照",
+        "species.identification.photo.library": "相冊",
+        "species.identification.habitat": "棲息地",
+        
+        // Journal (additional)
+        "journal.list.title": "行山日記",
+        "journal.no.entries": "尚無日記條目",
+        "journal.start.documenting": "開始記錄您的行山冒險！",
+        "journal.create.first.entry": "創建第一條日記",
+        
+        // Anomaly Severity
+        "anomaly.severity.low": "低",
+        "anomaly.severity.medium": "中",
+        "anomaly.severity.high": "高",
+        "anomaly.severity.critical": "嚴重"
     ]
 }
 

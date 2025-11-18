@@ -11,6 +11,7 @@ import CoreLocation
 
 struct LocationSharingView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var languageManager: LanguageManager
     @StateObject private var viewModel: LocationSharingViewModel
     @State private var isShowingAddContact = false
     @State private var newContactName = ""
@@ -52,7 +53,7 @@ struct LocationSharingView: View {
                 }
                 .padding(20)
             }
-            .navigationTitle("Location Sharing")
+            .navigationTitle(languageManager.localizedString(for: "home.location.share"))
             .background(
                 ZStack {
                     Color.hikingBackgroundGradient
@@ -74,18 +75,18 @@ struct LocationSharingView: View {
             .sheet(isPresented: $isShowingAddContact) {
                 addContactSheet
             }
-            .alert("Confirm Emergency SOS", isPresented: $isShowingSOSConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Send", role: .destructive) {
+            .alert(languageManager.localizedString(for: "location.share.confirm.sos"), isPresented: $isShowingSOSConfirmation) {
+                Button(languageManager.localizedString(for: "cancel"), role: .cancel) { }
+                Button(languageManager.localizedString(for: "location.share.send"), role: .destructive) {
                     Task {
                         await viewModel.sendEmergencySOS()
                     }
                 }
             } message: {
-                Text("This will send your location and SOS message to all emergency contacts. Please confirm this is an emergency.")
+                Text(languageManager.localizedString(for: "location.share.sos.message"))
             }
-            .alert("Error", isPresented: .constant(viewModel.error != nil), presenting: viewModel.error) { error in
-                Button("OK") {
+            .alert(languageManager.localizedString(for: "error"), isPresented: .constant(viewModel.error != nil), presenting: viewModel.error) { error in
+                Button(languageManager.localizedString(for: "ok")) {
                     viewModel.error = nil
                 }
             } message: { error in
@@ -105,10 +106,10 @@ struct LocationSharingView: View {
                     .foregroundStyle(viewModel.isSharing ? Color.hikingGreen : Color.hikingStone)
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(viewModel.isSharing ? "Sharing Location" : "Not Sharing")
+                    Text(viewModel.isSharing ? languageManager.localizedString(for: "location.share.sharing") : languageManager.localizedString(for: "location.share.not.sharing"))
                         .font(.headline)
                         .foregroundStyle(Color.hikingDarkGreen)
-                    Text(viewModel.isSharing ? "Your real-time location is being shared with emergency contacts" : "Tap the button below to start sharing location")
+                    Text(viewModel.isSharing ? languageManager.localizedString(for: "location.share.sharing.description") : languageManager.localizedString(for: "location.share.start.description"))
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
                 }
@@ -125,7 +126,7 @@ struct LocationSharingView: View {
             } label: {
                 HStack {
                     Image(systemName: viewModel.isSharing ? "stop.circle.fill" : "play.circle.fill")
-                    Text(viewModel.isSharing ? "Stop Sharing" : "Start Sharing")
+                    Text(viewModel.isSharing ? languageManager.localizedString(for: "location.share.stop") : languageManager.localizedString(for: "location.share.start"))
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -145,7 +146,7 @@ struct LocationSharingView: View {
             HStack {
                 Image(systemName: "sos")
                     .font(.system(size: 24))
-                Text("Emergency SOS")
+                Text(languageManager.localizedString(for: "location.share.emergency.sos"))
                     .font(.headline)
             }
             .frame(maxWidth: .infinity)
@@ -170,11 +171,11 @@ struct LocationSharingView: View {
             HStack {
                 Image(systemName: anomalyIcon(for: anomaly.severity))
                     .foregroundStyle(anomalyColor(for: anomaly.severity))
-                Text("Anomaly Detection")
+                Text(languageManager.localizedString(for: "location.share.anomaly.detection"))
                     .font(.headline)
                     .foregroundStyle(Color.hikingDarkGreen)
                 Spacer()
-                Text(anomaly.severity.severityText)
+                Text(anomaly.severity.localizedSeverityText(languageManager: languageManager))
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -186,7 +187,7 @@ struct LocationSharingView: View {
                 .font(.subheadline)
                 .foregroundStyle(Color.hikingBrown)
             
-            Text("Detected at: \(anomaly.detectedAt, style: .time)")
+            Text("\(languageManager.localizedString(for: "location.share.detected.at")): \(anomaly.detectedAt, style: .time)")
                 .font(.caption)
                 .foregroundStyle(Color.hikingStone)
         }
@@ -203,16 +204,16 @@ struct LocationSharingView: View {
             HStack {
                 Image(systemName: "mappin.circle.fill")
                     .foregroundStyle(Color.hikingGreen)
-                Text("Current Location")
+                Text(languageManager.localizedString(for: "location.share.current.location"))
                     .font(.headline)
                     .foregroundStyle(Color.hikingDarkGreen)
             }
             
             VStack(alignment: .leading, spacing: 8) {
-                InfoRow(label: "Latitude", value: String(format: "%.6f", location.coordinate.latitude))
-                InfoRow(label: "Longitude", value: String(format: "%.6f", location.coordinate.longitude))
+                InfoRow(label: languageManager.localizedString(for: "location.share.latitude"), value: String(format: "%.6f", location.coordinate.latitude))
+                InfoRow(label: languageManager.localizedString(for: "location.share.longitude"), value: String(format: "%.6f", location.coordinate.longitude))
                 if let altitude = viewModel.currentLocation?.altitude {
-                    InfoRow(label: "Altitude", value: String(format: "%.0f m", altitude))
+                    InfoRow(label: languageManager.localizedString(for: "location.share.altitude"), value: String(format: "%.0f m", altitude))
                 }
             }
         }
@@ -226,7 +227,7 @@ struct LocationSharingView: View {
             HStack {
                 Image(systemName: "link")
                     .foregroundStyle(Color.hikingGreen)
-                Text("Share Link")
+                Text(languageManager.localizedString(for: "location.share.share.link"))
                     .font(.headline)
                     .foregroundStyle(Color.hikingDarkGreen)
             }
@@ -241,7 +242,7 @@ struct LocationSharingView: View {
             } label: {
                 HStack {
                     Image(systemName: "doc.on.doc")
-                    Text("Copy Link")
+                    Text(languageManager.localizedString(for: "location.share.copy.link"))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -257,7 +258,7 @@ struct LocationSharingView: View {
     private var emergencyContactsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Emergency Contacts")
+                Text(languageManager.localizedString(for: "location.share.emergency.contacts"))
                     .font(.headline)
                     .foregroundStyle(Color.hikingDarkGreen)
                 Spacer()
@@ -274,10 +275,10 @@ struct LocationSharingView: View {
                     Image(systemName: "person.2.slash")
                         .font(.system(size: 48))
                         .foregroundStyle(Color.hikingStone)
-                    Text("No Emergency Contacts")
+                    Text(languageManager.localizedString(for: "location.share.no.emergency.contacts"))
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
-                    Text("Please add at least one emergency contact to use location sharing and emergency SOS features")
+                    Text(languageManager.localizedString(for: "location.share.add.contact.description"))
                         .font(.caption)
                         .foregroundStyle(Color.hikingStone)
                         .multilineTextAlignment(.center)
@@ -301,26 +302,26 @@ struct LocationSharingView: View {
     private var addContactSheet: some View {
         NavigationStack {
             Form {
-                Section("Contact Information") {
-                    TextField("Name", text: $newContactName)
-                    TextField("Phone Number", text: $newContactPhone)
+                Section(languageManager.localizedString(for: "location.share.contact.information")) {
+                    TextField(languageManager.localizedString(for: "location.share.contact.name"), text: $newContactName)
+                    TextField(languageManager.localizedString(for: "location.share.contact.phone"), text: $newContactPhone)
                         .keyboardType(.phonePad)
-                    TextField("Email (Optional)", text: $newContactEmail)
+                    TextField(languageManager.localizedString(for: "location.share.contact.email"), text: $newContactEmail)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                 }
             }
-            .navigationTitle("Add Emergency Contact")
+            .navigationTitle(languageManager.localizedString(for: "location.share.add.emergency.contact"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button(languageManager.localizedString(for: "cancel")) {
                         isShowingAddContact = false
                         resetContactForm()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(languageManager.localizedString(for: "save")) {
                         let contact = EmergencyContact(
                             name: newContactName,
                             phoneNumber: newContactPhone,
@@ -380,6 +381,7 @@ struct InfoRow: View {
 struct ContactRow: View {
     let contact: EmergencyContact
     let onDelete: () -> Void
+    @EnvironmentObject private var languageManager: LanguageManager
     
     var body: some View {
         HStack {
@@ -389,7 +391,7 @@ struct ContactRow: View {
                         .font(.headline)
                         .foregroundStyle(Color.hikingDarkGreen)
                     if contact.isPrimary {
-                        Text("Primary")
+                        Text(languageManager.localizedString(for: "location.share.primary"))
                             .font(.caption2)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)

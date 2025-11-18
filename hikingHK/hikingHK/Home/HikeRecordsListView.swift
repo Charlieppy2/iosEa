@@ -10,6 +10,7 @@ import SwiftData
 
 struct HikeRecordsListView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var languageManager: LanguageManager
     @Query(sort: \HikeRecord.startTime, order: .reverse) private var records: [HikeRecord]
     @State private var selectedRecord: HikeRecord?
     
@@ -18,9 +19,9 @@ struct HikeRecordsListView: View {
             List {
                 if records.isEmpty {
                     ContentUnavailableView(
-                        "No Hike Records",
+                        languageManager.localizedString(for: "hike.records.none"),
                         systemImage: "figure.hiking",
-                        description: Text("Start tracking your hiking activities to create records")
+                        description: Text(languageManager.localizedString(for: "hike.records.start.tracking"))
                     )
                 } else {
                     ForEach(records) { record in
@@ -32,7 +33,7 @@ struct HikeRecordsListView: View {
                     }
                 }
             }
-            .navigationTitle("Hike Records")
+            .navigationTitle(languageManager.localizedString(for: "home.hike.records"))
             .background(
                 ZStack {
                     Color.hikingBackgroundGradient
@@ -47,12 +48,13 @@ struct HikeRecordsListView: View {
 
 struct HikeRecordRow: View {
     let record: HikeRecord
+    @EnvironmentObject private var languageManager: LanguageManager
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(record.trailName ?? "Unnamed Trail")
+                    Text(record.trailName ?? languageManager.localizedString(for: "hike.records.unnamed.trail"))
                         .font(.headline)
                         .foregroundStyle(Color.hikingDarkGreen)
                     Text(record.startTime, style: .date)
@@ -85,5 +87,6 @@ struct HikeRecordRow: View {
 #Preview {
     HikeRecordsListView()
         .modelContainer(for: [HikeRecord.self, HikeTrackPoint.self], inMemory: true)
+        .environmentObject(LanguageManager.shared)
 }
 

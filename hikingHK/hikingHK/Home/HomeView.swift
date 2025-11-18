@@ -105,27 +105,33 @@ struct HomeView: View {
             }
             .sheet(isPresented: $isShowingLocationSharing) {
                 LocationSharingView(locationManager: locationManager)
+                    .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
             .sheet(isPresented: $isShowingHikeTracking) {
                 HikeTrackingView(locationManager: locationManager)
                     .environmentObject(viewModel)
+                    .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
             .sheet(isPresented: $isShowingHikeRecords) {
                 HikeRecordsListView()
+                    .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
             .sheet(isPresented: $isShowingRecommendations) {
                 TrailRecommendationView(appViewModel: viewModel)
+                    .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
             .sheet(isPresented: $isShowingSpeciesIdentification) {
                 SpeciesIdentificationView(locationManager: locationManager)
+                    .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
             .sheet(isPresented: $isShowingJournal) {
                 JournalListView()
+                    .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
             .sheet(isPresented: $isShowingWeatherForecast) {
@@ -867,13 +873,14 @@ struct OfflineMapsView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = OfflineMapsViewModel()
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var languageManager: LanguageManager
     
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     if viewModel.regions.isEmpty {
-                        Text("No regions available")
+                        Text(languageManager.localizedString(for: "offline.maps.no.regions"))
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(viewModel.regions) { region in
@@ -881,10 +888,10 @@ struct OfflineMapsView: View {
                         }
                     }
                 } header: {
-                    Text("Available Regions")
+                    Text(languageManager.localizedString(for: "offline.maps.available.regions"))
                 } footer: {
                     if viewModel.hasDownloadedMaps {
-                        Text("Total downloaded: \(formatSize(viewModel.totalDownloadedSize))")
+                        Text("\(languageManager.localizedString(for: "offline.maps.total.downloaded")): \(formatSize(viewModel.totalDownloadedSize))")
                             .font(.caption)
                     }
                 }
@@ -897,15 +904,15 @@ struct OfflineMapsView: View {
                                 viewModel.deleteRegion(region)
                             }
                         } label: {
-                            Label("Clear All Downloads", systemImage: "trash")
+                            Label(languageManager.localizedString(for: "offline.maps.clear.all"), systemImage: "trash")
                         }
                     }
                 }
             }
-            .navigationTitle("Offline Maps")
+            .navigationTitle(languageManager.localizedString(for: "home.offline.maps"))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button(languageManager.localizedString(for: "done")) {
                         dismiss()
                     }
                 }
@@ -916,11 +923,11 @@ struct OfflineMapsView: View {
             .onAppear {
                 viewModel.refreshRegions()
             }
-            .alert("Download Error", isPresented: Binding(
+            .alert(languageManager.localizedString(for: "offline.maps.download.error"), isPresented: Binding(
                 get: { viewModel.error != nil },
                 set: { if !$0 { viewModel.error = nil } }
             )) {
-                Button("OK") {
+                Button(languageManager.localizedString(for: "ok")) {
                     viewModel.error = nil
                 }
             } message: {
@@ -980,7 +987,7 @@ struct OfflineMapsView: View {
             if region.downloadStatus == .downloading {
                 ProgressView(value: region.downloadProgress) {
                     HStack {
-                        Text("Downloading...")
+                        Text(languageManager.localizedString(for: "offline.maps.downloading"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Spacer()
@@ -1037,6 +1044,7 @@ struct ARIdentifyView: View {
     @StateObject private var locationManager = LocationManager()
     @StateObject private var identifier: ARLandmarkIdentifier
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var languageManager: LanguageManager
     @State private var selectedLandmark: ARLandmarkIdentifier.IdentifiedLandmark?
     
     init() {
@@ -1066,11 +1074,11 @@ struct ARIdentifyView: View {
                                 VStack(spacing: 16) {
                                     ProgressView()
                                         .tint(.white)
-                                    Text("Scanning skyline…")
+                                    Text(languageManager.localizedString(for: "ar.scanning.skyline"))
                                         .font(.headline)
                                         .foregroundStyle(.white)
                                     if let closest = identifier.closestLandmark {
-                                        Text("Found: \(closest.landmark.name)")
+                                        Text("\(languageManager.localizedString(for: "ar.found")): \(closest.landmark.name)")
                                             .font(.subheadline)
                                             .foregroundStyle(.white.opacity(0.8))
                                     }
@@ -1080,7 +1088,7 @@ struct ARIdentifyView: View {
                                     Image(systemName: "camera.viewfinder")
                                         .font(.system(size: 48))
                                         .foregroundStyle(.white.opacity(0.8))
-                                    Text("Point your camera at a ridge to identify peaks")
+                                    Text(languageManager.localizedString(for: "ar.point.camera"))
                                         .font(.subheadline)
                                         .multilineTextAlignment(.center)
                                         .foregroundStyle(.white.opacity(0.9))
@@ -1116,7 +1124,7 @@ struct ARIdentifyView: View {
                     if identifier.identifiedLandmarks.isEmpty {
                         VStack(spacing: 8) {
                             ProgressView()
-                            Text("Searching for landmarks...")
+                            Text(languageManager.localizedString(for: "ar.searching.landmarks"))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -1138,7 +1146,7 @@ struct ARIdentifyView: View {
                     if !identifier.identifiedLandmarks.isEmpty {
                         ScrollView {
                             VStack(spacing: 12) {
-                                Text("Recent Identifications")
+                                Text(languageManager.localizedString(for: "ar.recent.identifications"))
                                     .font(.headline)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.horizontal)
@@ -1157,9 +1165,9 @@ struct ARIdentifyView: View {
                             Image(systemName: "mountain.2.fill")
                                 .font(.system(size: 48))
                                 .foregroundStyle(.secondary)
-                            Text("No landmarks identified yet")
+                            Text(languageManager.localizedString(for: "ar.no.landmarks"))
                                 .font(.headline)
-                            Text("Start scanning to identify nearby peaks")
+                            Text(languageManager.localizedString(for: "ar.start.scanning"))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
@@ -1183,7 +1191,7 @@ struct ARIdentifyView: View {
                 } label: {
                     HStack {
                         Image(systemName: identifier.isScanning ? "stop.circle.fill" : "play.circle.fill")
-                        Text(identifier.isScanning ? "Stop Scan" : "Start Scan")
+                        Text(identifier.isScanning ? languageManager.localizedString(for: "ar.stop.scan") : languageManager.localizedString(for: "ar.start.scan"))
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -1191,10 +1199,10 @@ struct ARIdentifyView: View {
                 .disabled(locationManager.authorizationStatus == .denied || locationManager.authorizationStatus == .restricted)
             }
             .padding()
-            .navigationTitle("AR Identify")
+            .navigationTitle(languageManager.localizedString(for: "home.ar.identify"))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button(languageManager.localizedString(for: "done")) {
                         identifier.stopScanning()
                         dismiss()
                     }

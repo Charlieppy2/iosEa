@@ -13,6 +13,7 @@ import PhotosUI
 struct SpeciesIdentificationView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var languageManager: LanguageManager
     @StateObject private var viewModel: SpeciesIdentificationViewModel
     @State private var isShowingCamera = false
     @State private var isShowingPhotoPicker = false
@@ -53,11 +54,11 @@ struct SpeciesIdentificationView: View {
                         .padding()
                 }
             }
-            .navigationTitle("Species Identification")
+            .navigationTitle(languageManager.localizedString(for: "species.identification.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
+                    Button(languageManager.localizedString(for: "close")) {
                         dismiss()
                     }
                 }
@@ -101,7 +102,7 @@ struct SpeciesIdentificationView: View {
                 HStack {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    Text("Identifying...")
+                    Text(languageManager.localizedString(for: "species.identification.identifying"))
                         .foregroundStyle(.white)
                         .font(.headline)
                 }
@@ -116,7 +117,7 @@ struct SpeciesIdentificationView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "camera.fill")
                                 .font(.title)
-                            Text("Take Photo")
+                            Text(languageManager.localizedString(for: "species.identification.take.photo"))
                                 .font(.subheadline)
                         }
                         .frame(maxWidth: .infinity)
@@ -131,7 +132,7 @@ struct SpeciesIdentificationView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "photo.on.rectangle")
                                 .font(.title)
-                            Text("Photo Library")
+                            Text(languageManager.localizedString(for: "species.identification.photo.library"))
                                 .font(.subheadline)
                         }
                         .frame(maxWidth: .infinity)

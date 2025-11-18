@@ -49,6 +49,12 @@ final class UserPreference {
             case .sunrise: return "sunrise.fill"
             }
         }
+        
+        func localizedRawValue(languageManager: LanguageManager) -> String {
+            let key = "preferences.scenery.\(rawValue)"
+            let localized = languageManager.localizedString(for: key)
+            return localized != key ? localized : rawValue
+        }
     }
     
     enum TimeOfDay: String, Codable, CaseIterable {
@@ -84,6 +90,12 @@ final class UserPreference {
             case .expert:
                 return [.moderate, .challenging]
             }
+        }
+        
+        func localizedRawValue(languageManager: LanguageManager) -> String {
+            let key = "preferences.fitness.level.\(rawValue)"
+            let localized = languageManager.localizedString(for: key)
+            return localized != key ? localized : rawValue
         }
     }
     

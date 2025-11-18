@@ -44,6 +44,11 @@ struct Anomaly {
             case .critical: return "Critical"
             }
         }
+        
+        func localizedSeverityText(languageManager: LanguageManager) -> String {
+            let key = "anomaly.severity.\(severityText.lowercased())"
+            return languageManager.localizedString(for: key)
+        }
     }
 }
 
