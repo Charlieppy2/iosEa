@@ -41,4 +41,5 @@ struct ContentView: View {
     ContentView()
         .environmentObject(AppViewModel())
         .environmentObject(SessionManager.previewSignedIn())
+        .environmentObject(LanguageManager.shared)
 }
