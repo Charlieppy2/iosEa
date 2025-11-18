@@ -376,9 +376,9 @@ struct ProfileView: View {
             Image(systemName: "globe")
                 .foregroundStyle(Color.hikingGreen)
             VStack(alignment: .leading, spacing: 4) {
-                Text("profile.language".localized)
+                Text(languageManager.localizedString(for: "profile.language"))
                     .foregroundStyle(Color.hikingDarkGreen)
-                Text("profile.language.description".localized)
+                Text(languageManager.localizedString(for: "profile.language.description"))
                     .font(.caption)
                     .foregroundStyle(Color.hikingStone)
             }
@@ -402,6 +402,7 @@ struct ProfileView: View {
     ProfileView()
         .environmentObject(AppViewModel())
         .environmentObject(SessionManager.previewSignedIn())
+        .environmentObject(LanguageManager.shared)
 }
 //
 //  ProfileView.swift
