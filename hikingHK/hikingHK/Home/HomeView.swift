@@ -617,9 +617,9 @@ struct SavedHikeDetailSheet: View {
         NavigationStack {
             Form {
                 Section(languageManager.localizedString(for: "trails.title")) {
-                    Text(hike.trail.name)
+                    Text(hike.trail.localizedName(languageManager: languageManager))
                         .font(.headline)
-                    Label(hike.trail.district, systemImage: "mappin.and.ellipse")
+                    Label(hike.trail.localizedDistrict(languageManager: languageManager), systemImage: "mappin.and.ellipse")
                     Label {
                         Text("\(hike.trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km • \(hike.trail.estimatedDurationMinutes / 60) h")
                     } icon: {
