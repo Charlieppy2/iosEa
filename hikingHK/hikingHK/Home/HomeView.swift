@@ -388,6 +388,8 @@ struct HomeView: View {
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(Color.hikingDarkGreen)
             }
+            
+            // Row 1: Safety & Navigation (4 items)
             HStack(spacing: 12) {
                 quickAction(icon: "exclamationmark.triangle.fill", title: languageManager.localizedString(for: "home.trail.alerts"), color: .orange) {
                     isShowingTrailAlerts = true
@@ -403,7 +405,7 @@ struct HomeView: View {
                 }
             }
             
-            // Hike Tracking Quick Actions
+            // Row 2: Tracking & Records (4 items)
             HStack(spacing: 12) {
                 quickAction(icon: "record.circle.fill", title: languageManager.localizedString(for: "home.start.tracking"), color: Color.hikingGreen) {
                     isShowingHikeTracking = true
@@ -411,10 +413,6 @@ struct HomeView: View {
                 quickAction(icon: "list.bullet.rectangle", title: languageManager.localizedString(for: "home.hike.records"), color: Color.hikingSky) {
                     isShowingHikeRecords = true
                 }
-            }
-            
-            // Recommendations and Species Identification
-            HStack(spacing: 12) {
                 quickAction(icon: "sparkles", title: languageManager.localizedString(for: "home.recommendations"), color: Color.hikingBrown) {
                     isShowingRecommendations = true
                 }
@@ -423,7 +421,7 @@ struct HomeView: View {
                 }
             }
             
-            // Journal and Weather Forecast Quick Actions
+            // Row 3: Journal & Weather (2 items, left-aligned)
             HStack(spacing: 12) {
                 quickAction(icon: "book.fill", title: languageManager.localizedString(for: "home.journal"), color: Color.hikingBrown) {
                     isShowingJournal = true
@@ -431,6 +429,7 @@ struct HomeView: View {
                 quickAction(icon: "cloud.sun.fill", title: languageManager.localizedString(for: "home.weather.forecast"), color: Color.hikingSky) {
                     isShowingWeatherForecast = true
                 }
+                Spacer()
             }
         }
     }
