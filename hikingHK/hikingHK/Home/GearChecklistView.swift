@@ -16,7 +16,7 @@ struct GearChecklistView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
-    @StateObject private var viewModel = GearChecklistViewModel()
+    @StateObject private var viewModel: GearChecklistViewModel
     
     var body: some View {
         NavigationStack {

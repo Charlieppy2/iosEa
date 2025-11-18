@@ -25,10 +25,16 @@ final class GearChecklistStore {
     
     func loadGearItems(for hikeId: UUID) throws -> [GearItem] {
         let descriptor = FetchDescriptor<GearItem>(
-            predicate: #Predicate { $0.hikeId == hikeId },
-            sortBy: [SortDescriptor(\.category), SortDescriptor(\.name)]
+            predicate: #Predicate { $0.hikeId == hikeId }
         )
-        return try context.fetch(descriptor)
+        let items = try context.fetch(descriptor)
+        // Manual sorting since SortDescriptor has limitations with enum types
+        return items.sorted { item1, item2 in
+            if item1.category.rawValue != item2.category.rawValue {
+                return item1.category.rawValue < item2.category.rawValue
+            }
+            return item1.name < item2.name
+        }
     }
     
     func toggleItem(_ item: GearItem) throws {

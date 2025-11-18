@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import Combine
 
 @MainActor
 final class GearChecklistViewModel: ObservableObject {
