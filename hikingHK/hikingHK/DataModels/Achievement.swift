@@ -38,6 +38,23 @@ final class Achievement {
             case .exploration: return "map.fill"
             }
         }
+        
+        func localizedRawValue(languageManager: LanguageManager) -> String {
+            let key = "achievement.badge.type.\(rawValue.lowercased())"
+            return languageManager.localizedString(for: key)
+        }
+    }
+    
+    func localizedTitle(languageManager: LanguageManager) -> String {
+        let key = "achievement.\(id).title"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : title
+    }
+    
+    func localizedDescription(languageManager: LanguageManager) -> String {
+        let key = "achievement.\(id).description"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : achievementDescription
     }
     
     init(

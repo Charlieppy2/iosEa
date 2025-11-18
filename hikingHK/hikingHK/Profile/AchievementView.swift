@@ -10,6 +10,7 @@ import SwiftData
 
 struct AchievementView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var languageManager: LanguageManager
     @StateObject private var viewModel: AchievementViewModel
     @State private var selectedType: Achievement.BadgeType?
     
@@ -32,7 +33,7 @@ struct AchievementView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Achievements & Badges")
+            .navigationTitle(languageManager.localizedString(for: "profile.achievements.badges"))
             .background(
                 ZStack {
                     Color.hikingBackgroundGradient
@@ -44,16 +45,16 @@ struct AchievementView: View {
             .onAppear {
                 viewModel.configureIfNeeded(context: modelContext)
             }
-            .alert("New Achievement Unlocked!", isPresented: .constant(!viewModel.newlyUnlockedAchievements.isEmpty)) {
-                Button("View") {
+            .alert(languageManager.localizedString(for: "achievement.new.unlocked"), isPresented: .constant(!viewModel.newlyUnlockedAchievements.isEmpty)) {
+                Button(languageManager.localizedString(for: "achievement.view")) {
                     // Can scroll to newly unlocked achievement
                 }
-                Button("OK", role: .cancel) {
+                Button(languageManager.localizedString(for: "ok"), role: .cancel) {
                     viewModel.newlyUnlockedAchievements = []
                 }
             } message: {
                 if let first = viewModel.newlyUnlockedAchievements.first {
-                    Text("Congratulations! You unlocked the \"\(first.title)\" achievement!")
+                    Text(languageManager.localizedString(for: "achievement.congratulations").replacingOccurrences(of: "{title}", with: first.title))
                 }
             }
         }
@@ -66,7 +67,7 @@ struct AchievementView: View {
                     Text("\(viewModel.unlockedCount)")
                         .font(.system(size: 48, weight: .bold))
                         .foregroundStyle(Color.hikingGreen)
-                    Text("Unlocked")
+                    Text(languageManager.localizedString(for: "achievement.unlocked"))
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
                 }
@@ -75,7 +76,7 @@ struct AchievementView: View {
                     Text("\(viewModel.totalCount)")
                         .font(.system(size: 48, weight: .bold))
                         .foregroundStyle(Color.hikingDarkGreen)
-                    Text("Total")
+                    Text(languageManager.localizedString(for: "achievement.total"))
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
                 }
@@ -109,7 +110,7 @@ struct AchievementView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 FilterButton(
-                    title: "All",
+                    title: languageManager.localizedString(for: "achievement.filter.all"),
                     icon: "star.fill",
                     isSelected: selectedType == nil
                 ) {
@@ -118,7 +119,7 @@ struct AchievementView: View {
                 
                 ForEach(Achievement.BadgeType.allCases, id: \.self) { type in
                     FilterButton(
-                        title: type.rawValue,
+                        title: type.localizedRawValue(languageManager: languageManager),
                         icon: type.icon,
                         isSelected: selectedType == type
                     ) {
@@ -169,6 +170,7 @@ struct FilterButton: View {
 
 struct AchievementRow: View {
     let achievement: Achievement
+    @EnvironmentObject private var languageManager: LanguageManager
     
     var body: some View {
         HStack(spacing: 16) {
@@ -198,7 +200,7 @@ struct AchievementRow: View {
             // 成就信息
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(achievement.title)
+                    Text(achievement.localizedTitle(languageManager: languageManager))
                         .font(.headline)
                         .foregroundStyle(achievement.isUnlocked ? Color.hikingDarkGreen : Color.hikingStone)
                     
@@ -210,7 +212,7 @@ struct AchievementRow: View {
                     }
                 }
                 
-                Text(achievement.achievementDescription)
+                Text(achievement.localizedDescription(languageManager: languageManager))
                     .font(.subheadline)
                     .foregroundStyle(Color.hikingBrown)
                 
@@ -234,7 +236,7 @@ struct AchievementRow: View {
                             .foregroundStyle(Color.hikingStone)
                     }
                 } else if let unlockedAt = achievement.unlockedAt {
-                    Text("Unlocked on \(unlockedAt, style: .date)")
+                    Text("\(languageManager.localizedString(for: "achievement.unlocked.on")) \(unlockedAt, style: .date)")
                         .font(.caption)
                         .foregroundStyle(Color.hikingGreen)
                 }
