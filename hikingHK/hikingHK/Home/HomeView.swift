@@ -347,27 +347,27 @@ struct HomeView: View {
                 }
             }
             
-            // 行山記錄快捷操作
+            // Hike Tracking Quick Actions
             HStack(spacing: 12) {
-                quickAction(icon: "record.circle.fill", title: "開始追蹤", color: Color.hikingGreen) {
+                quickAction(icon: "record.circle.fill", title: "Start Tracking", color: Color.hikingGreen) {
                     isShowingHikeTracking = true
                 }
-                quickAction(icon: "list.bullet.rectangle", title: "行山記錄", color: Color.hikingSky) {
+                quickAction(icon: "list.bullet.rectangle", title: "Hike Records", color: Color.hikingSky) {
                     isShowingHikeRecords = true
                 }
             }
             
-            // 智能推薦和物種識別
+            // Recommendations and Species Identification
             HStack(spacing: 12) {
-                quickAction(icon: "sparkles", title: "智能推薦", color: Color.hikingBrown) {
+                quickAction(icon: "sparkles", title: "Recommendations", color: Color.hikingBrown) {
                     isShowingRecommendations = true
                 }
-                quickAction(icon: "camera.macro", title: "物種識別", color: Color.hikingTan) {
+                quickAction(icon: "camera.macro", title: "Species ID", color: Color.hikingTan) {
                     isShowingSpeciesIdentification = true
                 }
             }
             
-            // 日記快捷操作
+            // Journal Quick Action
             HStack(spacing: 12) {
                 quickAction(icon: "book.fill", title: "Journal", color: Color.hikingBrown) {
                     isShowingJournal = true

@@ -184,7 +184,7 @@ final class HikeTrackingViewModel: ObservableObject {
         do {
             try store?.saveRecord(record)
         } catch let saveError {
-            self.error = "保存行山記錄失敗：\(saveError.localizedDescription)"
+            self.error = "Failed to save hike record: \(saveError.localizedDescription)"
             print("Save hike record error: \(saveError)")
         }
     }
@@ -194,7 +194,7 @@ final class HikeTrackingViewModel: ObservableObject {
         do {
             try store?.saveRecord(record)
         } catch let saveError {
-            self.error = "保存行山記錄失敗：\(saveError.localizedDescription)"
+            self.error = "Failed to save hike record: \(saveError.localizedDescription)"
         }
     }
     
@@ -202,7 +202,7 @@ final class HikeTrackingViewModel: ObservableObject {
         do {
             try store?.deleteRecord(record)
         } catch let deleteError {
-            self.error = "刪除行山記錄失敗：\(deleteError.localizedDescription)"
+            self.error = "Failed to delete hike record: \(deleteError.localizedDescription)"
         }
     }
     

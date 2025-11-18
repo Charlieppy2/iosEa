@@ -53,11 +53,11 @@ struct SpeciesIdentificationView: View {
                         .padding()
                 }
             }
-            .navigationTitle("物種識別")
+            .navigationTitle("Species Identification")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("關閉") {
+                    Button("Close") {
                         dismiss()
                     }
                 }
@@ -346,7 +346,7 @@ struct SpeciesIdentificationHistoryView: View {
             .navigationTitle("識別歷史")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("關閉") {
+                    Button("Close") {
                         dismiss()
                     }
                 }

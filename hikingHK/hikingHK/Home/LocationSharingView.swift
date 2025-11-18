@@ -52,7 +52,7 @@ struct LocationSharingView: View {
                 }
                 .padding(20)
             }
-            .navigationTitle("位置分享")
+            .navigationTitle("Location Sharing")
             .background(
                 ZStack {
                     Color.hikingBackgroundGradient
@@ -74,18 +74,18 @@ struct LocationSharingView: View {
             .sheet(isPresented: $isShowingAddContact) {
                 addContactSheet
             }
-            .alert("確認發送緊急求救", isPresented: $isShowingSOSConfirmation) {
-                Button("取消", role: .cancel) { }
-                Button("發送", role: .destructive) {
+            .alert("Confirm Emergency SOS", isPresented: $isShowingSOSConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Send", role: .destructive) {
                     Task {
                         await viewModel.sendEmergencySOS()
                     }
                 }
             } message: {
-                Text("這將向所有緊急聯繫人發送您的位置和求救信息。請確認這是緊急情況。")
+                Text("This will send your location and SOS message to all emergency contacts. Please confirm this is an emergency.")
             }
-            .alert("錯誤", isPresented: .constant(viewModel.error != nil), presenting: viewModel.error) { error in
-                Button("確定") {
+            .alert("Error", isPresented: .constant(viewModel.error != nil), presenting: viewModel.error) { error in
+                Button("OK") {
                     viewModel.error = nil
                 }
             } message: { error in
@@ -105,10 +105,10 @@ struct LocationSharingView: View {
                     .foregroundStyle(viewModel.isSharing ? Color.hikingGreen : Color.hikingStone)
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(viewModel.isSharing ? "正在分享位置" : "未分享位置")
+                    Text(viewModel.isSharing ? "Sharing Location" : "Not Sharing")
                         .font(.headline)
                         .foregroundStyle(Color.hikingDarkGreen)
-                    Text(viewModel.isSharing ? "您的實時位置正在分享給緊急聯繫人" : "點擊下方按鈕開始分享位置")
+                    Text(viewModel.isSharing ? "Your real-time location is being shared with emergency contacts" : "Tap the button below to start sharing location")
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
                 }
@@ -125,7 +125,7 @@ struct LocationSharingView: View {
             } label: {
                 HStack {
                     Image(systemName: viewModel.isSharing ? "stop.circle.fill" : "play.circle.fill")
-                    Text(viewModel.isSharing ? "停止分享" : "開始分享")
+                    Text(viewModel.isSharing ? "Stop Sharing" : "Start Sharing")
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -145,7 +145,7 @@ struct LocationSharingView: View {
             HStack {
                 Image(systemName: "sos")
                     .font(.system(size: 24))
-                Text("緊急求救")
+                Text("Emergency SOS")
                     .font(.headline)
             }
             .frame(maxWidth: .infinity)
@@ -170,7 +170,7 @@ struct LocationSharingView: View {
             HStack {
                 Image(systemName: anomalyIcon(for: anomaly.severity))
                     .foregroundStyle(anomalyColor(for: anomaly.severity))
-                Text("異常檢測")
+                Text("Anomaly Detection")
                     .font(.headline)
                     .foregroundStyle(Color.hikingDarkGreen)
                 Spacer()
@@ -186,7 +186,7 @@ struct LocationSharingView: View {
                 .font(.subheadline)
                 .foregroundStyle(Color.hikingBrown)
             
-            Text("檢測時間：\(anomaly.detectedAt, style: .time)")
+            Text("Detected at: \(anomaly.detectedAt, style: .time)")
                 .font(.caption)
                 .foregroundStyle(Color.hikingStone)
         }
@@ -203,16 +203,16 @@ struct LocationSharingView: View {
             HStack {
                 Image(systemName: "mappin.circle.fill")
                     .foregroundStyle(Color.hikingGreen)
-                Text("當前位置")
+                Text("Current Location")
                     .font(.headline)
                     .foregroundStyle(Color.hikingDarkGreen)
             }
             
             VStack(alignment: .leading, spacing: 8) {
-                InfoRow(label: "緯度", value: String(format: "%.6f", location.coordinate.latitude))
-                InfoRow(label: "經度", value: String(format: "%.6f", location.coordinate.longitude))
+                InfoRow(label: "Latitude", value: String(format: "%.6f", location.coordinate.latitude))
+                InfoRow(label: "Longitude", value: String(format: "%.6f", location.coordinate.longitude))
                 if let altitude = viewModel.currentLocation?.altitude {
-                    InfoRow(label: "海拔", value: String(format: "%.0f 米", altitude))
+                    InfoRow(label: "Altitude", value: String(format: "%.0f m", altitude))
                 }
             }
         }
@@ -226,7 +226,7 @@ struct LocationSharingView: View {
             HStack {
                 Image(systemName: "link")
                     .foregroundStyle(Color.hikingGreen)
-                Text("分享鏈接")
+                Text("Share Link")
                     .font(.headline)
                     .foregroundStyle(Color.hikingDarkGreen)
             }
@@ -241,7 +241,7 @@ struct LocationSharingView: View {
             } label: {
                 HStack {
                     Image(systemName: "doc.on.doc")
-                    Text("複製鏈接")
+                    Text("Copy Link")
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -257,7 +257,7 @@ struct LocationSharingView: View {
     private var emergencyContactsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("緊急聯繫人")
+                Text("Emergency Contacts")
                     .font(.headline)
                     .foregroundStyle(Color.hikingDarkGreen)
                 Spacer()
@@ -274,10 +274,10 @@ struct LocationSharingView: View {
                     Image(systemName: "person.2.slash")
                         .font(.system(size: 48))
                         .foregroundStyle(Color.hikingStone)
-                    Text("尚未添加緊急聯繫人")
+                    Text("No Emergency Contacts")
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
-                    Text("請添加至少一個緊急聯繫人以使用位置分享和緊急求救功能")
+                    Text("Please add at least one emergency contact to use location sharing and emergency SOS features")
                         .font(.caption)
                         .foregroundStyle(Color.hikingStone)
                         .multilineTextAlignment(.center)
@@ -301,26 +301,26 @@ struct LocationSharingView: View {
     private var addContactSheet: some View {
         NavigationStack {
             Form {
-                Section("聯繫人信息") {
-                    TextField("姓名", text: $newContactName)
-                    TextField("電話號碼", text: $newContactPhone)
+                Section("Contact Information") {
+                    TextField("Name", text: $newContactName)
+                    TextField("Phone Number", text: $newContactPhone)
                         .keyboardType(.phonePad)
-                    TextField("電子郵件（可選）", text: $newContactEmail)
+                    TextField("Email (Optional)", text: $newContactEmail)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                 }
             }
-            .navigationTitle("添加緊急聯繫人")
+            .navigationTitle("Add Emergency Contact")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
+                    Button("Cancel") {
                         isShowingAddContact = false
                         resetContactForm()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") {
+                    Button("Save") {
                         let contact = EmergencyContact(
                             name: newContactName,
                             phoneNumber: newContactPhone,
@@ -389,7 +389,7 @@ struct ContactRow: View {
                         .font(.headline)
                         .foregroundStyle(Color.hikingDarkGreen)
                     if contact.isPrimary {
-                        Text("主要")
+                        Text("Primary")
                             .font(.caption2)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)

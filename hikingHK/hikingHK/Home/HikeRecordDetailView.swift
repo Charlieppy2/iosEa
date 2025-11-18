@@ -36,7 +36,7 @@ struct HikeRecordDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(record.trailName ?? "行山記錄")
+        .navigationTitle(record.trailName ?? "Hike Record")
         .navigationBarTitleDisplayMode(.inline)
         .background(
             ZStack {
@@ -59,19 +59,19 @@ struct HikeRecordDetailView: View {
         .sheet(isPresented: $isShowingPlayback) {
             HikePlaybackView(record: record)
         }
-        .alert("刪除記錄", isPresented: $isShowingDeleteConfirmation) {
-            Button("取消", role: .cancel) { }
-            Button("刪除", role: .destructive) {
+        .alert("Delete Record", isPresented: $isShowingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
                 deleteRecord()
             }
         } message: {
-            Text("確定要刪除此行山記錄嗎？此操作無法撤銷。")
+            Text("Are you sure you want to delete this hike record? This action cannot be undone.")
         }
     }
     
     private var mapSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("路線軌跡")
+            Text("Route Track")
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
             
@@ -83,9 +83,9 @@ struct HikeRecordDetailView: View {
                     MapPolyline(coordinates: record.routeCoordinates)
                         .stroke(Color.hikingGreen, lineWidth: 4)
                     
-                    // 起點
+                    // Start point
                     if let start = record.routeCoordinates.first {
-                        Annotation("起點", coordinate: start) {
+                        Annotation("Start", coordinate: start) {
                             Circle()
                                 .fill(Color.green)
                                 .frame(width: 16, height: 16)
@@ -93,9 +93,9 @@ struct HikeRecordDetailView: View {
                         }
                     }
                     
-                    // 終點
+                    // End point
                     if let end = record.routeCoordinates.last {
-                        Annotation("終點", coordinate: end) {
+                        Annotation("End", coordinate: end) {
                             Circle()
                                 .fill(Color.red)
                                 .frame(width: 16, height: 16)

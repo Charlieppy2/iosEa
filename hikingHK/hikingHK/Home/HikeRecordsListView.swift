@@ -32,7 +32,7 @@ struct HikeRecordsListView: View {
                     }
                 }
             }
-            .navigationTitle("行山記錄")
+            .navigationTitle("Hike Records")
             .background(
                 ZStack {
                     Color.hikingBackgroundGradient
@@ -52,7 +52,7 @@ struct HikeRecordRow: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(record.trailName ?? "未命名路線")
+                    Text(record.trailName ?? "Unnamed Trail")
                         .font(.headline)
                         .foregroundStyle(Color.hikingDarkGreen)
                     Text(record.startTime, style: .date)

@@ -97,11 +97,11 @@ struct HikePlaybackView: View {
                         .padding()
                 }
             }
-            .navigationTitle("3D 軌跡回放")
+            .navigationTitle("3D Track Playback")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("關閉") {
+                    Button("Close") {
                         dismiss()
                     }
                 }

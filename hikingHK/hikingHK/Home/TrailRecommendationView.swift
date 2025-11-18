@@ -39,7 +39,7 @@ struct TrailRecommendationView: View {
                 }
                 .padding()
             }
-            .navigationTitle("智能推薦")
+            .navigationTitle("Trail Recommendations")
             .background(
                 ZStack {
                     Color.hikingBackgroundGradient

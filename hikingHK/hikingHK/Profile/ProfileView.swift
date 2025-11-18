@@ -160,7 +160,7 @@ struct ProfileView: View {
                 )
                 achievementViewModel.configureIfNeeded(context: modelContext)
                 
-                // 從行山記錄更新成就
+                // Update achievements from hike records
                 Task {
                     await apiChecker.checkAllAPIs()
                     updateAchievements()
@@ -187,7 +187,7 @@ struct ProfileView: View {
     }
     
     private func updateAchievements() {
-        // 從行山記錄更新成就
+        // Update achievements from hike records
         Task {
             do {
                 let recordStore = HikeRecordStore(context: modelContext)
