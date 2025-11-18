@@ -236,7 +236,24 @@ struct LocalizedStrings {
         "achievements.congratulations": "Congratulations! You unlocked the",
         "achievements.achievement": "achievement!",
         "achievements.unlocked.on": "Unlocked on",
-        "achievements.filter.all": "All"
+        "achievements.filter.all": "All",
+        
+        // Gear Checklist
+        "gear.title": "Smart Gear Checklist",
+        "gear.view.checklist": "View Gear Checklist",
+        "gear.progress": "Progress",
+        "gear.required": "Required",
+        "gear.required.items": "Required Items",
+        "gear.all.required.complete": "All required items completed!",
+        "gear.no.items": "No Gear Items",
+        "gear.generate.description": "Gear list will be generated based on trail difficulty, weather, and season",
+        "gear.category.essential": "Essential",
+        "gear.category.clothing": "Clothing",
+        "gear.category.navigation": "Navigation",
+        "gear.category.safety": "Safety",
+        "gear.category.food": "Food",
+        "gear.category.tools": "Tools",
+        "gear.category.optional": "Optional"
     ]
     
     private static let traditionalChineseStrings: [String: String] = [

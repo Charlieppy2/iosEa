@@ -636,6 +636,22 @@ struct SavedHikeDetailSheet: View {
                     }
                 }
                 Section {
+                    NavigationLink {
+                        GearChecklistView(
+                            trail: hike.trail,
+                            weather: WeatherSnapshot.hongKongMorning, // TODO: Get actual weather
+                            scheduledDate: plannedDate
+                        )
+                    } label: {
+                        HStack {
+                            Image(systemName: "backpack.fill")
+                                .foregroundStyle(Color.hikingGreen)
+                            Text(languageManager.localizedString(for: "gear.view.checklist"))
+                                .foregroundStyle(Color.hikingDarkGreen)
+                        }
+                    }
+                }
+                Section {
                     Button(languageManager.localizedString(for: "hike.plan.update")) {
                         onUpdate(plannedDate, note, isCompleted, isCompleted ? completedDate : nil)
                         dismiss()

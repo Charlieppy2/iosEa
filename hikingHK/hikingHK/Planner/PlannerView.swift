@@ -14,6 +14,7 @@ struct PlannerView: View {
     @State private var plannedDate = Date().addingTimeInterval(60 * 60 * 24)
     @State private var note = ""
     @State private var showSaveSuccess = false
+    @State private var isShowingGearChecklist = false
 
     var body: some View {
         NavigationStack {
@@ -46,6 +47,24 @@ struct PlannerView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                
+                if selectedTrail != nil {
+                    Section {
+                        Button {
+                            isShowingGearChecklist = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "backpack.fill")
+                                    .foregroundStyle(Color.hikingGreen)
+                                Text(languageManager.localizedString(for: "gear.view.checklist"))
+                                    .foregroundStyle(Color.hikingDarkGreen)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
             }
             .scrollContentBackground(.hidden)
             .background(
@@ -76,6 +95,15 @@ struct PlannerView: View {
                 Button(languageManager.localizedString(for: "ok"), role: .cancel) {}
             } message: {
                 Text(languageManager.localizedString(for: "planner.saved.message"))
+            }
+            .sheet(isPresented: $isShowingGearChecklist) {
+                if let trail = selectedTrail {
+                    GearChecklistView(
+                        trail: trail,
+                        weather: viewModel.weatherSnapshot,
+                        scheduledDate: plannedDate
+                    )
+                }
             }
         }
     }

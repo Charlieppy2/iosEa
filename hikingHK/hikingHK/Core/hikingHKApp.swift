@@ -30,7 +30,8 @@ struct hikingHKApp: App {
                 SpeciesIdentificationRecord.self,
                 Achievement.self,
                 HikeJournal.self,
-                JournalPhoto.self
+                JournalPhoto.self,
+                GearItem.self
             ]
         )
     }
