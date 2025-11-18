@@ -319,6 +319,22 @@ struct LocalizedStrings {
         "alerts.all.clear": "All trails are clear. Enjoy your hike!",
         "alerts.critical": "Critical",
         "alerts.active": "Active Alerts",
+        "alert.category.weather": "Weather",
+        "alert.category.maintenance": "Maintenance",
+        "alert.category.safety": "Safety",
+        "alert.category.closure": "Closure",
+        "alert.severity.low": "Low",
+        "alert.severity.medium": "Medium",
+        "alert.severity.high": "High",
+        "alert.severity.critical": "Critical",
+        "alert.time.minutes.ago": "min ago",
+        "alert.time.hours.ago": "hours ago",
+        "alert.time.days.ago": "days ago",
+        "alert.title.route.maintenance": "Route Maintenance",
+        "alert.title.weather": "Weather Alert",
+        "alert.title.safety": "Safety Alert",
+        "alert.title.closure": "Trail Closure",
+        "alert.detail.maclehose.section2.maintenance": "Section 2 of MacLehose Trail is partially closed near Long Ke due to slope works. Alternative route available.",
         
         // Hike Plan
         "hike.plan.title": "Hike plan",
@@ -337,6 +353,7 @@ struct LocalizedStrings {
         "tracking.altitude": "Altitude",
         "tracking.track.points": "Track Points",
         "tracking.select.trail": "Select Trail",
+        "hike.tracking.select.trail": "Select Trail",
         
         // Hike Records
         "records.title": "Hike Records",

@@ -21,14 +21,17 @@ struct TrailAlert: Identifiable, Equatable {
         return Date() < expiresAt
     }
     
-    var timeAgo: String {
+    func timeAgo(languageManager: LanguageManager) -> String {
         let interval = Date().timeIntervalSince(issuedAt)
         if interval < 3600 {
-            return "\(Int(interval / 60)) min ago"
+            let minutes = Int(interval / 60)
+            return "\(minutes) \(languageManager.localizedString(for: "alert.time.minutes.ago"))"
         } else if interval < 86400 {
-            return "\(Int(interval / 3600)) hours ago"
+            let hours = Int(interval / 3600)
+            return "\(hours) \(languageManager.localizedString(for: "alert.time.hours.ago"))"
         } else {
-            return "\(Int(interval / 86400)) days ago"
+            let days = Int(interval / 86400)
+            return "\(days) \(languageManager.localizedString(for: "alert.time.days.ago"))"
         }
     }
     
@@ -45,6 +48,11 @@ struct TrailAlert: Identifiable, Equatable {
             case .safety: return "exclamationmark.triangle.fill"
             case .closure: return "xmark.circle.fill"
             }
+        }
+        
+        func localizedRawValue(languageManager: LanguageManager) -> String {
+            let key = "alert.category.\(rawValue.lowercased())"
+            return languageManager.localizedString(for: key)
         }
     }
     
@@ -70,6 +78,11 @@ struct TrailAlert: Identifiable, Equatable {
             case .high: return "exclamationmark.triangle.fill"
             case .critical: return "exclamationmark.octagon.fill"
             }
+        }
+        
+        func localizedRawValue(languageManager: LanguageManager) -> String {
+            let key = "alert.severity.\(rawValue.lowercased())"
+            return languageManager.localizedString(for: key)
         }
     }
 }

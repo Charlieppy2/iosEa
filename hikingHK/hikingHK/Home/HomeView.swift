@@ -820,23 +820,23 @@ struct TrailAlertsView: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text(alert.title)
+                        Text(localizedAlertTitle(alert.title))
                             .font(.headline)
                         Spacer()
                         severityBadge(alert.severity)
                     }
                     
-                    Text(alert.detail)
+                    Text(localizedAlertDetail(alert.detail))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     
                     HStack(spacing: 12) {
-                        Label(alert.category.rawValue, systemImage: "tag.fill")
+                        Label(alert.category.localizedRawValue(languageManager: languageManager), systemImage: "tag.fill")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Text("•")
                             .foregroundStyle(.secondary)
-                        Text(alert.timeAgo)
+                        Text(alert.timeAgo(languageManager: languageManager))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -846,11 +846,37 @@ struct TrailAlertsView: View {
         .padding(.vertical, 4)
     }
     
+    private func localizedAlertTitle(_ title: String) -> String {
+        // Map common alert titles to localized keys
+        if title.contains("Route Maintenance") {
+            return languageManager.localizedString(for: "alert.title.route.maintenance")
+        }
+        if title.contains("Weather") {
+            return languageManager.localizedString(for: "alert.title.weather")
+        }
+        if title.contains("Safety") {
+            return languageManager.localizedString(for: "alert.title.safety")
+        }
+        if title.contains("Closure") {
+            return languageManager.localizedString(for: "alert.title.closure")
+        }
+        return title
+    }
+    
+    private func localizedAlertDetail(_ detail: String) -> String {
+        // Map common alert details to localized keys
+        if detail.contains("Section 2 of MacLehose Trail is partially closed near Long Ke due to slope works") {
+            return languageManager.localizedString(for: "alert.detail.maclehose.section2.maintenance")
+        }
+        // Add more mappings as needed
+        return detail
+    }
+    
     private func severityBadge(_ severity: TrailAlert.Severity) -> some View {
         HStack(spacing: 4) {
             Image(systemName: severity.icon)
                 .font(.caption2)
-            Text(severity.rawValue)
+            Text(severity.localizedRawValue(languageManager: languageManager))
                 .font(.caption2.bold())
         }
         .padding(.horizontal, 8)

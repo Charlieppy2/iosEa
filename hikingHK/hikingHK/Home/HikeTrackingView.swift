@@ -99,6 +99,7 @@ struct HikeTrackingView: View {
                     isShowingTrailPicker = false
                 }
                 .environmentObject(appViewModel)
+                .environmentObject(languageManager)
             }
             .onAppear {
                 viewModel.configureIfNeeded(context: modelContext)
@@ -235,6 +236,7 @@ struct StatItem: View {
 struct TrailPickerForTracking: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appViewModel: AppViewModel
+    @EnvironmentObject private var languageManager: LanguageManager
     let onTrailSelected: (Trail) -> Void
     
     var body: some View {
@@ -247,25 +249,25 @@ struct TrailPickerForTracking: View {
                     } label: {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(trail.name)
+                                Text(trail.localizedName(languageManager: languageManager))
                                     .font(.headline)
                                     .foregroundStyle(.primary)
-                                Text(trail.district)
+                                Text(trail.localizedDistrict(languageManager: languageManager))
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Label(trail.difficulty.rawValue, systemImage: trail.difficulty.icon)
+                            Label(trail.difficulty.localizedRawValue(languageManager: languageManager), systemImage: trail.difficulty.icon)
                                 .labelStyle(.iconOnly)
                                 .foregroundStyle(.secondary)
                         }
                     }
                 }
             }
-            .navigationTitle("Select Trail")
+            .navigationTitle(languageManager.localizedString(for: "hike.tracking.select.trail"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button(languageManager.localizedString(for: "cancel")) {
                         dismiss()
                     }
                 }
