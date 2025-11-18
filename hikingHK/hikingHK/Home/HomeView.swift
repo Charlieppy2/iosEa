@@ -178,7 +178,7 @@ struct HomeView: View {
                         .font(.system(size: 46, weight: .bold))
                         .foregroundStyle(Color.hikingDarkGreen)
                     if !snapshot.suggestion.isEmpty {
-                        Text(snapshot.suggestion)
+                        Text(localizedWeatherSuggestion(snapshot.suggestion))
                             .font(.subheadline)
                             .foregroundStyle(Color.hikingBrown)
                     }
@@ -199,8 +199,8 @@ struct HomeView: View {
                     Label(localizedWeatherError(error), systemImage: "wifi.slash")
                     .font(.subheadline)
                     .foregroundStyle(Color.hikingStone)
-            } else if !snapshot.suggestion.isEmpty && snapshot.suggestion != "Feels good for ridge walks" {
-                Text(snapshot.suggestion)
+            } else if !snapshot.suggestion.isEmpty {
+                Text(localizedWeatherSuggestion(snapshot.suggestion))
                     .font(.subheadline)
                     .foregroundStyle(Color.hikingBrown)
             }
@@ -221,6 +221,27 @@ struct HomeView: View {
             return languageManager.localizedString(for: "weather.error.cached")
         }
         return error
+    }
+    
+    private func localizedWeatherSuggestion(_ suggestion: String) -> String {
+        // Map common weather suggestions to localized keys
+        if suggestion.contains("Weather warning in force") {
+            return languageManager.localizedString(for: "weather.suggestion.warning")
+        }
+        if suggestion.contains("Extreme UV") {
+            return languageManager.localizedString(for: "weather.suggestion.extreme.uv")
+        }
+        if suggestion.contains("Humid conditions") {
+            return languageManager.localizedString(for: "weather.suggestion.humid")
+        }
+        if suggestion.contains("Conditions look stable") || suggestion.contains("great time to tackle") {
+            return languageManager.localizedString(for: "weather.suggestion.stable")
+        }
+        if suggestion.contains("Partly cloudy") || suggestion.contains("Great time to start") {
+            return languageManager.localizedString(for: "weather.suggestion.good")
+        }
+        // If no match, return original
+        return suggestion
     }
     
     private func localizedHighlight(_ highlight: String, for trail: Trail) -> String {

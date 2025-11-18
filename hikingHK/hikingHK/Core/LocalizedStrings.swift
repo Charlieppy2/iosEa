@@ -123,6 +123,11 @@ struct LocalizedStrings {
         "weather.humidity": "Humidity",
         "weather.uv.index": "UV Index",
         "weather.error.cached": "Unable to load latest weather. Showing cached data.",
+        "weather.suggestion.warning": "Weather warning in force. Re-plan or carry full rain gear.",
+        "weather.suggestion.extreme.uv": "Extreme UV. Start pre-dawn and bring SPF/umbrella.",
+        "weather.suggestion.humid": "Humid conditions. Hydrate frequently and rest more often.",
+        "weather.suggestion.stable": "Conditions look stable—great time to tackle exposed ridges.",
+        "weather.suggestion.good": "Partly cloudy with light easterlies. Great time to start ridge hikes before noon heat.",
         
         // Trails
         "trails.title": "Trails",
@@ -484,6 +489,11 @@ struct LocalizedStrings {
         "weather.humidity": "濕度",
         "weather.uv.index": "紫外線指數",
         "weather.error.cached": "無法載入最新天氣。顯示緩存數據。",
+        "weather.suggestion.warning": "天氣警告生效。重新計劃或攜帶全套雨具。",
+        "weather.suggestion.extreme.uv": "極高紫外線。建議清晨出發並攜帶防曬霜/雨傘。",
+        "weather.suggestion.humid": "潮濕天氣。請頻繁補充水分並多休息。",
+        "weather.suggestion.stable": "天氣狀況穩定，適合挑戰暴露的山脊路線。",
+        "weather.suggestion.good": "部分多雲，微東風。正午前開始山脊行山的好時機。",
         
         // Trails
         "trails.title": "路線",
