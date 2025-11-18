@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import Combine
 
 enum AppLanguage: String, CaseIterable, Codable {
     case english = "en"
@@ -32,7 +33,7 @@ enum AppLanguage: String, CaseIterable, Codable {
 }
 
 @MainActor
-class LanguageManager: ObservableObject {
+final class LanguageManager: ObservableObject {
     @Published var currentLanguage: AppLanguage {
         didSet {
             UserDefaults.standard.set(currentLanguage.rawValue, forKey: "appLanguage")
