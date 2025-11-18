@@ -160,7 +160,7 @@ struct HomeView: View {
         let snapshot = viewModel.weatherSnapshot
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label(snapshot.location, systemImage: "location.fill")
+                Label(localizedLocation(snapshot.location), systemImage: "location.fill")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(Color.hikingDarkGreen)
                 Spacer()
@@ -177,14 +177,16 @@ struct HomeView: View {
                     Text("\(String(format: "%.1f", snapshot.temperature))°C")
                         .font(.system(size: 46, weight: .bold))
                         .foregroundStyle(Color.hikingDarkGreen)
-                    Text("Feels good for ridge walks")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.hikingBrown)
+                    if !snapshot.suggestion.isEmpty {
+                        Text(snapshot.suggestion)
+                            .font(.subheadline)
+                            .foregroundStyle(Color.hikingBrown)
+                    }
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 6) {
-                    label(value: "\(snapshot.humidity)%", caption: "Humidity")
-                    label(value: "\(snapshot.uvIndex)", caption: "UV Index")
+                    label(value: "\(snapshot.humidity)%", caption: languageManager.localizedString(for: "weather.humidity"))
+                    label(value: "\(snapshot.uvIndex)", caption: languageManager.localizedString(for: "weather.uv.index"))
                 }
             }
             Divider()
@@ -194,10 +196,10 @@ struct HomeView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.orange)
             } else if let error = viewModel.weatherError {
-                    Label(error, systemImage: "wifi.slash")
+                    Label(localizedWeatherError(error), systemImage: "wifi.slash")
                     .font(.subheadline)
                     .foregroundStyle(Color.hikingStone)
-            } else {
+            } else if !snapshot.suggestion.isEmpty && snapshot.suggestion != "Feels good for ridge walks" {
                 Text(snapshot.suggestion)
                     .font(.subheadline)
                     .foregroundStyle(Color.hikingBrown)
@@ -205,6 +207,33 @@ struct HomeView: View {
         }
         .padding()
         .hikingCard()
+    }
+    
+    private func localizedLocation(_ location: String) -> String {
+        if location == "Hong Kong Observatory" {
+            return languageManager.localizedString(for: "weather.location.hko")
+        }
+        return location
+    }
+    
+    private func localizedWeatherError(_ error: String) -> String {
+        if error == "Unable to load latest weather. Showing cached data." {
+            return languageManager.localizedString(for: "weather.error.cached")
+        }
+        return error
+    }
+    
+    private func localizedHighlight(_ highlight: String, for trail: Trail) -> String {
+        // Create a key based on trail ID and highlight text
+        let highlightKey = highlight.lowercased()
+            .replacingOccurrences(of: " ", with: ".")
+            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: "(", with: "")
+            .replacingOccurrences(of: ")", with: "")
+        let key = "trail.\(trail.id.uuidString.lowercased()).highlight.\(highlightKey)"
+        let localized = languageManager.localizedString(for: key)
+        // If no localization found, return original highlight
+        return localized != key ? localized : highlight
     }
 
     private func label(value: String, caption: String) -> some View {

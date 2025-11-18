@@ -118,6 +118,12 @@ struct LocalizedStrings {
         "home.safety": "Safety",
         "home.sos.button": "SOS",
         
+        // Weather
+        "weather.location.hko": "Hong Kong Observatory",
+        "weather.humidity": "Humidity",
+        "weather.uv.index": "UV Index",
+        "weather.error.cached": "Unable to load latest weather. Showing cached data.",
+        
         // Trails
         "trails.title": "Trails",
         "trails.details": "Trail Details",
@@ -155,6 +161,9 @@ struct LocalizedStrings {
         // Dragon's Back
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.name": "Dragon's Back",
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.summary": "Most beloved half-day hike featuring coastal scenery overlooking Shek O, Big Wave Bay, and Tai Tam Bay.",
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.shek.o.peninsula.lookout": "Shek O Peninsula lookout",
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.paragliding.take-off.site": "Paragliding take-off site",
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.surfing.beach.finale": "Surfing beach finale",
         
         // Tai Mo Shan Waterfalls
         "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.name": "Tai Mo Shan Waterfalls",
@@ -470,6 +479,12 @@ struct LocalizedStrings {
         "home.safety": "安全",
         "home.sos.button": "緊急求救",
         
+        // Weather
+        "weather.location.hko": "香港天文台",
+        "weather.humidity": "濕度",
+        "weather.uv.index": "紫外線指數",
+        "weather.error.cached": "無法載入最新天氣。顯示緩存數據。",
+        
         // Trails
         "trails.title": "路線",
         "trails.details": "路線詳情",
@@ -503,10 +518,16 @@ struct LocalizedStrings {
         // Trail Names and Summaries (MacLehose Section 4)
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.name": "麥理浩徑第四段",
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.summary": "從企嶺下到基維爾營的標誌性山脊步道，可欣賞西貢海的全景。",
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.highlight.sharp.peak.vista": "蚺蛇尖景觀",
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.highlight.ma.on.shan.country.park.geology": "馬鞍山郊野公園地質",
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.highlight.golden.hour.sunrise.spot": "黃金時段日出觀賞點",
         
         // Dragon's Back
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.name": "龍脊",
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.summary": "最受歡迎的半日行山路線，可欣賞石澳、大浪灣和赤柱的沿海風景。",
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.shek.o.peninsula.lookout": "石澳半島觀景台",
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.paragliding.take-off.site": "滑翔傘起飛點",
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.surfing.beach.finale": "衝浪海灘終點",
         
         // Tai Mo Shan Waterfalls
         "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.name": "大帽山瀑布",

@@ -113,6 +113,7 @@ final class AppViewModel: ObservableObject {
             weatherSnapshot = snapshot
             weatherError = nil
         } catch {
+            // Error message will be localized in the view
             weatherError = "Unable to load latest weather. Showing cached data."
             print("Weather fetch error: \(error)")
         }
