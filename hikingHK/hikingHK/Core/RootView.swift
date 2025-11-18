@@ -42,7 +42,17 @@ struct RootView: View {
                 SavedHikeRecord.self,
                 FavoriteTrailRecord.self,
                 SafetyChecklistItem.self,
-                OfflineMapRegion.self
+                OfflineMapRegion.self,
+                EmergencyContact.self,
+                LocationShareSession.self,
+                HikeRecord.self,
+                HikeTrackPoint.self,
+                UserPreference.self,
+                RecommendationRecord.self,
+                SpeciesIdentificationRecord.self,
+                Achievement.self,
+                HikeJournal.self,
+                JournalPhoto.self
             ],
             inMemory: true
         )

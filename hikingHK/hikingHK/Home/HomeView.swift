@@ -14,8 +14,16 @@ struct HomeView: View {
     @State private var isShowingTrailAlerts = false
     @State private var isShowingOfflineMaps = false
     @State private var isShowingARIdentify = false
+    @State private var isShowingLocationSharing = false
+    @State private var isShowingHikeTracking = false
+    @State private var isShowingHikeRecords = false
+    @State private var isShowingRecommendations = false
+    @State private var isShowingSpeciesIdentification = false
+    @State private var isShowingJournal = false
     @State private var selectedSavedHike: SavedHike?
     @State private var isShowingTrailPicker = false
+    @StateObject private var locationManager = LocationManager()
+    @State private var isShowingSOSConfirmation = false
 
     var body: some View {
         NavigationStack {
@@ -41,6 +49,15 @@ struct HomeView: View {
                 .ignoresSafeArea()
             )
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        isShowingSOSConfirmation = true
+                    } label: {
+                        Label("SOS", systemImage: "sos")
+                            .foregroundStyle(.red)
+                            .fontWeight(.bold)
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         Task { await viewModel.refreshWeather() }
@@ -60,6 +77,14 @@ struct HomeView: View {
                     }
                 }
             }
+            .alert("緊急求救", isPresented: $isShowingSOSConfirmation) {
+                Button("取消", role: .cancel) { }
+                Button("打開位置分享", role: .destructive) {
+                    isShowingLocationSharing = true
+                }
+            } message: {
+                Text("這將打開位置分享功能，您可以在那裡發送緊急求救。")
+            }
             .sheet(isPresented: $isShowingSafetySheet) {
                 SafetyChecklistView()
                     .presentationDetents([.medium, .large])
@@ -75,6 +100,31 @@ struct HomeView: View {
             .sheet(isPresented: $isShowingARIdentify) {
                 ARIdentifyView()
                     .presentationDetents([.medium, .large])
+            }
+            .sheet(isPresented: $isShowingLocationSharing) {
+                LocationSharingView(locationManager: locationManager)
+                    .presentationDetents([.large])
+            }
+            .sheet(isPresented: $isShowingHikeTracking) {
+                HikeTrackingView(locationManager: locationManager)
+                    .environmentObject(viewModel)
+                    .presentationDetents([.large])
+            }
+            .sheet(isPresented: $isShowingHikeRecords) {
+                HikeRecordsListView()
+                    .presentationDetents([.large])
+            }
+            .sheet(isPresented: $isShowingRecommendations) {
+                TrailRecommendationView(appViewModel: viewModel)
+                    .presentationDetents([.large])
+            }
+            .sheet(isPresented: $isShowingSpeciesIdentification) {
+                SpeciesIdentificationView(locationManager: locationManager)
+                    .presentationDetents([.large])
+            }
+            .sheet(isPresented: $isShowingJournal) {
+                JournalListView()
+                    .presentationDetents([.large])
             }
             .sheet(item: $selectedSavedHike) { hike in
                 SavedHikeDetailSheet(
@@ -291,6 +341,36 @@ struct HomeView: View {
                 }
                 quickAction(icon: "camera.viewfinder", title: "AR Identify", color: Color.hikingSky) {
                     isShowingARIdentify = true
+                }
+                quickAction(icon: "location.fill", title: "Location Share", color: .red) {
+                    isShowingLocationSharing = true
+                }
+            }
+            
+            // 行山記錄快捷操作
+            HStack(spacing: 12) {
+                quickAction(icon: "record.circle.fill", title: "開始追蹤", color: Color.hikingGreen) {
+                    isShowingHikeTracking = true
+                }
+                quickAction(icon: "list.bullet.rectangle", title: "行山記錄", color: Color.hikingSky) {
+                    isShowingHikeRecords = true
+                }
+            }
+            
+            // 智能推薦和物種識別
+            HStack(spacing: 12) {
+                quickAction(icon: "sparkles", title: "智能推薦", color: Color.hikingBrown) {
+                    isShowingRecommendations = true
+                }
+                quickAction(icon: "camera.macro", title: "物種識別", color: Color.hikingTan) {
+                    isShowingSpeciesIdentification = true
+                }
+            }
+            
+            // 日記快捷操作
+            HStack(spacing: 12) {
+                quickAction(icon: "book.fill", title: "Journal", color: Color.hikingBrown) {
+                    isShowingJournal = true
                 }
             }
         }

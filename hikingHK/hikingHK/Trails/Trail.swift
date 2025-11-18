@@ -77,7 +77,7 @@ extension Trail {
 }
 
 extension Trail {
-    enum Difficulty: String, CaseIterable, Identifiable {
+    enum Difficulty: String, CaseIterable, Identifiable, Codable {
         case easy = "Easy"
         case moderate = "Moderate"
         case challenging = "Challenging"

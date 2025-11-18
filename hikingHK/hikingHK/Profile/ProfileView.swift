@@ -5,8 +5,10 @@ struct ProfileView: View {
     @EnvironmentObject private var sessionManager: SessionManager
     @Environment(\.modelContext) private var modelContext
     @State private var showSignOutConfirmation = false
+    @State private var isShowingAchievements = false
     @StateObject private var servicesStatus = ServicesStatusViewModel()
     @StateObject private var apiChecker = APIConnectionChecker()
+    @StateObject private var achievementViewModel = AchievementViewModel()
 
     private var plannedCount: Int {
         viewModel.savedHikes.filter { !$0.isCompleted }.count
@@ -61,6 +63,28 @@ struct ProfileView: View {
             List {
                 accountSection
                 statsSection
+                Section("Achievements") {
+                    NavigationLink {
+                        AchievementView()
+                    } label: {
+                        HStack {
+                            Image(systemName: "trophy.fill")
+                                .foregroundStyle(Color.hikingGreen)
+                            Text("Achievements & Badges")
+                                .foregroundStyle(Color.hikingDarkGreen)
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Text("\(achievementViewModel.unlockedCount)")
+                                    .font(.headline)
+                                    .foregroundStyle(Color.hikingGreen)
+                                Text("/")
+                                    .foregroundStyle(Color.hikingStone)
+                                Text("\(achievementViewModel.totalCount)")
+                                    .foregroundStyle(Color.hikingStone)
+                            }
+                        }
+                    }
+                }
                 Section("Goals") {
                     goalRow(goal: ridgeLinesGoal)
                     goalRow(goal: monthlyDistanceGoal)
@@ -134,9 +158,16 @@ struct ProfileView: View {
                     hasWeatherData: viewModel.weatherSnapshot.updatedAt > Date().addingTimeInterval(-3600),
                     context: modelContext
                 )
+                achievementViewModel.configureIfNeeded(context: modelContext)
+                
+                // 從行山記錄更新成就
                 Task {
                     await apiChecker.checkAllAPIs()
+                    updateAchievements()
                 }
+            }
+            .onChange(of: viewModel.savedHikes) { _, _ in
+                updateAchievements()
             }
             .onChange(of: viewModel.weatherError) { _ in
                 servicesStatus.checkWeatherServiceStatus(
@@ -151,6 +182,20 @@ struct ProfileView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("Are you sure you want to sign out?")
+            }
+        }
+    }
+    
+    private func updateAchievements() {
+        // 從行山記錄更新成就
+        Task {
+            do {
+                let recordStore = HikeRecordStore(context: modelContext)
+                let hikeRecords = try recordStore.loadAllRecords()
+                achievementViewModel.refreshAchievements(from: hikeRecords)
+            } catch {
+                // 如果沒有 HikeRecord，可以從 savedHikes 轉換
+                // 這裡暫時忽略錯誤
             }
         }
     }
