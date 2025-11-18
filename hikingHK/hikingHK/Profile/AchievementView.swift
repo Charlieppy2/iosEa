@@ -282,5 +282,6 @@ struct AchievementRow: View {
 #Preview {
     AchievementView()
         .modelContainer(for: [Achievement.self], inMemory: true)
+        .environmentObject(LanguageManager.shared)
 }
 
