@@ -22,6 +22,14 @@ struct TrailDetailView: View {
             }
             .padding(20)
         }
+        .background(
+            ZStack {
+                Color.hikingBackgroundGradient
+                HikingPatternBackground()
+                    .opacity(0.15)
+            }
+            .ignoresSafeArea()
+        )
         .navigationTitle(trail.name)
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -44,6 +44,20 @@ extension Color {
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
+    
+    // 应用背景渐变
+    static let hikingBackgroundGradient = LinearGradient(
+        colors: [
+            Color(red: 0.98, green: 0.99, blue: 0.97), // 非常浅的绿色
+            Color(red: 0.96, green: 0.98, blue: 0.95), // 浅绿色
+            Color(red: 0.94, green: 0.97, blue: 0.93)  // 稍深的浅绿色
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    
+    // 页面背景颜色
+    static let hikingBackground = Color(red: 0.97, green: 0.98, blue: 0.96)
 }
 
 extension View {
@@ -83,6 +97,92 @@ extension View {
                     )
             )
             .foregroundStyle(color)
+    }
+    
+    // 远足风格的背景
+    func hikingBackground() -> some View {
+        self
+            .background(
+                ZStack {
+                    // 基础渐变背景
+                    Color.hikingBackgroundGradient
+                    
+                    // 图案背景
+                    HikingPatternBackground()
+                        .opacity(0.15)
+                }
+                .ignoresSafeArea()
+            )
+    }
+    
+    // 带图片/图案的背景
+    func hikingBackgroundWithPattern() -> some View {
+        self
+            .background(
+                ZStack {
+                    // 基础渐变背景
+                    Color.hikingBackgroundGradient
+                    
+                    // 图案背景（更明显）
+                    HikingPatternBackground()
+                        .opacity(0.25)
+                }
+                .ignoresSafeArea()
+            )
+    }
+}
+
+// 远足主题图案背景视图
+struct HikingPatternBackground: View {
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // 山脉图案
+                ForEach(0..<3, id: \.self) { index in
+                    Image(systemName: "mountain.2.fill")
+                        .font(.system(size: 80))
+                        .foregroundStyle(Color.hikingGreen.opacity(0.1))
+                        .position(
+                            x: geometry.size.width * (0.2 + Double(index) * 0.3),
+                            y: geometry.size.height * (0.1 + Double(index) * 0.15)
+                        )
+                }
+                
+                // 树木图案
+                ForEach(0..<4, id: \.self) { index in
+                    Image(systemName: "tree.fill")
+                        .font(.system(size: 50))
+                        .foregroundStyle(Color.hikingDarkGreen.opacity(0.08))
+                        .position(
+                            x: geometry.size.width * (0.15 + Double(index) * 0.25),
+                            y: geometry.size.height * (0.7 + Double(index % 2) * 0.1)
+                        )
+                }
+                
+                // 云朵图案
+                ForEach(0..<2, id: \.self) { index in
+                    Image(systemName: "cloud.fill")
+                        .font(.system(size: 60))
+                        .foregroundStyle(Color.hikingSky.opacity(0.06))
+                        .position(
+                            x: geometry.size.width * (0.3 + Double(index) * 0.4),
+                            y: geometry.size.height * 0.2
+                        )
+                }
+                
+                // 路径线条
+                Path { path in
+                    let startY = geometry.size.height * 0.85
+                    path.move(to: CGPoint(x: 0, y: startY))
+                    path.addCurve(
+                        to: CGPoint(x: geometry.size.width, y: startY + 20),
+                        control1: CGPoint(x: geometry.size.width * 0.3, y: startY - 10),
+                        control2: CGPoint(x: geometry.size.width * 0.7, y: startY + 30)
+                    )
+                }
+                .stroke(Color.hikingBrown.opacity(0.1), lineWidth: 2)
+            }
+        }
     }
 }
 

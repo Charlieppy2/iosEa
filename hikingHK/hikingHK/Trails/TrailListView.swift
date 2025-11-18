@@ -30,6 +30,15 @@ struct TrailListView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(
+                ZStack {
+                    Color.hikingBackgroundGradient
+                    HikingPatternBackground()
+                        .opacity(0.15)
+                }
+                .ignoresSafeArea()
+            )
             .navigationTitle("Trails")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

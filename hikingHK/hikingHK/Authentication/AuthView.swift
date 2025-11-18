@@ -27,12 +27,13 @@ struct AuthView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "figure.hiking")
                         .font(.system(size: 48))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color.hikingGreen)
                     Text("Hiking HK")
                         .font(.largeTitle.bold())
+                        .foregroundStyle(Color.hikingDarkGreen)
                     Text(isRegistering ? "Create your hiking account." : "Sign in to sync your hikes, badges and plans.")
                         .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.hikingBrown)
                 }
                 VStack(spacing: 16) {
                     if isRegistering {
@@ -65,6 +66,14 @@ struct AuthView: View {
                 Spacer()
             }
             .padding()
+            .background(
+                ZStack {
+                    Color.hikingBackgroundGradient
+                    HikingPatternBackground()
+                        .opacity(0.2)
+                }
+                .ignoresSafeArea()
+            )
             .overlay(alignment: .top) {
                 if !sessionManager.isConfigured {
                     Label("Preparing secure storage…", systemImage: "lock.rectangle.stack")
@@ -103,6 +112,7 @@ extension AuthView {
             }
         }
         .buttonStyle(.borderedProminent)
+        .tint(Color.hikingGreen)
         .disabled(isRegistering ? (name.isEmpty || email.isEmpty || password.isEmpty || sessionManager.isAuthenticating) : (email.isEmpty || password.isEmpty || sessionManager.isAuthenticating))
     }
 

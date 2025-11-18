@@ -46,6 +46,15 @@ struct PlannerView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(
+                ZStack {
+                    Color.hikingBackgroundGradient
+                    HikingPatternBackground()
+                        .opacity(0.15)
+                }
+                .ignoresSafeArea()
+            )
             .navigationTitle("Planner")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

@@ -6,6 +6,7 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showSignOutConfirmation = false
     @StateObject private var servicesStatus = ServicesStatusViewModel()
+    @StateObject private var apiChecker = APIConnectionChecker()
 
     private var plannedCount: Int {
         viewModel.savedHikes.filter { !$0.isCompleted }.count
@@ -80,8 +81,52 @@ struct ProfileView: View {
                         icon: "arrow.down.circle",
                         status: servicesStatus.offlineMapsStatus
                     )
+                    apiStatusRow(
+                        title: "Mapbox API",
+                        icon: "map",
+                        status: apiChecker.mapboxAPIStatus
+                    )
+                }
+                Section("API Status") {
+                    HStack {
+                        Text("Last checked")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.hikingBrown)
+                        Spacer()
+                        if let lastCheck = apiChecker.lastCheckTime {
+                            Text(lastCheck, style: .relative)
+                                .font(.caption)
+                                .foregroundStyle(Color.hikingStone)
+                        } else {
+                            Text("Never")
+                                .font(.caption)
+                                .foregroundStyle(Color.hikingStone)
+                        }
+                    }
+                    Button {
+                        Task {
+                            await apiChecker.checkAllAPIs()
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.clockwise")
+                            Text("Check API Connection")
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(Color.hikingGreen)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(
+                ZStack {
+                    Color.hikingBackgroundGradient
+                    HikingPatternBackground()
+                        .opacity(0.15)
+                }
+                .ignoresSafeArea()
+            )
             .navigationTitle("Profile")
             .onAppear {
                 servicesStatus.refreshAllStatuses(
@@ -89,6 +134,9 @@ struct ProfileView: View {
                     hasWeatherData: viewModel.weatherSnapshot.updatedAt > Date().addingTimeInterval(-3600),
                     context: modelContext
                 )
+                Task {
+                    await apiChecker.checkAllAPIs()
+                }
             }
             .onChange(of: viewModel.weatherError) { _ in
                 servicesStatus.checkWeatherServiceStatus(
@@ -220,6 +268,39 @@ struct ProfileView: View {
                 Capsule()
                     .fill(statusColor(for: status).opacity(0.1))
             )
+        }
+    }
+    
+    private func apiStatusRow(title: String, icon: String, status: APIConnectionChecker.ConnectionStatus) -> some View {
+        HStack {
+            Label(title, systemImage: icon)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Color.hikingDarkGreen)
+            Spacer()
+            HStack(spacing: 6) {
+                Image(systemName: status.icon)
+                    .foregroundStyle(getColorForAPIConnectionStatus(status))
+                    .font(.caption)
+                Text(status.description)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(getColorForAPIConnectionStatus(status))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(getColorForAPIConnectionStatus(status).opacity(0.1))
+            )
+        }
+    }
+    
+    private func getColorForAPIConnectionStatus(_ status: APIConnectionChecker.ConnectionStatus) -> Color {
+        switch status {
+        case .checking: return .orange
+        case .connected: return Color.hikingGreen
+        case .disconnected: return .red
+        case .notConfigured: return Color.hikingStone
+        case .error: return .red
         }
     }
     

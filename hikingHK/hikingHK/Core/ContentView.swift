@@ -32,6 +32,7 @@ struct ContentView: View {
                 }
         }
         .tint(Color.hikingGreen)
+        .hikingBackgroundWithPattern()
     }
 }
 

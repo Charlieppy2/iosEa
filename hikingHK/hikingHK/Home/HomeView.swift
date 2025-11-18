@@ -32,6 +32,14 @@ struct HomeView: View {
                 .padding(.vertical, 24)
             }
             .navigationTitle("Hiking HK")
+            .background(
+                ZStack {
+                    Color.hikingBackgroundGradient
+                    HikingPatternBackground()
+                        .opacity(0.2)
+                }
+                .ignoresSafeArea()
+            )
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
