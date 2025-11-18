@@ -10,6 +10,7 @@ import CoreLocation
 
 struct HomeView: View {
     @EnvironmentObject private var viewModel: AppViewModel
+    @EnvironmentObject private var languageManager: LanguageManager
     @State private var isShowingSafetySheet = false
     @State private var isShowingTrailAlerts = false
     @State private var isShowingOfflineMaps = false
@@ -39,7 +40,7 @@ struct HomeView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 24)
             }
-            .navigationTitle("Hiking HK")
+            .navigationTitle(languageManager.localizedString(for: "app.name"))
             .background(
                 ZStack {
                     Color.hikingBackgroundGradient
@@ -77,13 +78,13 @@ struct HomeView: View {
                     }
                 }
             }
-            .alert("Emergency SOS", isPresented: $isShowingSOSConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Open Location Sharing", role: .destructive) {
+            .alert(languageManager.localizedString(for: "home.sos"), isPresented: $isShowingSOSConfirmation) {
+                Button(languageManager.localizedString(for: "cancel"), role: .cancel) { }
+                Button(languageManager.localizedString(for: "home.sos.open.sharing"), role: .destructive) {
                     isShowingLocationSharing = true
                 }
             } message: {
-                Text("This will open the location sharing feature where you can send an emergency SOS.")
+                Text(languageManager.localizedString(for: "home.sos.confirm"))
             }
             .sheet(isPresented: $isShowingSafetySheet) {
                 SafetyChecklistView()
@@ -224,7 +225,7 @@ struct HomeView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "mountain.2.fill")
                             .foregroundStyle(Color.hikingGreen)
-                        Text("Featured Trail")
+                        Text(languageManager.localizedString(for: "home.featured.trail"))
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(Color.hikingDarkGreen)
                     }
@@ -245,9 +246,9 @@ struct HomeView: View {
                 }
             }
             HStack(spacing: 12) {
-                statBadge(value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km", caption: "Distance")
-                statBadge(value: "\(trail.elevationGain) m", caption: "Elev gain")
-                statBadge(value: "\(trail.estimatedDurationMinutes / 60) h", caption: "Duration")
+                statBadge(value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km", caption: languageManager.localizedString(for: "trails.distance"))
+                statBadge(value: "\(trail.elevationGain) m", caption: languageManager.localizedString(for: "home.elev.gain"))
+                statBadge(value: "\(trail.estimatedDurationMinutes / 60) h", caption: languageManager.localizedString(for: "trails.duration"))
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -264,7 +265,7 @@ struct HomeView: View {
                 TrailDetailView(trail: trail)
             } label: {
                 HStack {
-                    Text("View trail plan")
+                    Text(languageManager.localizedString(for: "home.view.trail.plan"))
                         .font(.headline.weight(.semibold))
                     Spacer()
                     Image(systemName: "arrow.right.circle.fill")
@@ -328,48 +329,48 @@ struct HomeView: View {
             HStack(spacing: 6) {
                 Image(systemName: "bolt.fill")
                     .foregroundStyle(Color.hikingGreen)
-                Text("Quick actions")
+                Text(languageManager.localizedString(for: "home.quick.actions"))
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(Color.hikingDarkGreen)
             }
             HStack(spacing: 12) {
-                quickAction(icon: "exclamationmark.triangle.fill", title: "Trail Alerts", color: .orange) {
+                quickAction(icon: "exclamationmark.triangle.fill", title: languageManager.localizedString(for: "home.trail.alerts"), color: .orange) {
                     isShowingTrailAlerts = true
                 }
-                quickAction(icon: "map.fill", title: "Offline Maps", color: Color.hikingGreen) {
+                quickAction(icon: "map.fill", title: languageManager.localizedString(for: "home.offline.maps"), color: Color.hikingGreen) {
                     isShowingOfflineMaps = true
                 }
-                quickAction(icon: "camera.viewfinder", title: "AR Identify", color: Color.hikingSky) {
+                quickAction(icon: "camera.viewfinder", title: languageManager.localizedString(for: "home.ar.identify"), color: Color.hikingSky) {
                     isShowingARIdentify = true
                 }
-                quickAction(icon: "location.fill", title: "Location Share", color: .red) {
+                quickAction(icon: "location.fill", title: languageManager.localizedString(for: "home.location.share"), color: .red) {
                     isShowingLocationSharing = true
                 }
             }
             
             // Hike Tracking Quick Actions
             HStack(spacing: 12) {
-                quickAction(icon: "record.circle.fill", title: "Start Tracking", color: Color.hikingGreen) {
+                quickAction(icon: "record.circle.fill", title: languageManager.localizedString(for: "home.start.tracking"), color: Color.hikingGreen) {
                     isShowingHikeTracking = true
                 }
-                quickAction(icon: "list.bullet.rectangle", title: "Hike Records", color: Color.hikingSky) {
+                quickAction(icon: "list.bullet.rectangle", title: languageManager.localizedString(for: "home.hike.records"), color: Color.hikingSky) {
                     isShowingHikeRecords = true
                 }
             }
             
             // Recommendations and Species Identification
             HStack(spacing: 12) {
-                quickAction(icon: "sparkles", title: "Recommendations", color: Color.hikingBrown) {
+                quickAction(icon: "sparkles", title: languageManager.localizedString(for: "home.recommendations"), color: Color.hikingBrown) {
                     isShowingRecommendations = true
                 }
-                quickAction(icon: "camera.macro", title: "Species ID", color: Color.hikingTan) {
+                quickAction(icon: "camera.macro", title: languageManager.localizedString(for: "home.species.id"), color: Color.hikingTan) {
                     isShowingSpeciesIdentification = true
                 }
             }
             
             // Journal Quick Action
             HStack(spacing: 12) {
-                quickAction(icon: "book.fill", title: "Journal", color: Color.hikingBrown) {
+                quickAction(icon: "book.fill", title: languageManager.localizedString(for: "home.journal"), color: Color.hikingBrown) {
                     isShowingJournal = true
                 }
             }
@@ -415,7 +416,7 @@ struct HomeView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "calendar.badge.clock")
                         .foregroundStyle(Color.hikingGreen)
-                    Text("Next plans")
+                    Text(languageManager.localizedString(for: "home.next.plans"))
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(Color.hikingDarkGreen)
                 }
@@ -425,7 +426,7 @@ struct HomeView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "plus.circle.fill")
-                        Text("Add")
+                        Text(languageManager.localizedString(for: "home.add"))
                     }
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.hikingGreen)
@@ -436,10 +437,10 @@ struct HomeView: View {
                     Image(systemName: "mountain.2")
                         .font(.system(size: 40))
                         .foregroundStyle(Color.hikingStone.opacity(0.5))
-                    Text("No hikes scheduled")
+                    Text(languageManager.localizedString(for: "home.no.hikes.scheduled"))
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(Color.hikingBrown)
-                    Text("Tap Add to plan your first walk")
+                    Text(languageManager.localizedString(for: "home.tap.add.to.plan"))
                         .font(.caption)
                         .foregroundStyle(Color.hikingStone)
                 }
@@ -514,6 +515,7 @@ struct SavedHikeRow: View {
 struct SafetyChecklistView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var languageManager: LanguageManager
     @StateObject private var viewModel = SafetyChecklistViewModel()
     
     var body: some View {
@@ -522,7 +524,7 @@ struct SafetyChecklistView: View {
                 if !viewModel.items.isEmpty {
                     Section {
                         HStack {
-                            Text("Progress")
+                            Text(languageManager.localizedString(for: "safety.progress"))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                             Spacer()
@@ -558,17 +560,17 @@ struct SafetyChecklistView: View {
                     }
                 } footer: {
                     if viewModel.isAllCompleted {
-                        Text("Great! You're all set for a safe hike.")
+                        Text(languageManager.localizedString(for: "safety.all.complete"))
                             .foregroundStyle(.green)
                     } else {
-                        Text("Complete all items before heading out.")
+                        Text(languageManager.localizedString(for: "safety.complete.all"))
                     }
                 }
             }
-            .navigationTitle("Safety checklist")
+            .navigationTitle(languageManager.localizedString(for: "safety.checklist.title"))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button(languageManager.localizedString(for: "done")) {
                         dismiss()
                     }
                 }

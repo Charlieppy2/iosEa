@@ -9,6 +9,7 @@ import SwiftUI
 
 struct PlannerView: View {
     @EnvironmentObject private var viewModel: AppViewModel
+    @EnvironmentObject private var languageManager: LanguageManager
     @State private var selectedTrail: Trail?
     @State private var plannedDate = Date().addingTimeInterval(60 * 60 * 24)
     @State private var note = ""
@@ -17,18 +18,18 @@ struct PlannerView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Choose trail") {
-                    Picker("Trail", selection: $selectedTrail) {
+                Section(languageManager.localizedString(for: "planner.choose.trail")) {
+                    Picker(languageManager.localizedString(for: "trails.title"), selection: $selectedTrail) {
                         ForEach(viewModel.trails) { trail in
                             Text(trail.name).tag(Optional(trail))
                         }
                     }
                 }
-                Section("Schedule") {
-                    DatePicker("Date", selection: $plannedDate, displayedComponents: .date)
-                    TextField("Note (meet point, gear...)", text: $note)
+                Section(languageManager.localizedString(for: "planner.schedule")) {
+                    DatePicker(languageManager.localizedString(for: "planner.date"), selection: $plannedDate, displayedComponents: .date)
+                    TextField(languageManager.localizedString(for: "planner.note"), text: $note)
                 }
-                Section("Preview") {
+                Section(languageManager.localizedString(for: "planner.preview")) {
                     if let trail = selectedTrail {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(trail.name)
@@ -41,7 +42,7 @@ struct PlannerView: View {
                             }
                         }
                     } else {
-                        Text("Select a trail to see summary")
+                        Text(languageManager.localizedString(for: "planner.select.trail"))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -55,10 +56,10 @@ struct PlannerView: View {
                 }
                 .ignoresSafeArea()
             )
-            .navigationTitle("Planner")
+            .navigationTitle(languageManager.localizedString(for: "planner.title"))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(languageManager.localizedString(for: "save")) {
                         if let trail = selectedTrail {
                             viewModel.addSavedHike(for: trail, scheduledDate: plannedDate, note: note)
                             // Reset form after saving
@@ -71,10 +72,10 @@ struct PlannerView: View {
                     .disabled(selectedTrail == nil)
                 }
             }
-            .alert("Plan saved", isPresented: $showSaveSuccess) {
-                Button("OK", role: .cancel) {}
+            .alert(languageManager.localizedString(for: "planner.saved"), isPresented: $showSaveSuccess) {
+                Button(languageManager.localizedString(for: "ok"), role: .cancel) {}
             } message: {
-                Text("Your hike has been added to your plans.")
+                Text(languageManager.localizedString(for: "planner.saved.message"))
             }
         }
     }

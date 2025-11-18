@@ -32,6 +32,19 @@ struct LocalizedStrings {
         "stop": "Stop",
         "pause": "Pause",
         "resume": "Resume",
+        "done": "Done",
+        
+        // Auth
+        "auth.name": "Name",
+        "auth.email": "Email",
+        "auth.password": "Password",
+        "auth.create.account": "Create your hiking account.",
+        "auth.sign.in.description": "Sign in to sync your hikes, badges and plans.",
+        "auth.create.account.button": "Create Account",
+        "auth.sign.in": "Sign In",
+        "auth.have.account": "Have an account? Sign in",
+        "auth.new.hiker": "New hiker? Create account",
+        "auth.preparing.storage": "Preparing secure storage…",
         
         // Profile
         "profile.title": "Profile",
@@ -66,6 +79,13 @@ struct LocalizedStrings {
         "home.sos": "Emergency SOS",
         "home.sos.confirm": "This will open the location sharing feature where you can send an emergency SOS.",
         "home.sos.open.sharing": "Open Location Sharing",
+        "home.featured.trail": "Featured Trail",
+        "home.elev.gain": "Elev gain",
+        "home.view.trail.plan": "View trail plan",
+        "home.next.plans": "Next plans",
+        "home.add": "Add",
+        "home.no.hikes.scheduled": "No hikes scheduled",
+        "home.tap.add.to.plan": "Tap Add to plan your first walk",
         
         // Trails
         "trails.title": "Trails",
@@ -74,6 +94,25 @@ struct LocalizedStrings {
         "trails.duration": "Duration",
         "trails.difficulty": "Difficulty",
         "trails.district": "District",
+        "trails.all.difficulties": "All difficulties",
+        "trails.search.prompt": "Name or district",
+        
+        // Planner
+        "planner.title": "Planner",
+        "planner.choose.trail": "Choose trail",
+        "planner.schedule": "Schedule",
+        "planner.date": "Date",
+        "planner.note": "Note (meet point, gear...)",
+        "planner.preview": "Preview",
+        "planner.select.trail": "Select a trail to see summary",
+        "planner.saved": "Plan saved",
+        "planner.saved.message": "Your hike has been added to your plans.",
+        
+        // Safety
+        "safety.progress": "Progress",
+        "safety.all.complete": "Great! You're all set for a safe hike.",
+        "safety.complete.all": "Complete all items before heading out.",
+        "safety.checklist.title": "Safety checklist",
         
         // Hike Tracking
         "tracking.title": "Hike Tracking",
@@ -229,6 +268,13 @@ struct LocalizedStrings {
         "home.sos": "緊急求救",
         "home.sos.confirm": "這將打開位置分享功能，您可以在那裡發送緊急求救。",
         "home.sos.open.sharing": "打開位置分享",
+        "home.featured.trail": "精選路線",
+        "home.elev.gain": "海拔上升",
+        "home.view.trail.plan": "查看路線計劃",
+        "home.next.plans": "即將計劃",
+        "home.add": "添加",
+        "home.no.hikes.scheduled": "尚無計劃的行山",
+        "home.tap.add.to.plan": "點擊添加以計劃您的第一次行山",
         
         // Trails
         "trails.title": "路線",
@@ -237,6 +283,25 @@ struct LocalizedStrings {
         "trails.duration": "時長",
         "trails.difficulty": "難度",
         "trails.district": "地區",
+        "trails.all.difficulties": "所有難度",
+        "trails.search.prompt": "名稱或地區",
+        
+        // Planner
+        "planner.title": "計劃",
+        "planner.choose.trail": "選擇路線",
+        "planner.schedule": "時間表",
+        "planner.date": "日期",
+        "planner.note": "備註（集合點、裝備...）",
+        "planner.preview": "預覽",
+        "planner.select.trail": "選擇路線以查看摘要",
+        "planner.saved": "計劃已儲存",
+        "planner.saved.message": "您的行山計劃已添加到您的計劃中。",
+        
+        // Safety
+        "safety.progress": "進度",
+        "safety.all.complete": "太好了！您已準備好安全行山。",
+        "safety.complete.all": "出發前請完成所有項目。",
+        "safety.checklist.title": "安全檢查清單",
         
         // Hike Tracking
         "tracking.title": "行山追蹤",

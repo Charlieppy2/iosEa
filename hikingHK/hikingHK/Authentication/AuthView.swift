@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AuthView: View {
     @EnvironmentObject private var sessionManager: SessionManager
+    @EnvironmentObject private var languageManager: LanguageManager
     @State private var name = ""
     @State private var email = "jamie@trailcollective.hk"
     @State private var password = "GoHike123"
@@ -28,29 +29,29 @@ struct AuthView: View {
                     Image(systemName: "figure.hiking")
                         .font(.system(size: 48))
                         .foregroundStyle(Color.hikingGreen)
-                    Text("Hiking HK")
+                    Text(languageManager.localizedString(for: "app.name"))
                         .font(.largeTitle.bold())
                         .foregroundStyle(Color.hikingDarkGreen)
-                    Text(isRegistering ? "Create your hiking account." : "Sign in to sync your hikes, badges and plans.")
+                    Text(isRegistering ? languageManager.localizedString(for: "auth.create.account") : languageManager.localizedString(for: "auth.sign.in.description"))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Color.hikingBrown)
                 }
                 VStack(spacing: 16) {
                     if isRegistering {
-                        TextField("Name", text: $name)
+                        TextField(languageManager.localizedString(for: "auth.name"), text: $name)
                             .textContentType(.name)
                             .padding()
                             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .focused($focusedField, equals: .name)
                     }
-                    TextField("Email", text: $email)
+                    TextField(languageManager.localizedString(for: "auth.email"), text: $email)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.emailAddress)
                         .textContentType(.emailAddress)
                         .padding()
                         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .focused($focusedField, equals: .email)
-                    SecureField("Password", text: $password)
+                    SecureField(languageManager.localizedString(for: "auth.password"), text: $password)
                         .textContentType(.password)
                         .padding()
                         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -76,7 +77,7 @@ struct AuthView: View {
             )
             .overlay(alignment: .top) {
                 if !sessionManager.isConfigured {
-                    Label("Preparing secure storage…", systemImage: "lock.rectangle.stack")
+                    Label(languageManager.localizedString(for: "auth.preparing.storage"), systemImage: "lock.rectangle.stack")
                         .padding(12)
                         .background(.thinMaterial, in: Capsule())
                         .padding(.top, 16)
@@ -85,7 +86,7 @@ struct AuthView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") { focusedField = nil }
+                    Button(languageManager.localizedString(for: "done")) { focusedField = nil }
                 }
             }
         }
@@ -106,7 +107,7 @@ extension AuthView {
                     .progressViewStyle(.circular)
                     .frame(maxWidth: .infinity)
             } else {
-                Text(isRegistering ? "Create Account" : "Sign In")
+                Text(isRegistering ? languageManager.localizedString(for: "auth.create.account.button") : languageManager.localizedString(for: "auth.sign.in"))
                     .bold()
                     .frame(maxWidth: .infinity)
             }
@@ -123,7 +124,7 @@ extension AuthView {
                     isRegistering.toggle()
                 }
             } label: {
-                Text(isRegistering ? "Have an account? Sign in" : "New hiker? Create account")
+                Text(isRegistering ? languageManager.localizedString(for: "auth.have.account") : languageManager.localizedString(for: "auth.new.hiker"))
                     .font(.subheadline)
             }
             .buttonStyle(.plain)
@@ -134,5 +135,6 @@ extension AuthView {
 #Preview {
     AuthView()
         .environmentObject(SessionManager())
+        .environmentObject(LanguageManager.shared)
 }
 

@@ -17,19 +17,19 @@ struct ContentView: View {
         TabView {
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label(languageManager.localizedString(for: "home.title"), systemImage: "house.fill")
                 }
             TrailListView()
                 .tabItem {
-                    Label("Trails", systemImage: "map.fill")
+                    Label(languageManager.localizedString(for: "trails.title"), systemImage: "map.fill")
                 }
             PlannerView()
                 .tabItem {
-                    Label("Planner", systemImage: "calendar.badge.plus")
+                    Label(languageManager.localizedString(for: "planner.title"), systemImage: "calendar.badge.plus")
                 }
             ProfileView()
                 .tabItem {
-                    Label("Profile", systemImage: "person.circle.fill")
+                    Label(languageManager.localizedString(for: "profile.title"), systemImage: "person.circle.fill")
                 }
         }
         .tint(Color.hikingGreen)

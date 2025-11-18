@@ -9,6 +9,7 @@ import SwiftUI
 
 struct TrailListView: View {
     @EnvironmentObject private var viewModel: AppViewModel
+    @EnvironmentObject private var languageManager: LanguageManager
     @State private var selectedDifficulty: Trail.Difficulty?
     @State private var searchText = ""
 
@@ -39,11 +40,11 @@ struct TrailListView: View {
                 }
                 .ignoresSafeArea()
             )
-            .navigationTitle("Trails")
+            .navigationTitle(languageManager.localizedString(for: "trails.title"))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        Button("All difficulties") { selectedDifficulty = nil }
+                        Button(languageManager.localizedString(for: "trails.all.difficulties")) { selectedDifficulty = nil }
                         Divider()
                         ForEach(Trail.Difficulty.allCases) { difficulty in
                             Button {
@@ -57,7 +58,7 @@ struct TrailListView: View {
                     }
                 }
             }
-            .searchable(text: $searchText, prompt: "Name or district")
+            .searchable(text: $searchText, prompt: languageManager.localizedString(for: "trails.search.prompt"))
         }
     }
 }
