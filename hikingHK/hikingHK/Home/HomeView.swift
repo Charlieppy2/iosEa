@@ -461,6 +461,7 @@ struct HomeView: View {
 
 struct SavedHikeRow: View {
     let hike: SavedHike
+    @EnvironmentObject private var languageManager: LanguageManager
 
     var body: some View {
         HStack(spacing: 12) {
@@ -471,7 +472,7 @@ struct SavedHikeRow: View {
             
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text(hike.trail.name)
+                    Text(hike.trail.localizedName(languageManager: languageManager))
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(Color.hikingDarkGreen)
                     Spacer()
