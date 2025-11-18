@@ -129,12 +129,25 @@ struct TrailDetailView: View {
             Text(languageManager.localizedString(for: "trail.highlights"))
                 .font(.headline)
             ForEach(trail.highlights, id: \.self) { highlight in
-                Label(highlight, systemImage: "sparkles")
+                Label(localizedHighlight(highlight), systemImage: "sparkles")
                     .padding(.vertical, 6)
             }
             .padding()
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
+    }
+    
+    private func localizedHighlight(_ highlight: String) -> String {
+        // Create a key based on trail ID and highlight text
+        let highlightKey = highlight.lowercased()
+            .replacingOccurrences(of: " ", with: ".")
+            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: "(", with: "")
+            .replacingOccurrences(of: ")", with: "")
+        let key = "trail.\(trail.id.uuidString.lowercased()).highlight.\(highlightKey)"
+        let localized = languageManager.localizedString(for: key)
+        // If no localization found, return original highlight
+        return localized != key ? localized : highlight
     }
 
     private var transportationSection: some View {
