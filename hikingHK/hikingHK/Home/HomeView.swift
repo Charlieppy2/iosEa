@@ -54,7 +54,7 @@ struct HomeView: View {
                     Button {
                         isShowingSOSConfirmation = true
                     } label: {
-                        Label("SOS", systemImage: "sos")
+                        Label(languageManager.localizedString(for: "home.sos.button"), systemImage: "sos")
                             .foregroundStyle(.red)
                             .fontWeight(.bold)
                     }
@@ -67,13 +67,13 @@ struct HomeView: View {
                             .foregroundStyle(Color.hikingGreen)
                     }
                     .disabled(viewModel.isLoadingWeather)
-                    .accessibilityLabel("Refresh weather")
+                    .accessibilityLabel(languageManager.localizedString(for: "home.refresh.weather"))
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         isShowingSafetySheet.toggle()
                     } label: {
-                        Label("Safety", systemImage: "cross.case.fill")
+                        Label(languageManager.localizedString(for: "home.safety"), systemImage: "cross.case.fill")
                             .foregroundStyle(Color.hikingGreen)
                     }
                 }

@@ -88,6 +88,7 @@ struct LocalizedStrings {
         "home.tap.add.to.plan": "Tap Add to plan your first walk",
         "home.refresh.weather": "Refresh weather",
         "home.safety": "Safety",
+        "home.sos.button": "SOS",
         
         // Trails
         "trails.title": "Trails",
@@ -294,6 +295,7 @@ struct LocalizedStrings {
         "home.tap.add.to.plan": "點擊添加以計劃您的第一次行山",
         "home.refresh.weather": "刷新天氣",
         "home.safety": "安全",
+        "home.sos.button": "緊急求救",
         
         // Trails
         "trails.title": "路線",
