@@ -460,7 +460,24 @@ struct LocalizedStrings {
         "achievements.congratulations": "恭喜！您解鎖了",
         "achievements.achievement": "成就！",
         "achievements.unlocked.on": "解鎖時間",
-        "achievements.filter.all": "全部"
+        "achievements.filter.all": "全部",
+        
+        // Gear Checklist
+        "gear.title": "智能裝備清單",
+        "gear.view.checklist": "查看裝備清單",
+        "gear.progress": "進度",
+        "gear.required": "必需",
+        "gear.required.items": "必需項目",
+        "gear.all.required.complete": "所有必需項目已完成！",
+        "gear.no.items": "尚無裝備項目",
+        "gear.generate.description": "將根據路線難度、天氣和季節生成裝備清單",
+        "gear.category.essential": "必需品",
+        "gear.category.clothing": "服裝",
+        "gear.category.navigation": "導航",
+        "gear.category.safety": "安全",
+        "gear.category.food": "食物",
+        "gear.category.tools": "工具",
+        "gear.category.optional": "可選"
     ]
 }
 
