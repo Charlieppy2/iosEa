@@ -18,9 +18,9 @@ struct HikeRecordsListView: View {
             List {
                 if records.isEmpty {
                     ContentUnavailableView(
-                        "尚無行山記錄",
+                        "No Hike Records",
                         systemImage: "figure.hiking",
-                        description: Text("開始追蹤您的行山活動以創建記錄")
+                        description: Text("Start tracking your hiking activities to create records")
                     )
                 } else {
                     ForEach(records) { record in

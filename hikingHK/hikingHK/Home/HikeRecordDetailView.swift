@@ -106,7 +106,7 @@ struct HikeRecordDetailView: View {
                 .frame(height: 300)
                 .cornerRadius(16)
             } else {
-                Text("無軌跡數據")
+                Text("No Track Data")
                     .frame(height: 300)
                     .frame(maxWidth: .infinity)
                     .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
@@ -124,14 +124,14 @@ struct HikeRecordDetailView: View {
                     icon: "ruler.fill",
                     value: String(format: "%.2f", record.distanceKm),
                     unit: "km",
-                    label: "距離",
+                    label: "Distance",
                     color: Color.hikingGreen
                 )
                 StatCard(
                     icon: "clock.fill",
                     value: record.formattedDuration,
                     unit: "",
-                    label: "時長",
+                    label: "Duration",
                     color: Color.hikingSky
                 )
             }
@@ -141,14 +141,14 @@ struct HikeRecordDetailView: View {
                     icon: "speedometer",
                     value: String(format: "%.1f", record.averageSpeedKmh),
                     unit: "km/h",
-                    label: "平均速度",
+                    label: "Avg Speed",
                     color: Color.hikingBrown
                 )
                 StatCard(
                     icon: "arrow.up.arrow.down",
                     value: String(format: "%.0f", record.elevationGain),
                     unit: "m",
-                    label: "海拔上升",
+                    label: "Elev Gain",
                     color: Color.hikingDarkGreen
                 )
             }
@@ -157,16 +157,16 @@ struct HikeRecordDetailView: View {
     
     private var detailedStatsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("詳細統計")
+            Text("Detailed Statistics")
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
             
             VStack(spacing: 12) {
-                DetailRow(label: "最高速度", value: String(format: "%.1f km/h", record.maxSpeedKmh))
-                DetailRow(label: "最高海拔", value: String(format: "%.0f m", record.maxAltitude))
-                DetailRow(label: "最低海拔", value: String(format: "%.0f m", record.minAltitude))
-                DetailRow(label: "海拔下降", value: String(format: "%.0f m", record.elevationLoss))
-                DetailRow(label: "軌跡點數", value: "\(record.trackPoints.count)")
+                DetailRow(label: "Max Speed", value: String(format: "%.1f km/h", record.maxSpeedKmh))
+                DetailRow(label: "Max Altitude", value: String(format: "%.0f m", record.maxAltitude))
+                DetailRow(label: "Min Altitude", value: String(format: "%.0f m", record.minAltitude))
+                DetailRow(label: "Elev Loss", value: String(format: "%.0f m", record.elevationLoss))
+                DetailRow(label: "Track Points", value: "\(record.trackPoints.count)")
             }
         }
         .padding()
@@ -176,7 +176,7 @@ struct HikeRecordDetailView: View {
     
     private var elevationChartSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("海拔變化")
+            Text("Elevation Profile")
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
             
@@ -184,7 +184,7 @@ struct HikeRecordDetailView: View {
                 ElevationChart(points: record.trackPoints)
                     .frame(height: 200)
             } else {
-                Text("數據不足")
+                Text("Insufficient Data")
                     .frame(height: 200)
                     .frame(maxWidth: .infinity)
                     .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
@@ -202,7 +202,7 @@ struct HikeRecordDetailView: View {
             } label: {
                 HStack {
                     Image(systemName: "play.circle.fill")
-                    Text("3D 軌跡回放")
+                    Text("3D Track Playback")
                 }
                 .frame(maxWidth: .infinity)
                 .padding()

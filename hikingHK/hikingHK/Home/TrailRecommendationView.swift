@@ -77,12 +77,12 @@ struct TrailRecommendationView: View {
     
     private var recommendationSettingsCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("推薦設置")
+            Text("Recommendation Settings")
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
             
             VStack(alignment: .leading, spacing: 12) {
-                Text("可用時間：\(Int(availableHours)) 小時")
+                Text("Available Time: \(Int(availableHours)) hours")
                     .font(.subheadline)
                     .foregroundStyle(Color.hikingBrown)
                 
@@ -103,7 +103,7 @@ struct TrailRecommendationView: View {
             } label: {
                 HStack {
                     Image(systemName: "arrow.clockwise")
-                    Text("重新生成推薦")
+                    Text("Regenerate Recommendations")
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -121,10 +121,10 @@ struct TrailRecommendationView: View {
             Image(systemName: "sparkles")
                 .font(.system(size: 64))
                 .foregroundStyle(Color.hikingGreen)
-            Text("暫無推薦")
+            Text("No Recommendations")
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
-            Text("請調整您的偏好設置或可用時間")
+            Text("Please adjust your preferences or available time")
                 .font(.subheadline)
                 .foregroundStyle(Color.hikingBrown)
                 .multilineTextAlignment(.center)
@@ -135,7 +135,7 @@ struct TrailRecommendationView: View {
     
     private var recommendationsList: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("為您推薦")
+            Text("Recommended for You")
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
             
@@ -170,7 +170,7 @@ struct RecommendationCard: View {
                     Text("\(recommendation.matchPercentage)%")
                         .font(.title2.bold())
                         .foregroundStyle(Color.hikingGreen)
-                    Text("匹配度")
+                    Text("Match")
                         .font(.caption)
                         .foregroundStyle(Color.hikingStone)
                 }
@@ -224,7 +224,7 @@ struct RecommendationCard: View {
                     isShowingDetail = true
                     onAction(.viewed)
                 } label: {
-                    Text("查看詳情")
+                    Text("View Details")
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -288,21 +288,21 @@ struct PreferenceSettingsView: View {
                     }
                 }
                 
-                Section("偏好難度") {
-                    Picker("難度", selection: $preference.preferredDifficulty) {
-                        Text("無偏好").tag(Trail.Difficulty?.none)
+                Section("Preferred Difficulty") {
+                    Picker("Difficulty", selection: $preference.preferredDifficulty) {
+                        Text("No Preference").tag(Trail.Difficulty?.none)
                         ForEach(Trail.Difficulty.allCases, id: \.self) { difficulty in
                             Text(difficulty.rawValue).tag(Trail.Difficulty?.some(difficulty))
                         }
                     }
                 }
                 
-                Section("偏好距離") {
+                Section("Preferred Distance") {
                     VStack {
                         HStack {
-                            Text("最小：\(Int(preference.preferredDistance?.minKm ?? 0)) km")
+                            Text("Min: \(Int(preference.preferredDistance?.minKm ?? 0)) km")
                             Spacer()
-                            Text("最大：\(Int(preference.preferredDistance?.maxKm ?? 20)) km")
+                            Text("Max: \(Int(preference.preferredDistance?.maxKm ?? 20)) km")
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -312,7 +312,7 @@ struct PreferenceSettingsView: View {
                     }
                 }
             }
-            .navigationTitle("偏好設置")
+            .navigationTitle("Preferences")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

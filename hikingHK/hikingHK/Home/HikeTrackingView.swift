@@ -62,11 +62,11 @@ struct HikeTrackingView: View {
                         .padding()
                 }
             }
-            .navigationTitle("行山追蹤")
+            .navigationTitle("Hike Tracking")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
+                    Button("Cancel") {
                         if viewModel.isTracking {
                             viewModel.pauseTracking()
                         }
@@ -75,13 +75,13 @@ struct HikeTrackingView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if viewModel.isTracking {
-                        Button("停止") {
+                        Button("Stop") {
                             viewModel.stopTracking()
                             dismiss()
                         }
                         .foregroundStyle(.red)
                     } else {
-                        Button("開始") {
+                        Button("Start") {
                             if let trail = selectedTrail {
                                 viewModel.startTracking(trailId: trail.id, trailName: trail.name)
                             } else {
@@ -115,19 +115,19 @@ struct HikeTrackingView: View {
                 StatItem(
                     icon: "clock.fill",
                     value: viewModel.formattedElapsedTime,
-                    label: "時間",
+                    label: "Time",
                     color: Color.hikingGreen
                 )
                 StatItem(
                     icon: "ruler.fill",
                     value: viewModel.formattedDistance,
-                    label: "距離",
+                    label: "Distance",
                     color: Color.hikingSky
                 )
                 StatItem(
                     icon: "speedometer",
                     value: String(format: "%.1f km/h", viewModel.currentSpeedKmh),
-                    label: "速度",
+                    label: "Speed",
                     color: Color.hikingBrown
                 )
             }
@@ -139,13 +139,13 @@ struct HikeTrackingView: View {
                 StatItem(
                     icon: "mountain.2.fill",
                     value: String(format: "%.0f m", viewModel.currentAltitude),
-                    label: "海拔",
+                    label: "Altitude",
                     color: Color.hikingDarkGreen
                 )
                 StatItem(
                     icon: "arrow.up.circle.fill",
                     value: "\(viewModel.trackPoints.count)",
-                    label: "軌跡點",
+                    label: "Track Points",
                     color: Color.hikingTan
                 )
             }
@@ -158,7 +158,7 @@ struct HikeTrackingView: View {
                     } label: {
                         HStack {
                             Image(systemName: "pause.fill")
-                            Text("暫停")
+                            Text("Pause")
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -172,7 +172,7 @@ struct HikeTrackingView: View {
                     } label: {
                         HStack {
                             Image(systemName: "stop.fill")
-                            Text("停止")
+                            Text("Stop")
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -186,7 +186,7 @@ struct HikeTrackingView: View {
                 } label: {
                     HStack {
                         Image(systemName: "play.fill")
-                        Text("繼續")
+                        Text("Resume")
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -260,10 +260,10 @@ struct TrailPickerForTracking: View {
                     }
                 }
             }
-            .navigationTitle("選擇路線")
+            .navigationTitle("Select Trail")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
