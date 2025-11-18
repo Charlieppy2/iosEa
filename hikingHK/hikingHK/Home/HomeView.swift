@@ -128,6 +128,10 @@ struct HomeView: View {
                 JournalListView()
                     .presentationDetents([.large])
             }
+            .sheet(isPresented: $isShowingWeatherForecast) {
+                WeatherForecastView()
+                    .presentationDetents([.large])
+            }
             .sheet(item: $selectedSavedHike) { hike in
                 SavedHikeDetailSheet(
                     hike: hike,
