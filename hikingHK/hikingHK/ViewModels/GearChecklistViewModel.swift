@@ -16,10 +16,17 @@ final class GearChecklistViewModel: ObservableObject {
     @Published var error: String?
     
     private var store: GearChecklistStore?
-    private let gearService: SmartGearServiceProtocol
+    private var gearService: SmartGearServiceProtocol?
     
-    nonisolated init(gearService: SmartGearServiceProtocol = SmartGearService()) {
+    nonisolated init(gearService: SmartGearServiceProtocol? = nil) {
         self.gearService = gearService
+    }
+    
+    private func getGearService() -> SmartGearServiceProtocol {
+        if let service = gearService {
+            return service
+        }
+        return SmartGearService()
     }
     
     func configureIfNeeded(context: ModelContext) {
@@ -38,7 +45,7 @@ final class GearChecklistViewModel: ObservableObject {
         let season = Season.from(date: scheduledDate)
         let duration = trail.estimatedDurationMinutes / 60
         
-        let items = gearService.generateGearList(
+        let items = getGearService().generateGearList(
             difficulty: trail.difficulty,
             weather: weather,
             season: season,
