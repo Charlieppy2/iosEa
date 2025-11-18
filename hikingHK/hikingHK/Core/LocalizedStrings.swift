@@ -97,8 +97,108 @@ struct LocalizedStrings {
         "trails.duration": "Duration",
         "trails.difficulty": "Difficulty",
         "trails.district": "District",
+        "trails.elevation": "Elevation",
         "trails.all.difficulties": "All difficulties",
         "trails.search.prompt": "Name or district",
+        "trail.checkpoints": "Route checkpoints",
+        "trail.facilities": "Facilities & services",
+        "trail.highlights": "Highlights",
+        "trail.transportation": "Transport tips",
+        
+        // Trail Difficulties
+        "trail.difficulty.easy": "Easy",
+        "trail.difficulty.moderate": "Moderate",
+        "trail.difficulty.challenging": "Challenging",
+        
+        // Trail Districts
+        "trail.district.sai.kung": "Sai Kung",
+        "trail.district.hong.kong.island": "Hong Kong Island",
+        "trail.district.tsuen.wan": "Tsuen Wan",
+        "trail.district.sha.tin": "Sha Tin",
+        "trail.district.tai.mo.shan": "Tai Mo Shan",
+        "trail.district.kowloon": "Kowloon",
+        "trail.district.lantau": "Lantau",
+        "trail.district.tai.po": "Tai Po",
+        
+        // Trail Names and Summaries (MacLehose Section 4)
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.name": "MacLehose Section 4",
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.summary": "Iconic ridge walk from Kei Ling Ha to Tate's Cairn with panoramic views of Port Shelter.",
+        
+        // Dragon's Back
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.name": "Dragon's Back",
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.summary": "Most beloved half-day hike featuring coastal scenery overlooking Shek O, Big Wave Bay, and Tai Tam Bay.",
+        
+        // Tai Mo Shan Waterfalls
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.name": "Tai Mo Shan Waterfalls",
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.summary": "Family friendly nature trail showcasing four major cascades from the Ng Tung Chai waterfall series.",
+        
+        // MacLehose Section 1
+        "trail.a1b2c3d4-e5f6-7890-abcd-ef1234567890.name": "MacLehose Section 1",
+        "trail.a1b2c3d4-e5f6-7890-abcd-ef1234567890.summary": "Easy coastal walk from Pak Tam Chung to Long Ke Wan with reservoir views.",
+        
+        // MacLehose Section 2
+        "trail.b2c3d4e5-f6a7-8901-bcde-f23456789012.name": "MacLehose Section 2",
+        "trail.b2c3d4e5-f6a7-8901-bcde-f23456789012.summary": "Scenic route from Long Ke to Pak Tam Au via Sai Wan and Ham Tin.",
+        
+        // MacLehose Section 3
+        "trail.c3d4e5f6-a7b8-9012-cdef-345678901234.name": "MacLehose Section 3",
+        "trail.c3d4e5f6-a7b8-9012-cdef-345678901234.summary": "Challenging climb from Pak Tam Au to Kei Ling Ha over Kai Kung Shan.",
+        
+        // MacLehose Section 5
+        "trail.d4e5f6a7-b8c9-0123-def0-456789012345.name": "MacLehose Section 5",
+        "trail.d4e5f6a7-b8c9-0123-def0-456789012345.summary": "From Tate's Cairn to Tai Po Road via Lion Rock and Beacon Hill.",
+        
+        // MacLehose Section 8
+        "trail.e5f6a7b8-c9d0-1234-ef01-567890123456.name": "MacLehose Section 8",
+        "trail.e5f6a7b8-c9d0-1234-ef01-567890123456.summary": "Climb to Hong Kong's highest peak Tai Mo Shan from Lead Mine Pass.",
+        
+        // Wilson Trail Section 1
+        "trail.f6a7b8c9-d0e1-2345-f012-678901234567.name": "Wilson Trail Section 1",
+        "trail.f6a7b8c9-d0e1-2345-f012-678901234567.summary": "From Stanley Gap Road to Tsz Lo Lan Shan via Violet Hill and The Twins.",
+        
+        // Wilson Trail Section 2
+        "trail.a7b8c9d0-e1f2-3456-0123-789012345678.name": "Wilson Trail Section 2",
+        "trail.a7b8c9d0-e1f2-3456-0123-789012345678.summary": "From Tsz Lo Lan to Quarry Bay via Mount Butler and Jardine's Lookout.",
+        
+        // Lantau Trail Section 2
+        "trail.b8c9d0e1-f2a3-4567-1234-890123456789.name": "Lantau Trail Section 2",
+        "trail.b8c9d0e1-f2a3-4567-1234-890123456789.summary": "From Nam Shan to Pak Kung Au via Sunset Peak, Hong Kong's third highest peak.",
+        
+        // Lantau Trail Section 3
+        "trail.c9d0e1f2-a3b4-5678-2345-901234567890.name": "Lantau Trail Section 3",
+        "trail.c9d0e1f2-a3b4-5678-2345-901234567890.summary": "From Pak Kung Au to Ngong Ping via Lantau Peak, Hong Kong's second highest peak.",
+        
+        // Hong Kong Trail Section 1
+        "trail.d0e1f2a3-b4c5-6789-3456-012345678901.name": "Hong Kong Trail Section 1",
+        "trail.d0e1f2a3-b4c5-6789-3456-012345678901.summary": "From The Peak to Pok Fu Lam Reservoir via Lugard Road and Harlech Road.",
+        
+        // Hong Kong Trail Section 4
+        "trail.e1f2a3b4-c5d6-7890-4567-123456789012.name": "Hong Kong Trail Section 4",
+        "trail.e1f2a3b4-c5d6-7890-4567-123456789012.summary": "From Wan Chai Gap to Wong Nai Chung Gap via Black's Link and Jardine's Lookout.",
+        
+        // Lion Rock
+        "trail.f2a3b4c5-d6e7-8901-5678-234567890123.name": "Lion Rock",
+        "trail.f2a3b4c5-d6e7-8901-5678-234567890123.summary": "Iconic peak hike with panoramic views of Kowloon and Hong Kong Island.",
+        
+        // Sunset Peak
+        "trail.a3b4c5d6-e7f8-9012-6789-345678901234.name": "Sunset Peak",
+        "trail.a3b4c5d6-e7f8-9012-6789-345678901234.summary": "Climb to Sunset Peak via Mui Wo, famous for sunrise and sunset views.",
+        
+        // Sharp Peak
+        "trail.b4c5d6e7-f8a9-0123-7890-456789012345.name": "Sharp Peak",
+        "trail.b4c5d6e7-f8a9-0123-7890-456789012345.summary": "Challenging peak in Sai Kung East Country Park with distinctive pyramid shape.",
+        
+        // Tai Mo Shan
+        "trail.c5d6e7f8-a9b0-1234-8901-567890123456.name": "Tai Mo Shan",
+        "trail.c5d6e7f8-a9b0-1234-8901-567890123456.summary": "Hong Kong's highest peak at 957m, accessible via multiple routes.",
+        
+        // The Peak Circle Walk
+        "trail.d6e7f8a9-b0c1-2345-9012-678901234567.name": "The Peak Circle Walk",
+        "trail.d6e7f8a9-b0c1-2345-9012-678901234567.summary": "Easy circular walk around The Peak with stunning city and harbor views.",
+        
+        // Tai Tam Reservoir
+        "trail.e7f8a9b0-c1d2-3456-0123-789012345678.name": "Tai Tam Reservoir",
+        "trail.e7f8a9b0-c1d2-3456-0123-789012345678.summary": "Scenic walk around Tai Tam Reservoir with historic dam structures.",
         
         // Planner
         "planner.title": "Planner",
@@ -321,8 +421,108 @@ struct LocalizedStrings {
         "trails.duration": "時長",
         "trails.difficulty": "難度",
         "trails.district": "地區",
+        "trails.elevation": "海拔",
         "trails.all.difficulties": "所有難度",
         "trails.search.prompt": "名稱或地區",
+        "trail.checkpoints": "路線檢查點",
+        "trail.facilities": "設施與服務",
+        "trail.highlights": "亮點",
+        "trail.transportation": "交通提示",
+        
+        // Trail Difficulties
+        "trail.difficulty.easy": "容易",
+        "trail.difficulty.moderate": "中等",
+        "trail.difficulty.challenging": "困難",
+        
+        // Trail Districts
+        "trail.district.sai.kung": "西貢",
+        "trail.district.hong.kong.island": "香港島",
+        "trail.district.tsuen.wan": "荃灣",
+        "trail.district.sha.tin": "沙田",
+        "trail.district.tai.mo.shan": "大帽山",
+        "trail.district.kowloon": "九龍",
+        "trail.district.lantau": "大嶼山",
+        "trail.district.tai.po": "大埔",
+        
+        // Trail Names and Summaries (MacLehose Section 4)
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.name": "麥理浩徑第四段",
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.summary": "從企嶺下到基維爾營的標誌性山脊步道，可欣賞西貢海的全景。",
+        
+        // Dragon's Back
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.name": "龍脊",
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.summary": "最受歡迎的半日行山路線，可欣賞石澳、大浪灣和赤柱的沿海風景。",
+        
+        // Tai Mo Shan Waterfalls
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.name": "大帽山瀑布",
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.summary": "適合家庭的自然步道，展示梧桐寨瀑布群的四個主要瀑布。",
+        
+        // MacLehose Section 1
+        "trail.a1b2c3d4-e5f6-7890-abcd-ef1234567890.name": "麥理浩徑第一段",
+        "trail.a1b2c3d4-e5f6-7890-abcd-ef1234567890.summary": "從北潭涌到浪茄灣的輕鬆沿海步道，可欣賞水庫景色。",
+        
+        // MacLehose Section 2
+        "trail.b2c3d4e5-f6a7-8901-bcde-f23456789012.name": "麥理浩徑第二段",
+        "trail.b2c3d4e5-f6a7-8901-bcde-f23456789012.summary": "從浪茄到北潭凹的風景路線，途經西灣和鹹田灣。",
+        
+        // MacLehose Section 3
+        "trail.c3d4e5f6-a7b8-9012-cdef-345678901234.name": "麥理浩徑第三段",
+        "trail.c3d4e5f6-a7b8-9012-cdef-345678901234.summary": "從北潭凹到企嶺下的挑戰性攀登路線，途經雞公山。",
+        
+        // MacLehose Section 5
+        "trail.d4e5f6a7-b8c9-0123-def0-456789012345.name": "麥理浩徑第五段",
+        "trail.d4e5f6a7-b8c9-0123-def0-456789012345.summary": "從基維爾營到大埔公路，途經獅子山和筆架山。",
+        
+        // MacLehose Section 8
+        "trail.e5f6a7b8-c9d0-1234-ef01-567890123456.name": "麥理浩徑第八段",
+        "trail.e5f6a7b8-c9d0-1234-ef01-567890123456.summary": "從鉛礦坳攀登至香港最高峰大帽山。",
+        
+        // Wilson Trail Section 1
+        "trail.f6a7b8c9-d0e1-2345-f012-678901234567.name": "衛奕信徑第一段",
+        "trail.f6a7b8c9-d0e1-2345-f012-678901234567.summary": "從黃泥涌峽道到紫羅蘭山，途經紫崗橋和孖崗山。",
+        
+        // Wilson Trail Section 2
+        "trail.a7b8c9d0-e1f2-3456-0123-789012345678.name": "衛奕信徑第二段",
+        "trail.a7b8c9d0-e1f2-3456-0123-789012345678.summary": "從紫羅蘭山到鰂魚涌，途經畢拿山和渣甸山。",
+        
+        // Lantau Trail Section 2
+        "trail.b8c9d0e1-f2a3-4567-1234-890123456789.name": "鳳凰徑第二段",
+        "trail.b8c9d0e1-f2a3-4567-1234-890123456789.summary": "從南山到伯公坳，途經香港第三高峰鳳凰山。",
+        
+        // Lantau Trail Section 3
+        "trail.c9d0e1f2-a3b4-5678-2345-901234567890.name": "鳳凰徑第三段",
+        "trail.c9d0e1f2-a3b4-5678-2345-901234567890.summary": "從伯公坳到昂坪，途經香港第二高峰大東山。",
+        
+        // Hong Kong Trail Section 1
+        "trail.d0e1f2a3-b4c5-6789-3456-012345678901.name": "港島徑第一段",
+        "trail.d0e1f2a3-b4c5-6789-3456-012345678901.summary": "從山頂到薄扶林水塘，途經盧吉道和夏力道。",
+        
+        // Hong Kong Trail Section 4
+        "trail.e1f2a3b4-c5d6-7890-4567-123456789012.name": "港島徑第四段",
+        "trail.e1f2a3b4-c5d6-7890-4567-123456789012.summary": "從灣仔峽到黃泥涌峽，途經布力徑和渣甸山。",
+        
+        // Lion Rock
+        "trail.f2a3b4c5-d6e7-8901-5678-234567890123.name": "獅子山",
+        "trail.f2a3b4c5-d6e7-8901-5678-234567890123.summary": "標誌性的山峰行山路線，可欣賞九龍和香港島的全景。",
+        
+        // Sunset Peak
+        "trail.a3b4c5d6-e7f8-9012-6789-345678901234.name": "鳳凰山",
+        "trail.a3b4c5d6-e7f8-9012-6789-345678901234.summary": "從梅窩攀登至鳳凰山，以日出和日落景色聞名。",
+        
+        // Sharp Peak
+        "trail.b4c5d6e7-f8a9-0123-7890-456789012345.name": "蚺蛇尖",
+        "trail.b4c5d6e7-f8a9-0123-7890-456789012345.summary": "西貢東郊野公園的挑戰性山峰，具有獨特的金字塔形狀。",
+        
+        // Tai Mo Shan
+        "trail.c5d6e7f8-a9b0-1234-8901-567890123456.name": "大帽山",
+        "trail.c5d6e7f8-a9b0-1234-8901-567890123456.summary": "香港最高峰，海拔957米，可通過多條路線到達。",
+        
+        // The Peak Circle Walk
+        "trail.d6e7f8a9-b0c1-2345-9012-678901234567.name": "山頂環迴步行徑",
+        "trail.d6e7f8a9-b0c1-2345-9012-678901234567.summary": "圍繞山頂的輕鬆環形步道，可欣賞城市和海港的壯麗景色。",
+        
+        // Tai Tam Reservoir
+        "trail.e7f8a9b0-c1d2-3456-0123-789012345678.name": "大潭水塘",
+        "trail.e7f8a9b0-c1d2-3456-0123-789012345678.summary": "圍繞大潭水塘的風景步道，有歷史悠久的堤壩建築。",
         
         // Planner
         "planner.title": "計劃",

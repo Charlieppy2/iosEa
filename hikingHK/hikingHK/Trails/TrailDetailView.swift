@@ -9,6 +9,7 @@ import SwiftUI
 
 struct TrailDetailView: View {
     let trail: Trail
+    @EnvironmentObject private var languageManager: LanguageManager
 
     var body: some View {
         ScrollView {
@@ -30,7 +31,7 @@ struct TrailDetailView: View {
             }
             .ignoresSafeArea()
         )
-        .navigationTitle(trail.name)
+        .navigationTitle(trail.localizedName(languageManager: languageManager))
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -38,12 +39,12 @@ struct TrailDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Label(trail.district, systemImage: "mappin.and.ellipse")
+                    Label(trail.localizedDistrict(languageManager: languageManager), systemImage: "mappin.and.ellipse")
                         .foregroundStyle(.secondary)
                     HStack(spacing: 12) {
-                        statBlock(title: "Distance", value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km")
-                        statBlock(title: "Elevation", value: "\(trail.elevationGain) m")
-                        statBlock(title: "Duration", value: "\(trail.estimatedDurationMinutes / 60) h")
+                        statBlock(title: languageManager.localizedString(for: "trails.distance"), value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km")
+                        statBlock(title: languageManager.localizedString(for: "trails.elevation"), value: "\(trail.elevationGain) m")
+                        statBlock(title: languageManager.localizedString(for: "trails.duration"), value: "\(trail.estimatedDurationMinutes / 60) h")
                     }
                 }
                 Spacer()
@@ -51,7 +52,7 @@ struct TrailDetailView: View {
                     .font(.largeTitle)
                     .foregroundStyle(.primary)
             }
-            Text(trail.summary)
+            Text(trail.localizedSummary(languageManager: languageManager))
                 .font(.body)
                 .foregroundStyle(.secondary)
         }
@@ -59,7 +60,7 @@ struct TrailDetailView: View {
 
     private var timelineSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Route checkpoints")
+            Text(languageManager.localizedString(for: "trail.checkpoints"))
                 .font(.headline)
             VStack(alignment: .leading, spacing: 16) {
                 ForEach(trail.checkpoints) { checkpoint in
@@ -102,7 +103,7 @@ struct TrailDetailView: View {
 
     private var facilitiesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Facilities & services")
+            Text(languageManager.localizedString(for: "trail.facilities"))
                 .font(.headline)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
@@ -125,7 +126,7 @@ struct TrailDetailView: View {
 
     private var highlightsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Highlights")
+            Text(languageManager.localizedString(for: "trail.highlights"))
                 .font(.headline)
             ForEach(trail.highlights, id: \.self) { highlight in
                 Label(highlight, systemImage: "sparkles")
@@ -138,7 +139,7 @@ struct TrailDetailView: View {
 
     private var transportationSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Transport tips")
+            Text(languageManager.localizedString(for: "trail.transportation"))
                 .font(.headline)
             Text(trail.transportation)
                 .foregroundStyle(.secondary)

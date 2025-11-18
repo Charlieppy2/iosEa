@@ -65,20 +65,21 @@ struct TrailListView: View {
 
 struct TrailRow: View {
     let trail: Trail
+    @EnvironmentObject private var languageManager: LanguageManager
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(trail.name)
+                Text(trail.localizedName(languageManager: languageManager))
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(Color.hikingDarkGreen)
                 Spacer()
-                Label(trail.difficulty.rawValue, systemImage: trail.difficulty.icon)
+                Label(trail.difficulty.localizedRawValue(languageManager: languageManager), systemImage: trail.difficulty.icon)
                     .labelStyle(.iconOnly)
                     .foregroundStyle(Color.hikingGreen)
                     .font(.title3)
             }
-            Text(trail.summary)
+            Text(trail.localizedSummary(languageManager: languageManager))
                 .font(.subheadline)
                 .foregroundStyle(Color.hikingBrown)
                 .lineLimit(2)

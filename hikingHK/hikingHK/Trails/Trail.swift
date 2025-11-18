@@ -138,6 +138,33 @@ extension Trail {
         guard !routeLocations.isEmpty else { return nil }
         return MKPolyline(coordinates: routeLocations, count: routeLocations.count)
     }
+    
+    func localizedName(languageManager: LanguageManager) -> String {
+        let key = "trail.\(id.uuidString.lowercased()).name"
+        let localized = languageManager.localizedString(for: key)
+        // If no localization found, return original name
+        return localized != key ? localized : name
+    }
+    
+    func localizedSummary(languageManager: LanguageManager) -> String {
+        let key = "trail.\(id.uuidString.lowercased()).summary"
+        let localized = languageManager.localizedString(for: key)
+        // If no localization found, return original summary
+        return localized != key ? localized : summary
+    }
+    
+    func localizedDistrict(languageManager: LanguageManager) -> String {
+        let key = "trail.district.\(district.lowercased().replacingOccurrences(of: " ", with: "."))"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : district
+    }
+}
+
+extension Trail.Difficulty {
+    func localizedRawValue(languageManager: LanguageManager) -> String {
+        let key = "trail.difficulty.\(rawValue.lowercased())"
+        return languageManager.localizedString(for: key)
+    }
 }
 
 extension Trail {

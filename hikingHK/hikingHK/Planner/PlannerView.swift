@@ -22,7 +22,7 @@ struct PlannerView: View {
                 Section(languageManager.localizedString(for: "planner.choose.trail")) {
                     Picker(languageManager.localizedString(for: "trails.title"), selection: $selectedTrail) {
                         ForEach(viewModel.trails) { trail in
-                            Text(trail.name).tag(Optional(trail))
+                            Text(trail.localizedName(languageManager: languageManager)).tag(Optional(trail))
                         }
                     }
                 }
@@ -33,9 +33,9 @@ struct PlannerView: View {
                 Section(languageManager.localizedString(for: "planner.preview")) {
                     if let trail = selectedTrail {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(trail.name)
+                            Text(trail.localizedName(languageManager: languageManager))
                                 .font(.headline)
-                            Label(trail.district, systemImage: "mappin.and.ellipse")
+                            Label(trail.localizedDistrict(languageManager: languageManager), systemImage: "mappin.and.ellipse")
                             Label {
                                 Text("\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km • \(trail.estimatedDurationMinutes / 60) h")
                             } icon: {

@@ -229,10 +229,10 @@ struct HomeView: View {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(Color.hikingDarkGreen)
                     }
-                    Text(trail.name)
+                    Text(trail.localizedName(languageManager: languageManager))
                         .font(.title2.bold())
                         .foregroundStyle(Color.hikingDarkGreen)
-                    Label(trail.district, systemImage: "mappin.circle.fill")
+                    Label(trail.localizedDistrict(languageManager: languageManager), systemImage: "mappin.circle.fill")
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
                 }
