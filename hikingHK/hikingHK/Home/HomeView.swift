@@ -21,6 +21,7 @@ struct HomeView: View {
     @State private var isShowingRecommendations = false
     @State private var isShowingSpeciesIdentification = false
     @State private var isShowingJournal = false
+    @State private var isShowingWeatherForecast = false
     @State private var selectedSavedHike: SavedHike?
     @State private var isShowingTrailPicker = false
     @StateObject private var locationManager = LocationManager()
@@ -418,10 +419,13 @@ struct HomeView: View {
                 }
             }
             
-            // Journal Quick Action
+            // Journal and Weather Forecast Quick Actions
             HStack(spacing: 12) {
                 quickAction(icon: "book.fill", title: languageManager.localizedString(for: "home.journal"), color: Color.hikingBrown) {
                     isShowingJournal = true
+                }
+                quickAction(icon: "cloud.sun.fill", title: languageManager.localizedString(for: "home.weather.forecast"), color: Color.hikingSky) {
+                    isShowingWeatherForecast = true
                 }
             }
         }
