@@ -591,6 +591,7 @@ struct SavedHikeDetailSheet: View {
     var onDelete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var languageManager: LanguageManager
     @State private var plannedDate: Date
     @State private var note: String
     @State private var isCompleted: Bool
@@ -614,7 +615,7 @@ struct SavedHikeDetailSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Trail") {
+                Section(languageManager.localizedString(for: "trails.title")) {
                     Text(hike.trail.name)
                         .font(.headline)
                     Label(hike.trail.district, systemImage: "mappin.and.ellipse")
@@ -624,39 +625,39 @@ struct SavedHikeDetailSheet: View {
                         Image(systemName: "clock")
                     }
                 }
-                Section("Schedule") {
-                    DatePicker("Date", selection: $plannedDate, displayedComponents: .date)
-                    TextField("Note", text: $note)
+                Section(languageManager.localizedString(for: "planner.schedule")) {
+                    DatePicker(languageManager.localizedString(for: "planner.date"), selection: $plannedDate, displayedComponents: .date)
+                    TextField(languageManager.localizedString(for: "planner.note"), text: $note)
                 }
-                Section("Status") {
-                    Toggle("Mark as completed", isOn: $isCompleted.animation())
+                Section(languageManager.localizedString(for: "hike.plan.status")) {
+                    Toggle(languageManager.localizedString(for: "hike.plan.mark.completed"), isOn: $isCompleted.animation())
                     if isCompleted {
-                        DatePicker("Completed on", selection: $completedDate, displayedComponents: .date)
+                        DatePicker(languageManager.localizedString(for: "hike.plan.completed.on"), selection: $completedDate, displayedComponents: .date)
                     }
                 }
                 Section {
-                    Button("Update plan") {
+                    Button(languageManager.localizedString(for: "hike.plan.update")) {
                         onUpdate(plannedDate, note, isCompleted, isCompleted ? completedDate : nil)
                         dismiss()
                     }
                     .buttonStyle(.borderedProminent)
                 }
                 Section {
-                    Button("Delete plan", role: .destructive) {
+                    Button(languageManager.localizedString(for: "hike.plan.delete"), role: .destructive) {
                         isShowingDeleteConfirmation = true
                     }
                 }
             }
-            .navigationTitle("Hike plan")
+            .navigationTitle(languageManager.localizedString(for: "hike.plan.title"))
             .navigationBarTitleDisplayMode(.inline)
-            .confirmationDialog("Delete plan", isPresented: $isShowingDeleteConfirmation, titleVisibility: .visible) {
-                Button("Delete", role: .destructive) {
+            .confirmationDialog(languageManager.localizedString(for: "hike.plan.delete"), isPresented: $isShowingDeleteConfirmation, titleVisibility: .visible) {
+                Button(languageManager.localizedString(for: "delete"), role: .destructive) {
                     onDelete()
                     dismiss()
                 }
-                Button("Cancel", role: .cancel) { }
+                Button(languageManager.localizedString(for: "cancel"), role: .cancel) { }
             } message: {
-                Text("This hike will be removed from your planner.")
+                Text(languageManager.localizedString(for: "hike.plan.delete.message"))
             }
             .onChange(of: isCompleted) { newValue in
                 if newValue && hike.completedAt == nil {
@@ -670,6 +671,7 @@ struct SavedHikeDetailSheet: View {
 struct TrailAlertsView: View {
     @StateObject private var viewModel = TrailAlertsViewModel()
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var languageManager: LanguageManager
     
     var body: some View {
         NavigationStack {
@@ -679,9 +681,9 @@ struct TrailAlertsView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if viewModel.alerts.isEmpty {
                     ContentUnavailableView(
-                        "No Active Alerts",
+                        languageManager.localizedString(for: "alerts.no.active"),
                         systemImage: "checkmark.shield.fill",
-                        description: Text("All trails are clear. Enjoy your hike!")
+                        description: Text(languageManager.localizedString(for: "alerts.all.clear"))
                     )
                 } else {
                     List {
@@ -691,7 +693,7 @@ struct TrailAlertsView: View {
                                     alertRow(alert: alert)
                                 }
                             } header: {
-                                Text("Critical")
+                                Text(languageManager.localizedString(for: "alerts.critical"))
                             }
                         }
                         
@@ -700,15 +702,15 @@ struct TrailAlertsView: View {
                                 alertRow(alert: alert)
                             }
                         } header: {
-                            Text("Active Alerts")
+                            Text(languageManager.localizedString(for: "alerts.active"))
                         }
                     }
                 }
             }
-            .navigationTitle("Trail Alerts")
+            .navigationTitle(languageManager.localizedString(for: "home.trail.alerts"))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button(languageManager.localizedString(for: "done")) {
                         dismiss()
                     }
                 }

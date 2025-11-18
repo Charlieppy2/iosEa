@@ -86,6 +86,8 @@ struct LocalizedStrings {
         "home.add": "Add",
         "home.no.hikes.scheduled": "No hikes scheduled",
         "home.tap.add.to.plan": "Tap Add to plan your first walk",
+        "home.refresh.weather": "Refresh weather",
+        "home.safety": "Safety",
         
         // Trails
         "trails.title": "Trails",
@@ -113,6 +115,21 @@ struct LocalizedStrings {
         "safety.all.complete": "Great! You're all set for a safe hike.",
         "safety.complete.all": "Complete all items before heading out.",
         "safety.checklist.title": "Safety checklist",
+        
+        // Trail Alerts
+        "alerts.no.active": "No Active Alerts",
+        "alerts.all.clear": "All trails are clear. Enjoy your hike!",
+        "alerts.critical": "Critical",
+        "alerts.active": "Active Alerts",
+        
+        // Hike Plan
+        "hike.plan.title": "Hike plan",
+        "hike.plan.status": "Status",
+        "hike.plan.mark.completed": "Mark as completed",
+        "hike.plan.completed.on": "Completed on",
+        "hike.plan.update": "Update plan",
+        "hike.plan.delete": "Delete plan",
+        "hike.plan.delete.message": "This hike will be removed from your planner.",
         
         // Hike Tracking
         "tracking.title": "Hike Tracking",
@@ -275,6 +292,8 @@ struct LocalizedStrings {
         "home.add": "添加",
         "home.no.hikes.scheduled": "尚無計劃的行山",
         "home.tap.add.to.plan": "點擊添加以計劃您的第一次行山",
+        "home.refresh.weather": "刷新天氣",
+        "home.safety": "安全",
         
         // Trails
         "trails.title": "路線",
@@ -302,6 +321,21 @@ struct LocalizedStrings {
         "safety.all.complete": "太好了！您已準備好安全行山。",
         "safety.complete.all": "出發前請完成所有項目。",
         "safety.checklist.title": "安全檢查清單",
+        
+        // Trail Alerts
+        "alerts.no.active": "尚無活躍警示",
+        "alerts.all.clear": "所有路線暢通。享受您的行山之旅！",
+        "alerts.critical": "緊急",
+        "alerts.active": "活躍警示",
+        
+        // Hike Plan
+        "hike.plan.title": "行山計劃",
+        "hike.plan.status": "狀態",
+        "hike.plan.mark.completed": "標記為已完成",
+        "hike.plan.completed.on": "完成日期",
+        "hike.plan.update": "更新計劃",
+        "hike.plan.delete": "刪除計劃",
+        "hike.plan.delete.message": "此行山將從您的計劃中移除。",
         
         // Hike Tracking
         "tracking.title": "行山追蹤",
