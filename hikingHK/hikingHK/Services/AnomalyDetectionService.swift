@@ -38,10 +38,10 @@ struct Anomaly {
         
         var severityText: String {
             switch self {
-            case .low: return "低"
-            case .medium: return "中"
-            case .high: return "高"
-            case .critical: return "嚴重"
+            case .low: return "Low"
+            case .medium: return "Medium"
+            case .high: return "High"
+            case .critical: return "Critical"
             }
         }
     }
@@ -71,7 +71,7 @@ final class AnomalyDetectionService: AnomalyDetectionServiceProtocol {
                 return Anomaly(
                     type: .noLocationUpdate,
                     severity: severity,
-                    message: "已經 \(Int(timeSinceUpdate / 60)) 分鐘沒有收到位置更新。可能失去 GPS 信號。",
+                    message: "No location update received for \(Int(timeSinceUpdate / 60)) minutes. GPS signal may be lost.",
                     detectedAt: now
                 )
             }
@@ -91,7 +91,7 @@ final class AnomalyDetectionService: AnomalyDetectionServiceProtocol {
             return Anomaly(
                 type: .noMovement,
                 severity: severity,
-                message: "已經 \(Int(timeSinceLastUpdate / 60)) 分鐘沒有移動。可能遇到困難或需要協助。",
+                message: "No movement detected for \(Int(timeSinceLastUpdate / 60)) minutes. May need assistance.",
                 detectedAt: now
             )
         }
@@ -101,7 +101,7 @@ final class AnomalyDetectionService: AnomalyDetectionServiceProtocol {
             return Anomaly(
                 type: .locationStuck,
                 severity: .medium,
-                message: "位置似乎沒有變化。請確認是否正常。",
+                message: "Location appears unchanged. Please confirm if everything is normal.",
                 detectedAt: now
             )
         }

@@ -43,7 +43,7 @@ final class TrailRecommendationViewModel: ObservableObject {
                 userPreference = UserPreference()
             }
         } catch {
-            self.error = "載入用戶偏好失敗：\(error.localizedDescription)"
+            self.error = "Failed to load user preferences: \(error.localizedDescription)"
         }
     }
     
@@ -104,7 +104,7 @@ final class TrailRecommendationViewModel: ObservableObject {
         do {
             try store.saveUserPreference(preference)
         } catch {
-            self.error = "保存用戶偏好失敗：\(error.localizedDescription)"
+            self.error = "Failed to save user preferences: \(error.localizedDescription)"
         }
     }
     

@@ -33,7 +33,7 @@ final class AchievementViewModel: ObservableObject {
             try store?.seedDefaultsIfNeeded()
             achievements = try store?.loadAllAchievements() ?? []
         } catch {
-            self.error = "載入成就失敗：\(error.localizedDescription)"
+            self.error = "Failed to load achievements: \(error.localizedDescription)"
         }
     }
     
@@ -84,7 +84,7 @@ final class AchievementViewModel: ObservableObject {
         do {
             try store.saveAchievements(achievements)
         } catch {
-            self.error = "保存成就失敗：\(error.localizedDescription)"
+            self.error = "Failed to save achievements: \(error.localizedDescription)"
         }
     }
     

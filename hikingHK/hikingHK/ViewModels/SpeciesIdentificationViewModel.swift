@@ -61,7 +61,7 @@ final class SpeciesIdentificationViewModel: ObservableObject {
                 await saveIdentification(species: species, confidence: result.confidence, image: image, location: location)
             }
         } catch let identificationError {
-            self.error = "識別失敗：\(identificationError.localizedDescription)"
+            self.error = "Identification failed: \(identificationError.localizedDescription)"
             identificationResult = SpeciesIdentificationResult(
                 species: nil,
                 confidence: 0,
@@ -98,7 +98,7 @@ final class SpeciesIdentificationViewModel: ObservableObject {
             try store.saveIdentification(record)
             loadHistory()
         } catch {
-            self.error = "保存識別記錄失敗：\(error.localizedDescription)"
+            self.error = "Failed to save identification record: \(error.localizedDescription)"
         }
     }
     
@@ -107,7 +107,7 @@ final class SpeciesIdentificationViewModel: ObservableObject {
         do {
             identificationHistory = try store.loadAllIdentifications()
         } catch {
-            self.error = "載入識別歷史失敗：\(error.localizedDescription)"
+            self.error = "Failed to load identification history: \(error.localizedDescription)"
         }
     }
     
@@ -117,7 +117,7 @@ final class SpeciesIdentificationViewModel: ObservableObject {
             try store.deleteIdentification(record)
             loadHistory()
         } catch {
-            self.error = "刪除記錄失敗：\(error.localizedDescription)"
+            self.error = "Failed to delete record: \(error.localizedDescription)"
         }
     }
 }

@@ -54,7 +54,7 @@ final class LocationSharingService: LocationSharingServiceProtocol {
     }
     
     func sendEmergencySOS(contacts: [EmergencyContact], location: CLLocationCoordinate2D, message: String) async throws {
-        let sosMessage = "🆘 緊急求救！\n\n\(message)\n\n我的位置：\n緯度：\(location.latitude)\n經度：\(location.longitude)\n地圖：\(generateShareLink(location: location))\n\n請立即協助！"
+        let sosMessage = "🆘 Emergency SOS!\n\n\(message)\n\nMy Location:\nLatitude: \(location.latitude)\nLongitude: \(location.longitude)\nMap: \(generateShareLink(location: location))\n\nPlease assist immediately!"
         
         // 發送給所有緊急聯繫人
         for contact in contacts {
@@ -64,7 +64,7 @@ final class LocationSharingService: LocationSharingServiceProtocol {
             }
             // 如果有郵箱，也發送郵件
             if let email = contact.email, !email.isEmpty {
-                try await sendLocationViaEmail(contacts: [contact], location: location, subject: "緊急求救 - 需要立即協助", message: sosMessage)
+                try await sendLocationViaEmail(contacts: [contact], location: location, subject: "Emergency SOS - Immediate Assistance Needed", message: sosMessage)
             }
         }
         

@@ -54,7 +54,7 @@ final class LocationSharingViewModel: ObservableObject {
                 startLocationSharing()
             }
         } catch let loadError {
-            self.error = "載入位置分享設置失敗：\(loadError.localizedDescription)"
+            self.error = "Failed to load location sharing settings: \(loadError.localizedDescription)"
             print("Location sharing load error: \(loadError)")
         }
     }
@@ -86,7 +86,7 @@ final class LocationSharingViewModel: ObservableObject {
         do {
             try store?.saveSession(session)
         } catch let saveError {
-            self.error = "保存分享會話失敗：\(saveError.localizedDescription)"
+            self.error = "Failed to save sharing session: \(saveError.localizedDescription)"
         }
         
         // 開始位置更新循環
@@ -110,7 +110,7 @@ final class LocationSharingViewModel: ObservableObject {
                 try store?.saveSession(session)
             }
         } catch let stopError {
-            self.error = "停止分享會話失敗：\(stopError.localizedDescription)"
+            self.error = "Failed to stop sharing session: \(stopError.localizedDescription)"
         }
     }
     
@@ -164,14 +164,14 @@ final class LocationSharingViewModel: ObservableObject {
         }
     }
     
-    func sendEmergencySOS(message: String = "我需要緊急協助！") async {
+    func sendEmergencySOS(message: String = "I need emergency assistance!") async {
         guard let location = currentLocation ?? locationManager.currentLocation else {
-            error = "無法獲取當前位置"
+            error = "Unable to get current location"
             return
         }
         
         guard !emergencyContacts.isEmpty else {
-            error = "請先添加緊急聯繫人"
+            error = "Please add at least one emergency contact first"
             return
         }
         
@@ -185,7 +185,7 @@ final class LocationSharingViewModel: ObservableObject {
                 message: message
             )
         } catch let sosError {
-            self.error = "發送緊急求救失敗：\(sosError.localizedDescription)"
+            self.error = "Failed to send emergency SOS: \(sosError.localizedDescription)"
         }
         
         isSendingSOS = false
@@ -213,7 +213,7 @@ final class LocationSharingViewModel: ObservableObject {
         do {
             try store?.saveContact(contact)
         } catch let addError {
-            self.error = "添加緊急聯繫人失敗：\(addError.localizedDescription)"
+            self.error = "Failed to add emergency contact: \(addError.localizedDescription)"
         }
     }
     
@@ -222,7 +222,7 @@ final class LocationSharingViewModel: ObservableObject {
         do {
             try store?.deleteContact(contact)
         } catch let deleteError {
-            self.error = "刪除緊急聯繫人失敗：\(deleteError.localizedDescription)"
+            self.error = "Failed to delete emergency contact: \(deleteError.localizedDescription)"
         }
     }
     
