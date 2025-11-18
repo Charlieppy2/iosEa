@@ -9,6 +9,7 @@ struct ProfileView: View {
     @StateObject private var servicesStatus = ServicesStatusViewModel()
     @StateObject private var apiChecker = APIConnectionChecker()
     @StateObject private var achievementViewModel = AchievementViewModel()
+    @StateObject private var languageManager = LanguageManager.shared
 
     private var plannedCount: Int {
         viewModel.savedHikes.filter { !$0.isCompleted }.count
@@ -110,6 +111,9 @@ struct ProfileView: View {
                         icon: "map",
                         status: apiChecker.mapboxAPIStatus
                     )
+                }
+                Section("Language") {
+                    languageSelectionRow
                 }
                 Section("API Status") {
                     HStack {
@@ -364,6 +368,31 @@ struct ProfileView: View {
         case .disconnected: return "Disconnected"
         case .unavailable: return "Unavailable"
         case .unknown: return "Unknown"
+        }
+    }
+    
+    private var languageSelectionRow: some View {
+        HStack {
+            Image(systemName: "globe")
+                .foregroundStyle(Color.hikingGreen)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("profile.language".localized)
+                    .foregroundStyle(Color.hikingDarkGreen)
+                Text("profile.language.description".localized)
+                    .font(.caption)
+                    .foregroundStyle(Color.hikingStone)
+            }
+            Spacer()
+            Picker("", selection: $languageManager.currentLanguage) {
+                ForEach(AppLanguage.allCases, id: \.self) { language in
+                    HStack {
+                        Text(language.flag)
+                        Text(language.displayName)
+                    }
+                    .tag(language)
+                }
+            }
+            .pickerStyle(.menu)
         }
     }
 

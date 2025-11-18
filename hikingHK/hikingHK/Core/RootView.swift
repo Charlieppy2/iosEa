@@ -12,6 +12,7 @@ struct RootView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var sessionManager = SessionManager()
     @StateObject private var appViewModel = AppViewModel()
+    @StateObject private var languageManager = LanguageManager.shared
     @State private var didConfigure = false
 
     var body: some View {
@@ -20,9 +21,11 @@ struct RootView: View {
                 ContentView()
                     .environmentObject(appViewModel)
                     .environmentObject(sessionManager)
+                    .environmentObject(languageManager)
             } else {
                 AuthView()
                     .environmentObject(sessionManager)
+                    .environmentObject(languageManager)
             }
         }
         .task {
