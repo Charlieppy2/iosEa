@@ -11,6 +11,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var viewModel: AppViewModel
     @EnvironmentObject private var sessionManager: SessionManager
+    @EnvironmentObject private var languageManager: LanguageManager
 
     var body: some View {
         TabView {

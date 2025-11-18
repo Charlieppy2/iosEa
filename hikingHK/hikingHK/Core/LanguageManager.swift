@@ -57,9 +57,21 @@ final class LanguageManager: ObservableObject {
 }
 
 // Helper extension for easy access
+// Note: This extension doesn't trigger view updates automatically
+// For views that need to update when language changes, use LocalizedText view or observe LanguageManager
 extension String {
     var localized: String {
         LanguageManager.shared.localizedString(for: self)
+    }
+}
+
+// A view that automatically updates when language changes
+struct LocalizedText: View {
+    let key: String
+    @EnvironmentObject private var languageManager: LanguageManager
+    
+    var body: some View {
+        Text(languageManager.localizedString(for: key))
     }
 }
 

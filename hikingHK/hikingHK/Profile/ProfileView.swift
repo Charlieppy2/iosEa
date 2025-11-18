@@ -9,7 +9,7 @@ struct ProfileView: View {
     @StateObject private var servicesStatus = ServicesStatusViewModel()
     @StateObject private var apiChecker = APIConnectionChecker()
     @StateObject private var achievementViewModel = AchievementViewModel()
-    @StateObject private var languageManager = LanguageManager.shared
+    @EnvironmentObject private var languageManager: LanguageManager
 
     private var plannedCount: Int {
         viewModel.savedHikes.filter { !$0.isCompleted }.count
@@ -86,11 +86,11 @@ struct ProfileView: View {
                         }
                     }
                 }
-                Section("Goals") {
+                Section(languageManager.localizedString(for: "profile.goals")) {
                     goalRow(goal: ridgeLinesGoal)
                     goalRow(goal: monthlyDistanceGoal)
                 }
-                Section("Data & services") {
+                Section(languageManager.localizedString(for: "profile.data.services")) {
                     serviceStatusRow(
                         title: "HK Weather API",
                         icon: "cloud.sun",
@@ -112,7 +112,7 @@ struct ProfileView: View {
                         status: apiChecker.mapboxAPIStatus
                     )
                 }
-                Section("Language") {
+                Section(languageManager.localizedString(for: "profile.language")) {
                     languageSelectionRow
                 }
                 Section("API Status") {
@@ -179,13 +179,13 @@ struct ProfileView: View {
                     hasWeatherData: viewModel.weatherSnapshot.updatedAt > Date().addingTimeInterval(-3600)
                 )
             }
-            .confirmationDialog("Sign Out", isPresented: $showSignOutConfirmation, titleVisibility: .visible) {
-                Button("Sign Out", role: .destructive) {
+            .confirmationDialog(languageManager.localizedString(for: "profile.sign.out"), isPresented: $showSignOutConfirmation, titleVisibility: .visible) {
+                Button(languageManager.localizedString(for: "profile.sign.out"), role: .destructive) {
                     sessionManager.signOut()
                 }
-                Button("Cancel", role: .cancel) {}
+                Button(languageManager.localizedString(for: "cancel"), role: .cancel) {}
             } message: {
-                Text("Are you sure you want to sign out?")
+                Text(languageManager.localizedString(for: "profile.sign.out.confirm"))
             }
         }
     }
@@ -205,7 +205,7 @@ struct ProfileView: View {
     }
 
     private var accountSection: some View {
-        Section("Account") {
+        Section(languageManager.localizedString(for: "profile.account")) {
             if let user = sessionManager.currentUser {
                 HStack(spacing: 16) {
                     Image(systemName: user.avatarSymbol)
@@ -221,7 +221,7 @@ struct ProfileView: View {
                     }
                 }
             }
-            Button("Sign out", role: .destructive) {
+            Button(languageManager.localizedString(for: "profile.sign.out"), role: .destructive) {
                 showSignOutConfirmation = true
             }
         }
