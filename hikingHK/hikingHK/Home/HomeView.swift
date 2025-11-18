@@ -77,13 +77,13 @@ struct HomeView: View {
                     }
                 }
             }
-            .alert("緊急求救", isPresented: $isShowingSOSConfirmation) {
-                Button("取消", role: .cancel) { }
-                Button("打開位置分享", role: .destructive) {
+            .alert("Emergency SOS", isPresented: $isShowingSOSConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Open Location Sharing", role: .destructive) {
                     isShowingLocationSharing = true
                 }
             } message: {
-                Text("這將打開位置分享功能，您可以在那裡發送緊急求救。")
+                Text("This will open the location sharing feature where you can send an emergency SOS.")
             }
             .sheet(isPresented: $isShowingSafetySheet) {
                 SafetyChecklistView()
