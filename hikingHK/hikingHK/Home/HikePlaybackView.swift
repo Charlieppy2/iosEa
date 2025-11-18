@@ -118,7 +118,7 @@ struct HikePlaybackView: View {
             // 進度條
             VStack(spacing: 8) {
                 HStack {
-                    Text("進度")
+                    Text("Progress")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
