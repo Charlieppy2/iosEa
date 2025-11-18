@@ -861,6 +861,22 @@ struct LocalizedStrings {
         "alerts.all.clear": "所有路線暢通。享受您的行山之旅！",
         "alerts.critical": "緊急",
         "alerts.active": "活躍警示",
+        "alert.category.weather": "天氣",
+        "alert.category.maintenance": "維護",
+        "alert.category.safety": "安全",
+        "alert.category.closure": "封閉",
+        "alert.severity.low": "低",
+        "alert.severity.medium": "中",
+        "alert.severity.high": "高",
+        "alert.severity.critical": "嚴重",
+        "alert.time.minutes.ago": "分鐘前",
+        "alert.time.hours.ago": "小時前",
+        "alert.time.days.ago": "天前",
+        "alert.title.route.maintenance": "路線維護",
+        "alert.title.weather": "天氣警示",
+        "alert.title.safety": "安全警示",
+        "alert.title.closure": "路線封閉",
+        "alert.detail.maclehose.section2.maintenance": "麥理浩徑第二段近浪茄因斜坡工程部分封閉。有替代路線可供使用。",
         
         // Hike Plan
         "hike.plan.title": "行山計劃",
@@ -879,6 +895,7 @@ struct LocalizedStrings {
         "tracking.altitude": "海拔",
         "tracking.track.points": "軌跡點",
         "tracking.select.trail": "選擇路線",
+        "hike.tracking.select.trail": "選擇路線",
         
         // Hike Records
         "records.title": "行山記錄",
