@@ -101,7 +101,7 @@ struct SpeciesIdentificationView: View {
                 HStack {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    Text("正在識別...")
+                    Text("Identifying...")
                         .foregroundStyle(.white)
                         .font(.headline)
                 }
@@ -116,7 +116,7 @@ struct SpeciesIdentificationView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "camera.fill")
                                 .font(.title)
-                            Text("拍照")
+                            Text("Take Photo")
                                 .font(.subheadline)
                         }
                         .frame(maxWidth: .infinity)
@@ -131,7 +131,7 @@ struct SpeciesIdentificationView: View {
                         VStack(spacing: 8) {
                             Image(systemName: "photo.on.rectangle")
                                 .font(.title)
-                            Text("相冊")
+                            Text("Photo Library")
                                 .font(.subheadline)
                         }
                         .frame(maxWidth: .infinity)
@@ -192,7 +192,7 @@ struct SpeciesIdentificationView: View {
                 // 棲息地
                 if !species.habitat.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("棲息地")
+                        Text("Habitat")
                             .font(.caption.bold())
                             .foregroundStyle(Color.hikingStone)
                         Text(species.habitat)
@@ -201,10 +201,10 @@ struct SpeciesIdentificationView: View {
                     }
                 }
                 
-                // 分佈
+                // Distribution
                 if !species.distribution.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("分佈")
+                        Text("Distribution")
                             .font(.caption.bold())
                             .foregroundStyle(Color.hikingStone)
                         Text(species.distribution)
@@ -216,7 +216,7 @@ struct SpeciesIdentificationView: View {
                 // 替代選項
                 if !result.alternatives.isEmpty {
                     Divider()
-                    Text("其他可能")
+                    Text("Other Possibilities")
                         .font(.caption.bold())
                         .foregroundStyle(Color.hikingStone)
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -233,7 +233,7 @@ struct SpeciesIdentificationView: View {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 48))
                         .foregroundStyle(.orange)
-                    Text("無法識別")
+                    Text("Unable to Identify")
                         .font(.headline)
                         .foregroundStyle(Color.hikingDarkGreen)
                     if let error = result.error {
@@ -331,9 +331,9 @@ struct SpeciesIdentificationHistoryView: View {
             List {
                 if viewModel.identificationHistory.isEmpty {
                     ContentUnavailableView(
-                        "尚無識別記錄",
+                        "No Identification History",
                         systemImage: "camera.metering.unknown",
-                        description: Text("開始識別物種以查看歷史記錄")
+                        description: Text("Start identifying species to view history")
                     )
                 } else {
                     ForEach(viewModel.identificationHistory) { record in
@@ -343,7 +343,7 @@ struct SpeciesIdentificationHistoryView: View {
                     }
                 }
             }
-            .navigationTitle("識別歷史")
+            .navigationTitle("Identification History")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
