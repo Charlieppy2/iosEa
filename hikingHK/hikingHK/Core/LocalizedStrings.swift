@@ -491,6 +491,11 @@ struct LocalizedStrings {
         // Location Sharing (additional)
         "location.share.confirm.sos": "Confirm Emergency SOS",
         "location.share.sos.message": "This will send your location and SOS message to all emergency contacts. Please confirm this is an emergency.",
+        "location.share.sharing": "Sharing Location",
+        "location.share.not.sharing": "Not Sharing",
+        "location.share.start": "Start Sharing",
+        "location.share.stop": "Stop Sharing",
+        "location.share.send": "Send",
         "location.share.sharing.description": "Your real-time location is being shared with emergency contacts",
         "location.share.start.description": "Tap the button below to start sharing location",
         "location.share.anomaly.detection": "Anomaly Detection",
@@ -1033,6 +1038,11 @@ struct LocalizedStrings {
         // Location Sharing (additional)
         "location.share.confirm.sos": "確認發送緊急求救",
         "location.share.sos.message": "這將向所有緊急聯繫人發送您的位置和求救信息。請確認這是緊急情況。",
+        "location.share.sharing": "正在分享位置",
+        "location.share.not.sharing": "未分享位置",
+        "location.share.start": "開始分享",
+        "location.share.stop": "停止分享",
+        "location.share.send": "發送",
         "location.share.sharing.description": "您的實時位置正在與緊急聯繫人分享",
         "location.share.start.description": "點擊下方按鈕開始分享位置",
         "location.share.anomaly.detection": "異常檢測",
