@@ -606,7 +606,7 @@ struct SafetyChecklistView: View {
                                 .foregroundStyle(item.isCompleted ? .green : .secondary)
                                 .frame(width: 24)
                             
-                            Text(item.title)
+                            Text(languageManager.localizedString(for: "safety.item.\(item.id)"))
                                 .strikethrough(item.isCompleted)
                                 .foregroundStyle(item.isCompleted ? .secondary : .primary)
                             

@@ -313,6 +313,11 @@ struct LocalizedStrings {
         "safety.all.complete": "Great! You're all set for a safe hike.",
         "safety.complete.all": "Complete all items before heading out.",
         "safety.checklist.title": "Safety checklist",
+        "safety.item.location": "Enable Live Location",
+        "safety.item.water": "Pack 2L of water",
+        "safety.item.heat": "Check heat stroke signal",
+        "safety.item.offline": "Download offline map",
+        "safety.item.share": "Share hike plan with buddies",
         
         // Trail Alerts
         "alerts.no.active": "No Active Alerts",
@@ -860,6 +865,11 @@ struct LocalizedStrings {
         "safety.all.complete": "太好了！您已準備好安全行山。",
         "safety.complete.all": "出發前請完成所有項目。",
         "safety.checklist.title": "安全檢查清單",
+        "safety.item.location": "啟用實時位置",
+        "safety.item.water": "準備 2 公升水",
+        "safety.item.heat": "檢查酷熱天氣警告",
+        "safety.item.offline": "下載離線地圖",
+        "safety.item.share": "與朋友分享行山計劃",
         
         // Trail Alerts
         "alerts.no.active": "尚無活躍警示",
