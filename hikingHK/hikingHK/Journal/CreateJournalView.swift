@@ -14,6 +14,7 @@ struct CreateJournalView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var appViewModel: AppViewModel
+    @EnvironmentObject private var languageManager: LanguageManager
     @ObservedObject var viewModel: JournalViewModel
     
     @State private var title: String = ""
@@ -28,42 +29,42 @@ struct CreateJournalView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Basic Information") {
-                    TextField("Title", text: $title)
-                    DatePicker("Hike Date", selection: $hikeDate, displayedComponents: .date)
+                Section(languageManager.localizedString(for: "journal.basic.information")) {
+                    TextField(languageManager.localizedString(for: "journal.title.field"), text: $title)
+                    DatePicker(languageManager.localizedString(for: "journal.hike.date"), selection: $hikeDate, displayedComponents: .date)
                 }
                 
-                Section("Trail") {
+                Section(languageManager.localizedString(for: "journal.trail")) {
                     if let trail = selectedTrail {
                         HStack {
-                            Text(trail.name)
+                            Text(trail.localizedName(languageManager: languageManager))
                                 .foregroundStyle(Color.hikingDarkGreen)
                             Spacer()
-                            Button("Change") {
+                            Button(languageManager.localizedString(for: "journal.change")) {
                                 isShowingTrailPicker = true
                             }
                             .foregroundStyle(Color.hikingGreen)
                         }
                     } else {
-                        Button("Select Trail") {
+                        Button(languageManager.localizedString(for: "journal.select.trail")) {
                             isShowingTrailPicker = true
                         }
                         .foregroundStyle(Color.hikingGreen)
                     }
                 }
                 
-                Section("Content") {
+                Section(languageManager.localizedString(for: "journal.content")) {
                     TextEditor(text: $content)
                         .frame(minHeight: 200)
                 }
                 
-                Section("Photos") {
+                Section(languageManager.localizedString(for: "journal.photos")) {
                     PhotosPicker(
                         selection: $selectedPhotos,
                         maxSelectionCount: 10,
                         matching: .images
                     ) {
-                        Label("Add Photos", systemImage: "photo.on.rectangle")
+                        Label(languageManager.localizedString(for: "journal.add.photos"), systemImage: "photo.on.rectangle")
                             .foregroundStyle(Color.hikingGreen)
                     }
                     .onChange(of: selectedPhotos) { _, newItems in
@@ -101,16 +102,16 @@ struct CreateJournalView: View {
                     }
                 }
             }
-            .navigationTitle("New Journal Entry")
+            .navigationTitle(languageManager.localizedString(for: "journal.new.entry"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
+                    Button(languageManager.localizedString(for: "cancel")) {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
+                    Button(languageManager.localizedString(for: "save")) {
                         saveJournal()
                     }
                     .disabled(title.isEmpty || content.isEmpty || isSaving)
@@ -169,6 +170,7 @@ struct CreateJournalView: View {
 struct TrailPickerView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appViewModel: AppViewModel
+    @EnvironmentObject private var languageManager: LanguageManager
     @Binding var selectedTrail: Trail?
     
     var body: some View {
@@ -178,12 +180,12 @@ struct TrailPickerView: View {
                     Button {
                         selectedTrail = trail
                         dismiss()
-                    } label: {
+                    }                     label: {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(trail.name)
+                                Text(trail.localizedName(languageManager: languageManager))
                                     .foregroundStyle(Color.hikingDarkGreen)
-                                Text(trail.district)
+                                Text(trail.localizedDistrict(languageManager: languageManager))
                                     .font(.caption)
                                     .foregroundStyle(Color.hikingBrown)
                             }
@@ -196,11 +198,11 @@ struct TrailPickerView: View {
                     }
                 }
             }
-            .navigationTitle("Select Trail")
+            .navigationTitle(languageManager.localizedString(for: "journal.select.trail"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                    Button(languageManager.localizedString(for: "done")) {
                         dismiss()
                     }
                 }

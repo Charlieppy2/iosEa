@@ -11,6 +11,7 @@ import PhotosUI
 
 struct EditJournalView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var languageManager: LanguageManager
     @ObservedObject var viewModel: JournalViewModel
     let journal: HikeJournal
     
@@ -35,23 +36,23 @@ struct EditJournalView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Basic Information") {
-                    TextField("Title", text: $title)
-                    DatePicker("Hike Date", selection: $hikeDate, displayedComponents: .date)
+                Section(languageManager.localizedString(for: "journal.basic.information")) {
+                    TextField(languageManager.localizedString(for: "journal.title.field"), text: $title)
+                    DatePicker(languageManager.localizedString(for: "journal.hike.date"), selection: $hikeDate, displayedComponents: .date)
                 }
                 
-                Section("Content") {
+                Section(languageManager.localizedString(for: "journal.content")) {
                     TextEditor(text: $content)
                         .frame(minHeight: 200)
                 }
                 
-                Section("Photos") {
+                Section(languageManager.localizedString(for: "journal.photos")) {
                     PhotosPicker(
                         selection: $selectedPhotos,
                         maxSelectionCount: 10,
                         matching: .images
                     ) {
-                        Label("Add Photos", systemImage: "photo.on.rectangle")
+                        Label(languageManager.localizedString(for: "journal.add.photos"), systemImage: "photo.on.rectangle")
                             .foregroundStyle(Color.hikingGreen)
                     }
                     .onChange(of: selectedPhotos) { _, newItems in
@@ -91,16 +92,16 @@ struct EditJournalView: View {
                     }
                 }
             }
-            .navigationTitle("Edit Journal Entry")
+            .navigationTitle(languageManager.localizedString(for: "journal.edit"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
+                    Button(languageManager.localizedString(for: "cancel")) {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
+                    Button(languageManager.localizedString(for: "save")) {
                         saveJournal()
                     }
                     .disabled(title.isEmpty || content.isEmpty || isSaving)

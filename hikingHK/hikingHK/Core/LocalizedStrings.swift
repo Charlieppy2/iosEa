@@ -500,6 +500,16 @@ struct LocalizedStrings {
         "journal.create": "Create Journal Entry",
         "journal.edit": "Edit Journal Entry",
         "journal.detail": "Journal Detail",
+        "journal.new.entry": "New Journal Entry",
+        "journal.basic.information": "Basic Information",
+        "journal.title.field": "Title",
+        "journal.hike.date": "Hike Date",
+        "journal.trail": "Trail",
+        "journal.select.trail": "Select Trail",
+        "journal.change": "Change",
+        "journal.content": "Content",
+        "journal.photos": "Photos",
+        "journal.add.photos": "Add Photos",
         
         // Achievements
         "achievements.title": "Achievements & Badges",
@@ -1106,6 +1116,16 @@ struct LocalizedStrings {
         "journal.create": "創建日記",
         "journal.edit": "編輯日記",
         "journal.detail": "日記詳情",
+        "journal.new.entry": "新日記條目",
+        "journal.basic.information": "基本資訊",
+        "journal.title.field": "標題",
+        "journal.hike.date": "行山日期",
+        "journal.trail": "路線",
+        "journal.select.trail": "選擇路線",
+        "journal.change": "更改",
+        "journal.content": "內容",
+        "journal.photos": "照片",
+        "journal.add.photos": "添加照片",
         
         // Achievements
         "achievements.title": "成就與徽章",

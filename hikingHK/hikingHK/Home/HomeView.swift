@@ -1335,6 +1335,7 @@ struct LandmarkDetailView: View {
 
 struct QuickAddTrailPickerView: View {
     @EnvironmentObject private var viewModel: AppViewModel
+    @EnvironmentObject private var languageManager: LanguageManager
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
     
@@ -1342,9 +1343,13 @@ struct QuickAddTrailPickerView: View {
     
     private var filteredTrails: [Trail] {
         guard !searchText.isEmpty else { return viewModel.trails }
-        return viewModel.trails.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            $0.district.localizedCaseInsensitiveContains(searchText)
+        return viewModel.trails.filter { trail in
+            let localizedName = trail.localizedName(languageManager: languageManager)
+            let localizedDistrict = trail.localizedDistrict(languageManager: languageManager)
+            return localizedName.localizedCaseInsensitiveContains(searchText) ||
+                   localizedDistrict.localizedCaseInsensitiveContains(searchText) ||
+                   trail.name.localizedCaseInsensitiveContains(searchText) ||
+                   trail.district.localizedCaseInsensitiveContains(searchText)
         }
     }
     
@@ -1357,21 +1362,21 @@ struct QuickAddTrailPickerView: View {
                     } label: {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(trail.name)
+                                Text(trail.localizedName(languageManager: languageManager))
                                     .font(.headline)
                                     .foregroundStyle(.primary)
-                                Text(trail.district)
+                                Text(trail.localizedDistrict(languageManager: languageManager))
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                 HStack(spacing: 12) {
-                                    Label("\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km", systemImage: "ruler")
-                                    Label("\(trail.estimatedDurationMinutes / 60)h", systemImage: "clock")
+                                    Label("\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) \(languageManager.localizedString(for: "unit.km"))", systemImage: "ruler")
+                                    Label("\(trail.estimatedDurationMinutes / 60)\(languageManager.localizedString(for: "unit.h"))", systemImage: "clock")
                                 }
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Label(trail.difficulty.rawValue, systemImage: trail.difficulty.icon)
+                            Label(trail.difficulty.localizedRawValue(languageManager: languageManager), systemImage: trail.difficulty.icon)
                                 .labelStyle(.iconOnly)
                                 .foregroundStyle(.secondary)
                         }
@@ -1379,11 +1384,11 @@ struct QuickAddTrailPickerView: View {
                     }
                 }
             }
-            .navigationTitle("Choose Trail")
-            .searchable(text: $searchText, prompt: "Search trails")
+            .navigationTitle(languageManager.localizedString(for: "planner.choose.trail"))
+            .searchable(text: $searchText, prompt: languageManager.localizedString(for: "trails.search.prompt"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button(languageManager.localizedString(for: "cancel")) {
                         dismiss()
                     }
                 }
