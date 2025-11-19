@@ -199,6 +199,59 @@ struct LocalizedStrings {
         "trail.highlights": "Highlights",
         "trail.transportation": "Transport tips",
         
+        // Map
+        "map.interactive": "Interactive map",
+        "map.start": "Start",
+        "map.you": "You",
+        "map.start.location": "Start {district}",
+        "map.enable.location": "Enable location",
+        "map.center.on.me": "Center on me",
+        "map.location.disabled": "Location disabled",
+        "map.mapbox.token.required": "Set MAPBOX_ACCESS_TOKEN to view live routing overlays.",
+        
+        // Checkpoints
+        "checkpoint.trailhead": "Trailhead",
+        "checkpoint.viewpoint": "Viewpoint",
+        "checkpoint.finish": "Finish",
+        "checkpoint.peak": "Peak",
+        "checkpoint.start": "Start",
+        
+        // Facilities
+        "facility.country.park.toilet": "Country park toilet",
+        "facility.pavilion.shelter": "Pavilion shelter",
+        "facility.visitor.center": "Visitor center",
+        "facility.toilet": "Toilet",
+        "facility.camping": "Camping",
+        
+        // Checkpoint Names (MacLehose Section 4)
+        "checkpoint.kei.ling.ha": "Kei Ling Ha",
+        "checkpoint.kai.kung.shan": "Kai Kung Shan",
+        "checkpoint.tates.cairn": "Tate's Cairn",
+        "checkpoint.high.island.reservoir": "High Island Reservoir",
+        "checkpoint.sharp.peak": "Sharp Peak",
+        "checkpoint.tai.long.wan": "Tai Long Wan",
+        "checkpoint.route.twisk": "Route Twisk",
+        "checkpoint.tai.mo.shan": "Tai Mo Shan",
+        "checkpoint.lead.mine.pass": "Lead Mine Pass",
+        "checkpoint.nam.shan": "Nam Shan",
+        "checkpoint.pak.kung.au": "Pak Kung Au",
+        "checkpoint.ngong.ping": "Ngong Ping",
+        "checkpoint.the.peak": "The Peak",
+        "checkpoint.pok.fu.lam.reservoir": "Pok Fu Lam Reservoir",
+        "checkpoint.wan.chai.gap": "Wan Chai Gap",
+        "checkpoint.wong.nai.chung.gap": "Wong Nai Chung Gap",
+        "checkpoint.lion.rock.park": "Lion Rock Park",
+        "checkpoint.mui.wo": "Mui Wo",
+        "checkpoint.pak.tam.chung": "Pak Tam Chung",
+        "checkpoint.stanley.gap": "Stanley Gap",
+        "checkpoint.tai.tam": "Tai Tam",
+        "checkpoint.stanley": "Stanley",
+        
+        // Units
+        "unit.km": "km",
+        "unit.m": "m",
+        "unit.h": "h",
+        
         // Trail Difficulties
         "trail.difficulty.easy": "Easy",
         "trail.difficulty.moderate": "Moderate",
@@ -217,6 +270,7 @@ struct LocalizedStrings {
         // Trail Names and Summaries (MacLehose Section 4)
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.name": "MacLehose Section 4",
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.summary": "Iconic ridge walk from Kei Ling Ha to Tate's Cairn with panoramic views of Port Shelter.",
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.transportation": "Bus 99/99R to Kei Ling Ha; return via bus/minibus from Tate's Cairn tunnel portal.",
         
         // Dragon's Back
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.name": "Dragon's Back",
@@ -748,6 +802,59 @@ struct LocalizedStrings {
         "trail.highlights": "亮點",
         "trail.transportation": "交通提示",
         
+        // Map
+        "map.interactive": "交互式地圖",
+        "map.start": "起點",
+        "map.you": "您的位置",
+        "map.start.location": "起點 {district}",
+        "map.enable.location": "啟用位置",
+        "map.center.on.me": "定位到我的位置",
+        "map.location.disabled": "位置已禁用",
+        "map.mapbox.token.required": "設置 MAPBOX_ACCESS_TOKEN 以查看實時路線疊加層。",
+        
+        // Checkpoints
+        "checkpoint.trailhead": "起點",
+        "checkpoint.viewpoint": "觀景點",
+        "checkpoint.finish": "終點",
+        "checkpoint.peak": "山峰",
+        "checkpoint.start": "起點",
+        
+        // Facilities
+        "facility.country.park.toilet": "郊野公園洗手間",
+        "facility.pavilion.shelter": "涼亭",
+        "facility.visitor.center": "訪客中心",
+        "facility.toilet": "洗手間",
+        "facility.camping": "露營",
+        
+        // Checkpoint Names (MacLehose Section 4)
+        "checkpoint.kei.ling.ha": "企嶺下",
+        "checkpoint.kai.kung.shan": "雞公山",
+        "checkpoint.tates.cairn": "基維爾營",
+        "checkpoint.high.island.reservoir": "萬宜水庫",
+        "checkpoint.sharp.peak": "蚺蛇尖",
+        "checkpoint.tai.long.wan": "大浪灣",
+        "checkpoint.route.twisk": "荃錦公路",
+        "checkpoint.tai.mo.shan": "大帽山",
+        "checkpoint.lead.mine.pass": "鉛礦坳",
+        "checkpoint.nam.shan": "南山",
+        "checkpoint.pak.kung.au": "伯公坳",
+        "checkpoint.ngong.ping": "昂坪",
+        "checkpoint.the.peak": "山頂",
+        "checkpoint.pok.fu.lam.reservoir": "薄扶林水塘",
+        "checkpoint.wan.chai.gap": "灣仔峽",
+        "checkpoint.wong.nai.chung.gap": "黃泥涌峽",
+        "checkpoint.lion.rock.park": "獅子山公園",
+        "checkpoint.mui.wo": "梅窩",
+        "checkpoint.pak.tam.chung": "北潭涌",
+        "checkpoint.stanley.gap": "赤柱峽",
+        "checkpoint.tai.tam": "大潭",
+        "checkpoint.stanley": "赤柱",
+        
+        // Units
+        "unit.km": "公里",
+        "unit.m": "米",
+        "unit.h": "小時",
+        
         // Trail Difficulties
         "trail.difficulty.easy": "容易",
         "trail.difficulty.moderate": "中等",
@@ -766,6 +873,7 @@ struct LocalizedStrings {
         // Trail Names and Summaries (MacLehose Section 4)
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.name": "麥理浩徑第四段",
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.summary": "從企嶺下到基維爾營的標誌性山脊步道，可欣賞西貢海的全景。",
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.transportation": "乘搭 99/99R 巴士到企嶺下；回程從基維爾隧道口乘搭巴士/小巴。",
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.highlight.sharp.peak.vista": "蚺蛇尖景觀",
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.highlight.ma.on.shan.country.park.geology": "馬鞍山郊野公園地質",
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.highlight.golden.hour.sunrise.spot": "黃金時段日出觀賞點",

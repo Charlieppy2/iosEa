@@ -50,7 +50,7 @@ struct TrailListView: View {
                             Button {
                                 selectedDifficulty = difficulty
                             } label: {
-                                Label(difficulty.rawValue, systemImage: difficulty.icon)
+                                Label(difficulty.localizedRawValue(languageManager: languageManager), systemImage: difficulty.icon)
                             }
                         }
                     } label: {
@@ -84,9 +84,9 @@ struct TrailRow: View {
                 .foregroundStyle(Color.hikingBrown)
                 .lineLimit(2)
             HStack(spacing: 16) {
-                metricLabel(icon: "ruler.fill", text: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km")
-                metricLabel(icon: "arrow.up.right", text: "\(trail.elevationGain) m")
-                metricLabel(icon: "clock.fill", text: "\(trail.estimatedDurationMinutes / 60)h")
+                metricLabel(icon: "ruler.fill", text: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) \(languageManager.localizedString(for: "unit.km"))")
+                metricLabel(icon: "arrow.up.right", text: "\(trail.elevationGain) \(languageManager.localizedString(for: "unit.m"))")
+                metricLabel(icon: "clock.fill", text: "\(trail.estimatedDurationMinutes / 60)\(languageManager.localizedString(for: "unit.h"))")
             }
             .font(.caption.weight(.medium))
             .foregroundStyle(Color.hikingStone)

@@ -11,6 +11,7 @@ import MapKit
 struct TrailMapView: View {
     let trail: Trail
     @StateObject private var locationManager = LocationManager()
+    @EnvironmentObject private var languageManager: LanguageManager
     @State private var position: MapCameraPosition
     @State private var dynamicPolyline: MKPolyline?
     private let routeService = MapboxRouteService()
@@ -22,7 +23,7 @@ struct TrailMapView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Interactive map")
+            Text(languageManager.localizedString(for: "map.interactive"))
                 .font(.headline)
             Map(position: $position, interactionModes: .all) {
                 if let polyline = trail.mkPolyline {
@@ -34,7 +35,7 @@ struct TrailMapView: View {
                         .stroke(.blue, style: StrokeStyle(lineWidth: 3, lineCap: .round, dash: [6, 4]))
                 }
                 if let startCoordinate = trail.routeLocations.first {
-                    Annotation("Start", coordinate: startCoordinate) {
+                    Annotation(languageManager.localizedString(for: "map.start"), coordinate: startCoordinate) {
                         Image(systemName: "flag.circle.fill")
                             .font(.title2)
                             .foregroundStyle(Color.accentColor)
@@ -42,7 +43,7 @@ struct TrailMapView: View {
                     }
                 }
                 if let userCoordinate = locationManager.currentLocation?.coordinate {
-                    Annotation("You", coordinate: userCoordinate) {
+                    Annotation(languageManager.localizedString(for: "map.you"), coordinate: userCoordinate) {
                         Image(systemName: "location.circle.fill")
                             .font(.title2)
                             .foregroundStyle(Color.blue)
@@ -56,7 +57,7 @@ struct TrailMapView: View {
                 await loadDynamicRoute()
             }
             HStack {
-                Label("Start \(trail.district)", systemImage: "mappin.and.ellipse")
+                Label(localizedStartLocation, systemImage: "mappin.and.ellipse")
                 Spacer()
                 Button {
                     handleLocationAction()
@@ -67,21 +68,27 @@ struct TrailMapView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             if !routeService.isConfigured {
-                Text("Set MAPBOX_ACCESS_TOKEN to view live routing overlays.")
+                Text(languageManager.localizedString(for: "map.mapbox.token.required"))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }
     }
 
+    private var localizedStartLocation: String {
+        let district = trail.localizedDistrict(languageManager: languageManager)
+        let template = languageManager.localizedString(for: "map.start.location")
+        return template.replacingOccurrences(of: "{district}", with: district)
+    }
+    
     private var locationButtonTitle: String {
         switch locationManager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
-            return "Center on me"
+            return languageManager.localizedString(for: "map.center.on.me")
         case .denied, .restricted:
-            return "Location disabled"
+            return languageManager.localizedString(for: "map.location.disabled")
         default:
-            return "Enable location"
+            return languageManager.localizedString(for: "map.enable.location")
         }
     }
 

@@ -42,9 +42,9 @@ struct TrailDetailView: View {
                     Label(trail.localizedDistrict(languageManager: languageManager), systemImage: "mappin.and.ellipse")
                         .foregroundStyle(.secondary)
                     HStack(spacing: 12) {
-                        statBlock(title: languageManager.localizedString(for: "trails.distance"), value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km")
-                        statBlock(title: languageManager.localizedString(for: "trails.elevation"), value: "\(trail.elevationGain) m")
-                        statBlock(title: languageManager.localizedString(for: "trails.duration"), value: "\(trail.estimatedDurationMinutes / 60) h")
+                        statBlock(title: languageManager.localizedString(for: "trails.distance"), value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) \(languageManager.localizedString(for: "unit.km"))")
+                        statBlock(title: languageManager.localizedString(for: "trails.elevation"), value: "\(trail.elevationGain) \(languageManager.localizedString(for: "unit.m"))")
+                        statBlock(title: languageManager.localizedString(for: "trails.duration"), value: "\(trail.estimatedDurationMinutes / 60) \(languageManager.localizedString(for: "unit.h"))")
                     }
                 }
                 Spacer()
@@ -74,18 +74,18 @@ struct TrailDetailView: View {
                                 .foregroundStyle(Color.accentColor.opacity(0.3))
                         }
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(checkpoint.title)
+                            Text(localizedCheckpointTitle(checkpoint.title))
                                 .font(.subheadline.weight(.semibold))
-                            Text(checkpoint.subtitle)
+                            Text(localizedCheckpointSubtitle(checkpoint.subtitle))
                                 .foregroundStyle(.secondary)
                             HStack(spacing: 12) {
                                 Label {
-                                    Text("\(checkpoint.distanceKm.formatted(.number.precision(.fractionLength(1)))) km")
+                                    Text("\(checkpoint.distanceKm.formatted(.number.precision(.fractionLength(1)))) \(languageManager.localizedString(for: "unit.km"))")
                                 } icon: {
                                     Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
                                 }
                                 Label {
-                                    Text("\(checkpoint.altitude) m")
+                                    Text("\(checkpoint.altitude) \(languageManager.localizedString(for: "unit.m"))")
                                 } icon: {
                                     Image(systemName: "altimeter")
                                 }
@@ -111,7 +111,7 @@ struct TrailDetailView: View {
                         VStack(spacing: 8) {
                             Image(systemName: facility.systemImage)
                                 .font(.title2)
-                            Text(facility.name)
+                            Text(localizedFacilityName(facility.name))
                                 .font(.caption)
                                 .multilineTextAlignment(.center)
                         }
@@ -154,14 +154,38 @@ struct TrailDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(languageManager.localizedString(for: "trail.transportation"))
                 .font(.headline)
-            Text(trail.transportation)
+            Text(localizedTransportation)
                 .foregroundStyle(.secondary)
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
+    
+    private var localizedTransportation: String {
+        let key = "trail.\(trail.id.uuidString.lowercased()).transportation"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : trail.transportation
+    }
 
+    private func localizedCheckpointTitle(_ title: String) -> String {
+        let key = "checkpoint.\(title.lowercased().replacingOccurrences(of: " ", with: ".").replacingOccurrences(of: "'", with: ""))"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : title
+    }
+    
+    private func localizedCheckpointSubtitle(_ subtitle: String) -> String {
+        let key = "checkpoint.\(subtitle.lowercased())"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : subtitle
+    }
+    
+    private func localizedFacilityName(_ name: String) -> String {
+        let key = "facility.\(name.lowercased().replacingOccurrences(of: " ", with: "."))"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : name
+    }
+    
     private func statBlock(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
