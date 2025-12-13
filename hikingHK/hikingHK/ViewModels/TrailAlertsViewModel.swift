@@ -15,9 +15,15 @@ final class TrailAlertsViewModel: ObservableObject {
     @Published var error: String?
     
     private let alertsService: TrailAlertsServiceProtocol
+    private var languageManager: LanguageManager?
     
-    init(alertsService: TrailAlertsServiceProtocol = TrailAlertsService()) {
+    init(alertsService: TrailAlertsServiceProtocol = TrailAlertsService(), languageManager: LanguageManager? = nil) {
         self.alertsService = alertsService
+        self.languageManager = languageManager
+    }
+    
+    func updateLanguageManager(_ languageManager: LanguageManager) {
+        self.languageManager = languageManager
     }
     
     func fetchAlerts() async {
@@ -25,8 +31,10 @@ final class TrailAlertsViewModel: ObservableObject {
         error = nil
         defer { isLoading = false }
         
+        let language = languageManager?.currentLanguage.rawValue ?? "en"
+        
         do {
-            let fetchedAlerts = try await alertsService.fetchAlerts()
+            let fetchedAlerts = try await alertsService.fetchAlerts(language: language)
             // Filter to only show active alerts
             alerts = fetchedAlerts.filter { $0.isActive }
             // Sort by severity (critical first) and then by issued date (newest first)

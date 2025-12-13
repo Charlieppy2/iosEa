@@ -34,7 +34,9 @@ final class AppViewModel: ObservableObject {
         self.featuredTrail = trails.first
         self.weatherService = weatherService
 
-        Task { await refreshWeather() }
+        // Initial weather fetch will use default language (en)
+        // Language will be updated when user changes language preference
+        Task { await refreshWeather(language: "en") }
     }
 
     func configurePersistenceIfNeeded(context: ModelContext) {
@@ -105,11 +107,11 @@ final class AppViewModel: ObservableObject {
         return trails.filter { $0.difficulty == difficulty }
     }
 
-    func refreshWeather() async {
+    func refreshWeather(language: String = "en") async {
         isLoadingWeather = true
         defer { isLoadingWeather = false }
         do {
-            let snapshot = try await weatherService.fetchSnapshot()
+            let snapshot = try await weatherService.fetchSnapshot(language: language)
             weatherSnapshot = snapshot
             weatherError = nil
         } catch {

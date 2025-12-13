@@ -62,7 +62,7 @@ struct HomeView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        Task { await viewModel.refreshWeather() }
+                        Task { await viewModel.refreshWeather(language: languageManager.currentLanguage.rawValue) }
                     } label: {
                         Image(systemName: "arrow.clockwise")
                             .foregroundStyle(Color.hikingGreen)
@@ -749,9 +749,13 @@ struct SavedHikeDetailSheet: View {
 }
 
 struct TrailAlertsView: View {
-    @StateObject private var viewModel = TrailAlertsViewModel()
+    @StateObject private var viewModel: TrailAlertsViewModel
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager
+    
+    init() {
+        _viewModel = StateObject(wrappedValue: TrailAlertsViewModel(languageManager: LanguageManager.shared))
+    }
     
     var body: some View {
         NavigationStack {
@@ -806,7 +810,14 @@ struct TrailAlertsView: View {
                 }
             }
             .task {
+                viewModel.updateLanguageManager(languageManager)
                 await viewModel.fetchAlerts()
+            }
+            .onChange(of: languageManager.currentLanguage) { _, _ in
+                viewModel.updateLanguageManager(languageManager)
+                Task {
+                    await viewModel.fetchAlerts()
+                }
             }
         }
     }

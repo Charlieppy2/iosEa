@@ -8,20 +8,29 @@
 import Foundation
 
 protocol WeatherServiceProtocol {
-    func fetchSnapshot() async throws -> WeatherSnapshot
+    func fetchSnapshot(language: String) async throws -> WeatherSnapshot
 }
 
 struct WeatherService: WeatherServiceProtocol {
     private let session: URLSession
     private let decoder: JSONDecoder
-    private let endpoint = URL(string: "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en")!
+    
+    // Base endpoint - language will be appended
+    private let baseEndpoint = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang="
 
     init(session: URLSession = .shared, decoder: JSONDecoder = JSONDecoder()) {
         self.session = session
         self.decoder = decoder
     }
+    
+    private func endpointURL(language: String) -> URL {
+        // Map language codes: en -> en, zh-Hant -> tc
+        let langCode = language == "zh-Hant" ? "tc" : "en"
+        return URL(string: "\(baseEndpoint)\(langCode)")!
+    }
 
-    func fetchSnapshot() async throws -> WeatherSnapshot {
+    func fetchSnapshot(language: String = "en") async throws -> WeatherSnapshot {
+        let endpoint = endpointURL(language: language)
         let (data, response) = try await session.data(from: endpoint)
         guard let httpResponse = response as? HTTPURLResponse, (200..<300).contains(httpResponse.statusCode) else {
             throw WeatherServiceError.invalidResponse
