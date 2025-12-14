@@ -57,7 +57,6 @@ struct RootView: View {
                 HikeTrackPoint.self,
                 UserPreference.self,
                 RecommendationRecord.self,
-                SpeciesIdentificationRecord.self,
                 Achievement.self,
                 HikeJournal.self,
                 JournalPhoto.self

@@ -425,5 +425,6 @@ struct ContactRow: View {
 #Preview {
     LocationSharingView(locationManager: LocationManager())
         .modelContainer(for: [EmergencyContact.self, LocationShareSession.self], inMemory: true)
+        .environmentObject(LanguageManager.shared)
 }
 

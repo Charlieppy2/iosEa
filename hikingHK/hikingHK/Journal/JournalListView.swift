@@ -210,5 +210,6 @@ struct JournalRow: View {
 #Preview {
     JournalListView()
         .modelContainer(for: [HikeJournal.self, JournalPhoto.self], inMemory: true)
+        .environmentObject(LanguageManager.shared)
 }
 

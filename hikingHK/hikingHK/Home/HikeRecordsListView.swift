@@ -13,16 +13,67 @@ struct HikeRecordsListView: View {
     @EnvironmentObject private var languageManager: LanguageManager
     @Query(sort: \HikeRecord.startTime, order: .reverse) private var records: [HikeRecord]
     @State private var selectedRecord: HikeRecord?
+    @State private var isShowingHikeTracking = false
+    @StateObject private var locationManager = LocationManager()
     
     var body: some View {
         NavigationStack {
             List {
                 if records.isEmpty {
-                    ContentUnavailableView(
-                        languageManager.localizedString(for: "hike.records.none"),
-                        systemImage: "figure.hiking",
-                        description: Text(languageManager.localizedString(for: "hike.records.start.tracking"))
-                    )
+                    Section {
+                        VStack(spacing: 20) {
+                            Image(systemName: "figure.hiking")
+                                .font(.system(size: 60))
+                                .foregroundStyle(Color.hikingGreen.opacity(0.6))
+                            
+                            VStack(spacing: 8) {
+                                Text(languageManager.localizedString(for: "hike.records.none"))
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                
+                                Text(languageManager.localizedString(for: "hike.records.start.tracking"))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            
+                            // 功能说明
+                            VStack(alignment: .leading, spacing: 12) {
+                                FeatureRow(
+                                    icon: "list.bullet",
+                                    title: languageManager.localizedString(for: "hike.records.feature.list"),
+                                    description: languageManager.localizedString(for: "hike.records.feature.list.desc")
+                                )
+                                FeatureRow(
+                                    icon: "info.circle",
+                                    title: languageManager.localizedString(for: "hike.records.feature.detail"),
+                                    description: languageManager.localizedString(for: "hike.records.feature.detail.desc")
+                                )
+                                FeatureRow(
+                                    icon: "play.circle.fill",
+                                    title: languageManager.localizedString(for: "hike.records.feature.playback"),
+                                    description: languageManager.localizedString(for: "hike.records.feature.playback.desc")
+                                )
+                            }
+                            .padding()
+                            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+                            
+                            // 开始追踪按钮
+                            Button {
+                                isShowingHikeTracking = true
+                            } label: {
+                                HStack {
+                                    Image(systemName: "location.fill")
+                                    Text(languageManager.localizedString(for: "hike.tracking.start"))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.hikingGreen, in: RoundedRectangle(cornerRadius: 12))
+                                .foregroundStyle(.white)
+                            }
+                        }
+                        .padding(.vertical, 20)
+                    }
                 } else {
                     ForEach(records) { record in
                         NavigationLink {
@@ -42,6 +93,35 @@ struct HikeRecordsListView: View {
                 }
                 .ignoresSafeArea()
             )
+            .sheet(isPresented: $isShowingHikeTracking) {
+                HikeTrackingView(locationManager: locationManager)
+                    .environmentObject(languageManager)
+                    .presentationDetents([.large])
+            }
+        }
+    }
+}
+
+struct FeatureRow: View {
+    let icon: String
+    let title: String
+    let description: String
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(Color.hikingGreen)
+                .frame(width: 30)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }

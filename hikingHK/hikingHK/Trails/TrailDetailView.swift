@@ -200,6 +200,7 @@ struct TrailDetailView: View {
 #Preview {
     NavigationStack {
         TrailDetailView(trail: Trail.sampleData[0])
+            .environmentObject(LanguageManager.shared)
     }
 }
 

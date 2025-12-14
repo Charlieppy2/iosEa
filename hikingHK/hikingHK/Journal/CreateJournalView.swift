@@ -236,6 +236,7 @@ struct TrailPickerView: View {
 #Preview {
     CreateJournalView(viewModel: JournalViewModel())
         .environmentObject(AppViewModel())
+        .environmentObject(LanguageManager.shared)
         .modelContainer(for: [HikeJournal.self, JournalPhoto.self], inMemory: true)
 }
 

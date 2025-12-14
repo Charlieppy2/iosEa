@@ -439,11 +439,18 @@ struct LocalizedStrings {
         "tracking.track.points": "Track Points",
         "tracking.select.trail": "Select Trail",
         "hike.tracking.select.trail": "Select Trail",
+        "hike.tracking.start": "Start Tracking",
         
         // Hike Records
         "records.title": "Hike Records",
         "records.no.records": "No Hike Records",
         "records.start.tracking": "Start tracking your hiking activities to create records",
+        "hike.records.feature.list": "Hike Records List",
+        "hike.records.feature.list.desc": "View all your saved hike records",
+        "hike.records.feature.detail": "Record Details",
+        "hike.records.feature.detail.desc": "View detailed statistics, map and elevation profile",
+        "hike.records.feature.playback": "3D Track Playback",
+        "hike.records.feature.playback.desc": "Replay your hike track in 3D map",
         "records.detail": "Hike Record",
         "records.route.track": "Route Track",
         "records.no.track.data": "No Track Data",
@@ -1283,6 +1290,12 @@ struct LocalizedStrings {
         "hike.records.none": "尚無行山記錄",
         "hike.records.start.tracking": "開始追蹤您的行山活動以創建記錄",
         "hike.records.unnamed.trail": "未命名路線",
+        "hike.records.feature.list": "行山記錄列表",
+        "hike.records.feature.list.desc": "查看所有已保存的行山記錄",
+        "hike.records.feature.detail": "記錄詳情",
+        "hike.records.feature.detail.desc": "查看詳細統計、地圖和海拔圖表",
+        "hike.records.feature.playback": "3D 軌跡回放",
+        "hike.records.feature.playback.desc": "以 3D 地圖回放您的行山軌跡",
         
         // Hike Tracking (additional)
         "hike.tracking.title": "行山追蹤",
@@ -1292,6 +1305,7 @@ struct LocalizedStrings {
         "hike.tracking.altitude": "海拔",
         "hike.tracking.track.points": "軌跡點",
         "hike.tracking.current.location": "當前位置",
+        "hike.tracking.start": "開始追蹤",
         
         // Recommendations (additional)
         "recommendations.generating": "正在生成推薦...",

@@ -350,5 +350,6 @@ struct PreferenceSettingsView: View {
 #Preview {
     TrailRecommendationView(appViewModel: AppViewModel())
         .modelContainer(for: [UserPreference.self, RecommendationRecord.self], inMemory: true)
+        .environmentObject(LanguageManager.shared)
 }
 

@@ -106,5 +106,6 @@ struct TrailRow: View {
 #Preview {
     TrailListView()
         .environmentObject(AppViewModel())
+        .environmentObject(LanguageManager.shared)
 }
 

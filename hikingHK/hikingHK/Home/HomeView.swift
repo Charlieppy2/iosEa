@@ -1380,5 +1380,7 @@ struct QuickAddTrailPickerView: View {
 #Preview {
     HomeView()
         .environmentObject(AppViewModel())
+        .environmentObject(LanguageManager.shared)
+        .modelContainer(for: [SafetyChecklistItem.self, OfflineMapRegion.self, HikeJournal.self, FavoriteTrailRecord.self, UserCredential.self], inMemory: true)
 }
 

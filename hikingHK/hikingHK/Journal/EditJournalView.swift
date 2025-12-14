@@ -163,5 +163,6 @@ struct EditJournalView: View {
     )
     return EditJournalView(journal: journal, viewModel: JournalViewModel())
         .modelContainer(for: [HikeJournal.self, JournalPhoto.self], inMemory: true)
+        .environmentObject(LanguageManager.shared)
 }
 

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct PlannerView: View {
     @EnvironmentObject private var viewModel: AppViewModel
@@ -112,5 +113,7 @@ struct PlannerView: View {
 #Preview {
     PlannerView()
         .environmentObject(AppViewModel())
+        .environmentObject(LanguageManager.shared)
+        .modelContainer(for: [SavedHikeRecord.self, GearItem.self], inMemory: true)
 }
 

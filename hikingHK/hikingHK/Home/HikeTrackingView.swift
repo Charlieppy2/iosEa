@@ -289,7 +289,6 @@ struct StatItem: View {
     let value: String
     let label: String
     let color: Color
-    @EnvironmentObject private var languageManager: LanguageManager
     
     var body: some View {
         VStack(spacing: 8) {
@@ -359,5 +358,7 @@ extension HikeTrackingViewModel {
 #Preview {
     HikeTrackingView(locationManager: LocationManager())
         .modelContainer(for: [HikeRecord.self, HikeTrackPoint.self], inMemory: true)
+        .environmentObject(AppViewModel())
+        .environmentObject(LanguageManager.shared)
 }
 

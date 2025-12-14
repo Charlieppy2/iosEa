@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import MapKit
 import CoreLocation
 
@@ -298,7 +299,53 @@ extension Double {
     }
 }
 
+// 辅助函数：创建示例轨迹点
+private func createSampleTrackPoints(startTime: Date) -> [HikeTrackPoint] {
+    var points: [HikeTrackPoint] = []
+    for index in 0..<10 {
+        let lat = 22.319 + Double(index) * 0.001
+        let lon = 114.169 + Double(index) * 0.001
+        let alt = 100.0 + Double(index) * 10
+        let spd = 1.5 + Double(index) * 0.1
+        let time = startTime.addingTimeInterval(TimeInterval(index * 60))
+        let point = HikeTrackPoint(
+            latitude: lat,
+            longitude: lon,
+            altitude: alt,
+            speed: spd,
+            timestamp: time
+        )
+        points.append(point)
+    }
+    return points
+}
+
+// 辅助函数：创建示例记录
+private func createSampleRecord() -> HikeRecord {
+    let startTime = Date()
+    let trackPoints = createSampleTrackPoints(startTime: startTime)
+    let endTime = startTime.addingTimeInterval(600)
+    
+    return HikeRecord(
+        trailName: "Sample Trail",
+        startTime: startTime,
+        endTime: endTime,
+        isCompleted: true,
+        totalDistance: 5000,
+        totalDuration: 600,
+        averageSpeed: 1.5,
+        maxSpeed: 2.5,
+        elevationGain: 100,
+        elevationLoss: 50,
+        minAltitude: 100,
+        maxAltitude: 200,
+        trackPoints: trackPoints
+    )
+}
+
 #Preview {
-    HikePlaybackView(record: HikeRecord())
+    let record = createSampleRecord()
+    return HikePlaybackView(record: record)
+        .modelContainer(for: [HikeRecord.self, HikeTrackPoint.self], inMemory: true)
 }
 
