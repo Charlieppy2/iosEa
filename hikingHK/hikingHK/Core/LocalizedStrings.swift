@@ -286,6 +286,9 @@ struct LocalizedStrings {
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.name": "MacLehose Section 4",
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.summary": "Iconic ridge walk from Kei Ling Ha to Tate's Cairn with panoramic views of Port Shelter.",
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.transportation": "Bus 99/99R to Kei Ling Ha; return via bus/minibus from Tate's Cairn tunnel portal.",
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.highlight.sharp.peak.vista": "Sharp Peak vista",
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.highlight.ma.on.shan.country.park.geology": "Ma On Shan country park geology",
+        "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.highlight.golden.hour.sunrise.spot": "Golden hour sunrise spot",
         
         // Dragon's Back
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.name": "Dragon's Back",
@@ -382,6 +385,7 @@ struct LocalizedStrings {
         "safety.all.complete": "Great! You're all set for a safe hike.",
         "safety.complete.all": "Complete all items before heading out.",
         "safety.checklist.title": "Safety checklist",
+        "safety.create.items": "Create Checklist Items",
         "safety.item.location": "Enable Live Location",
         "safety.item.water": "Pack 2L of water",
         "safety.item.heat": "Check heat stroke signal",
@@ -558,6 +562,7 @@ struct LocalizedStrings {
         // Offline Maps
         "offline.maps.no.regions": "No regions available",
         "offline.maps.available.regions": "Available Regions",
+        "offline.maps.create.regions": "Create Map Regions",
         "offline.maps.total.downloaded": "Total downloaded",
         "offline.maps.clear.all": "Clear All Downloads",
         "offline.maps.downloading": "Downloading...",
@@ -1025,6 +1030,7 @@ struct LocalizedStrings {
         "safety.all.complete": "太好了！您已準備好安全行山。",
         "safety.complete.all": "出發前請完成所有項目。",
         "safety.checklist.title": "安全檢查清單",
+        "safety.create.items": "創建檢查清單項目",
         "safety.item.location": "啟用實時位置",
         "safety.item.water": "準備 2 公升水",
         "safety.item.heat": "檢查酷熱天氣警告",
@@ -1201,6 +1207,7 @@ struct LocalizedStrings {
         // Offline Maps
         "offline.maps.no.regions": "暫無可用區域",
         "offline.maps.available.regions": "可用區域",
+        "offline.maps.create.regions": "創建地圖區域",
         "offline.maps.total.downloaded": "總下載量",
         "offline.maps.clear.all": "清除所有下載",
         "offline.maps.downloading": "下載中...",

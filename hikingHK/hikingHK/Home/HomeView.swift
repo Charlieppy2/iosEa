@@ -32,7 +32,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     weatherCard
                     if let featured = viewModel.featuredTrail {
-                        featuredTrailCard(featured)
+                        featuredTrailCard()
                     }
                     quickActions
                     savedHikesSection
@@ -281,93 +281,97 @@ struct HomeView: View {
         }
     }
 
-    private func featuredTrailCard(_ trail: Trail) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "mountain.2.fill")
-                            .foregroundStyle(Color.hikingGreen)
-                        Text(languageManager.localizedString(for: "home.featured.trail"))
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Color.hikingDarkGreen)
-                    }
-                    Text(trail.localizedName(languageManager: languageManager))
-                        .font(.title2.bold())
-                        .foregroundStyle(Color.hikingDarkGreen)
-                    Label(trail.localizedDistrict(languageManager: languageManager), systemImage: "mappin.circle.fill")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.hikingBrown)
-                }
-                Spacer()
-                Button {
-                    viewModel.markFavorite(trail)
-                } label: {
-                    Image(systemName: trail.isFavorite ? "heart.fill" : "heart")
-                        .font(.title3)
-                        .foregroundStyle(trail.isFavorite ? .red : Color.hikingStone)
-                }
-            }
-            HStack(spacing: 12) {
-                statBadge(value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km", caption: languageManager.localizedString(for: "trails.distance"))
-                statBadge(value: "\(trail.elevationGain) m", caption: languageManager.localizedString(for: "home.elev.gain"))
-                statBadge(value: "\(trail.estimatedDurationMinutes / 60) h", caption: languageManager.localizedString(for: "trails.duration"))
-            }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(trail.highlights, id: \.self) { highlight in
-                        Text(highlight)
-                            .font(.caption.weight(.medium))
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 12)
-                            .hikingBadge(color: Color.hikingGreen)
-                    }
-                }
-            }
-            NavigationLink {
-                TrailDetailView(trail: trail)
-            } label: {
+    @ViewBuilder
+    private func featuredTrailCard() -> some View {
+        // 直接从 viewModel.featuredTrail 读取，确保使用最新的数据
+        if let trail = viewModel.featuredTrail {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text(languageManager.localizedString(for: "home.view.trail.plan"))
-                        .font(.headline.weight(.semibold))
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "mountain.2.fill")
+                                .foregroundStyle(Color.hikingGreen)
+                            Text(languageManager.localizedString(for: "home.featured.trail"))
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Color.hikingDarkGreen)
+                        }
+                        Text(trail.localizedName(languageManager: languageManager))
+                            .font(.title2.bold())
+                            .foregroundStyle(Color.hikingDarkGreen)
+                        Label(trail.localizedDistrict(languageManager: languageManager), systemImage: "mappin.circle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.hikingBrown)
+                    }
                     Spacer()
-                    Image(systemName: "arrow.right.circle.fill")
+                    Button {
+                        viewModel.markFavorite(trail)
+                    } label: {
+                        Image(systemName: trail.isFavorite ? "heart.fill" : "heart")
+                            .font(.title3)
+                            .foregroundStyle(trail.isFavorite ? .red : Color.hikingStone)
+                    }
                 }
-                .foregroundStyle(.white)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.hikingGradient)
-                        .shadow(color: Color.hikingGreen.opacity(0.4), radius: 8, x: 0, y: 4)
-                )
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.96, green: 0.98, blue: 0.95),
-                            Color(red: 0.94, green: 0.97, blue: 0.93)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+                HStack(spacing: 12) {
+                    statBadge(value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km", caption: languageManager.localizedString(for: "trails.distance"))
+                    statBadge(value: "\(trail.elevationGain) m", caption: languageManager.localizedString(for: "home.elev.gain"))
+                    statBadge(value: "\(trail.estimatedDurationMinutes / 60) h", caption: languageManager.localizedString(for: "trails.duration"))
+                }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(trail.highlights, id: \.self) { highlight in
+                            Text(localizedHighlight(highlight, for: trail))
+                                .font(.caption.weight(.medium))
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .hikingBadge(color: Color.hikingGreen)
+                        }
+                    }
+                }
+                NavigationLink {
+                    TrailDetailView(trail: trail)
+                } label: {
+                    HStack {
+                        Text(languageManager.localizedString(for: "home.view.trail.plan"))
+                            .font(.headline.weight(.semibold))
+                        Spacer()
+                        Image(systemName: "arrow.right.circle.fill")
+                    }
+                    .foregroundStyle(.white)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color.hikingGradient)
+                            .shadow(color: Color.hikingGreen.opacity(0.4), radius: 8, x: 0, y: 4)
                     )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.hikingGreen.opacity(0.3), Color.hikingDarkGreen.opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.96, green: 0.98, blue: 0.95),
+                                Color(red: 0.94, green: 0.97, blue: 0.93)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                )
-                .shadow(color: Color.hikingDarkGreen.opacity(0.15), radius: 20, x: 0, y: 8)
-        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Color.hikingGreen.opacity(0.3), Color.hikingDarkGreen.opacity(0.2)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(color: Color.hikingDarkGreen.opacity(0.15), radius: 20, x: 0, y: 8)
+            )
+        }
     }
 
     private func statBadge(value: String, caption: String) -> some View {
@@ -571,8 +575,13 @@ struct SafetyChecklistView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
-    @Query private var items: [SafetyChecklistItem]
     @StateObject private var viewModel = SafetyChecklistViewModel()
+    @State private var isCreatingItems = false
+    
+    // 使用 ViewModel 的 items 而不是 @Query
+    private var items: [SafetyChecklistItem] {
+        viewModel.items
+    }
     
     private var completedCount: Int {
         items.filter { $0.isCompleted }.count
@@ -590,11 +599,41 @@ struct SafetyChecklistView: View {
         NavigationStack {
             Group {
                 if items.isEmpty {
-                    ContentUnavailableView(
-                        languageManager.localizedString(for: "safety.checklist.title"),
-                        systemImage: "checklist",
-                        description: Text(languageManager.localizedString(for: "safety.complete.all"))
-                    )
+                    VStack(spacing: 20) {
+                        ContentUnavailableView(
+                            languageManager.localizedString(for: "safety.checklist.title"),
+                            systemImage: "checklist",
+                            description: Text(languageManager.localizedString(for: "safety.complete.all"))
+                        )
+                        
+                        Button {
+                            guard !isCreatingItems else { return }
+                            isCreatingItems = true
+                            Task {
+                                await viewModel.createDefaultItems(context: modelContext)
+                                isCreatingItems = false
+                            }
+                        } label: {
+                            if isCreatingItems {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.white)
+                            } else {
+                                Label(
+                                    languageManager.localizedString(for: "safety.create.items"),
+                                    systemImage: "plus.circle.fill"
+                                )
+                            }
+                        }
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(isCreatingItems ? Color.gray : Color.hikingGreen)
+                        .cornerRadius(12)
+                        .disabled(isCreatingItems)
+                        .padding(.horizontal)
+                    }
                 } else {
                     List {
                         Section {
@@ -654,9 +693,24 @@ struct SafetyChecklistView: View {
             .task {
                 // 在 task 中配置和初始化数据
                 await viewModel.configureIfNeeded(context: modelContext)
+                viewModel.refreshItems()
+                // 如果项目为空，尝试创建
+                if viewModel.items.isEmpty {
+                    await viewModel.createDefaultItems(context: modelContext)
+                }
+            }
+            .onAppear {
+                viewModel.refreshItems()
+                // 如果项目为空，尝试创建
+                if viewModel.items.isEmpty {
+                    Task {
+                        await viewModel.createDefaultItems(context: modelContext)
+                    }
+                }
             }
         }
     }
+    
 }
 
 struct SavedHikeDetailSheet: View {
@@ -921,33 +975,75 @@ struct OfflineMapsView: View {
     @StateObject private var viewModel = OfflineMapsViewModel()
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager
+    @State private var isCreatingRegions = false
+    
+    // 使用 ViewModel 的 regions 而不是 @Query
+    private var regions: [OfflineMapRegion] {
+        viewModel.regions
+    }
+    
+    private var hasDownloadedMaps: Bool {
+        regions.contains { $0.downloadStatus == .downloaded }
+    }
+    
+    private var totalDownloadedSize: Int64 {
+        regions
+            .filter { $0.downloadStatus == .downloaded }
+            .reduce(0) { $0 + $1.downloadedSize }
+    }
     
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    if viewModel.regions.isEmpty {
-                        Text(languageManager.localizedString(for: "offline.maps.no.regions"))
-                            .foregroundStyle(.secondary)
+                    if regions.isEmpty {
+                        VStack(spacing: 16) {
+                            Text(languageManager.localizedString(for: "offline.maps.no.regions"))
+                                .foregroundStyle(.secondary)
+                            
+                            Button {
+                                Task {
+                                    await createDefaultRegions()
+                                }
+                            } label: {
+                                if isCreatingRegions {
+                                    ProgressView()
+                                        .progressViewStyle(.circular)
+                                        .tint(.white)
+                                } else {
+                                    Label(
+                                        languageManager.localizedString(for: "offline.maps.create.regions"),
+                                        systemImage: "plus.circle.fill"
+                                    )
+                                }
+                            }
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(isCreatingRegions ? Color.gray : Color.hikingGreen)
+                            .cornerRadius(12)
+                            .disabled(isCreatingRegions)
+                        }
                     } else {
-                        ForEach(viewModel.regions) { region in
+                        ForEach(regions.sorted(by: { $0.name < $1.name })) { region in
                             regionRow(region: region)
                         }
                     }
                 } header: {
                     Text(languageManager.localizedString(for: "offline.maps.available.regions"))
                 } footer: {
-                    if viewModel.hasDownloadedMaps {
-                        Text("\(languageManager.localizedString(for: "offline.maps.total.downloaded")): \(formatSize(viewModel.totalDownloadedSize))")
+                    if hasDownloadedMaps {
+                        Text("\(languageManager.localizedString(for: "offline.maps.total.downloaded")): \(formatSize(totalDownloadedSize))")
                             .font(.caption)
                     }
                 }
                 
-                if viewModel.hasDownloadedMaps {
+                if hasDownloadedMaps {
                     Section {
                         Button(role: .destructive) {
                             // Delete all downloaded maps
-                            for region in viewModel.regions.filter({ $0.downloadStatus == .downloaded }) {
+                            for region in regions.filter({ $0.downloadStatus == .downloaded }) {
                                 viewModel.deleteRegion(region)
                             }
                         } label: {
@@ -965,12 +1061,30 @@ struct OfflineMapsView: View {
                 }
             }
             .task {
-                await MainActor.run {
-                    viewModel.configureIfNeeded(context: modelContext)
+                await viewModel.configureIfNeeded(context: modelContext)
+                viewModel.refreshRegions()
+                // 如果区域为空，尝试创建
+                if viewModel.regions.isEmpty {
+                    print("🔧 OfflineMapsView: Regions are empty in task, creating...")
+                    await createDefaultRegions()
+                    // 创建后刷新
+                    viewModel.refreshRegions()
+                } else {
+                    print("✅ OfflineMapsView: Found \(viewModel.regions.count) regions in task")
                 }
             }
             .onAppear {
-                viewModel.configureIfNeeded(context: modelContext)
+                viewModel.refreshRegions()
+                // 在 onAppear 时也检查并创建（如果为空）
+                if viewModel.regions.isEmpty {
+                    print("🔧 OfflineMapsView: Regions are empty on appear, creating...")
+                    Task {
+                        await createDefaultRegions()
+                        viewModel.refreshRegions()
+                    }
+                } else {
+                    print("✅ OfflineMapsView: Found \(viewModel.regions.count) regions on appear")
+                }
             }
             .alert(languageManager.localizedString(for: "offline.maps.download.error"), isPresented: Binding(
                 get: { viewModel.error != nil },
@@ -984,6 +1098,94 @@ struct OfflineMapsView: View {
                     Text(error)
                 }
             }
+        }
+    }
+    
+    private func createDefaultRegions() async {
+        // 防止重复创建
+        guard !isCreatingRegions else {
+            print("⚠️ OfflineMapsView: Already creating regions, skipping...")
+            return
+        }
+        
+        // 检查是否已有区域
+        if !regions.isEmpty {
+            print("⚠️ OfflineMapsView: Regions already exist (\(regions.count) regions), skipping creation")
+            return
+        }
+        
+        isCreatingRegions = true
+        defer { 
+            isCreatingRegions = false
+            print("🔧 OfflineMapsView: isCreatingRegions set to false")
+        }
+        
+        print("🔧 OfflineMapsView: Creating default regions directly...")
+        print("🔧 OfflineMapsView: Current regions count: \(regions.count)")
+        
+        // 检查是否已经有这些区域存在（通过查询）
+        let existingNames = Set(regions.map { $0.name })
+        let availableNames = Set(OfflineMapRegion.availableRegions)
+        let missingNames = availableNames.subtracting(existingNames)
+        
+        guard !missingNames.isEmpty else {
+            print("⚠️ OfflineMapsView: All regions already exist")
+            return
+        }
+        
+        print("🔧 OfflineMapsView: Missing regions: \(missingNames)")
+        
+        let defaultRegions = missingNames.map { name in
+            OfflineMapRegion(name: name)
+        }
+        
+        print("🔧 OfflineMapsView: Creating \(defaultRegions.count) new regions...")
+        
+        for region in defaultRegions {
+            modelContext.insert(region)
+            print("✅ OfflineMapsView: Inserted region: \(region.name)")
+        }
+        
+        do {
+            // 先保存一次
+            try modelContext.save()
+            print("✅ OfflineMapsView: First save completed")
+            
+            // 等待一小段时间
+            try? await Task.sleep(nanoseconds: 50_000_000) // 0.05秒
+            
+            // 再次保存确保数据持久化
+            try modelContext.save()
+            print("✅ OfflineMapsView: Second save completed")
+            
+            // 等待更长时间让 SwiftData 和 @Query 同步
+            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2秒
+            
+            // 验证数据是否已保存 - 使用不同的查询方式
+            let verifyDescriptor = FetchDescriptor<OfflineMapRegion>()
+            let verified = try modelContext.fetch(verifyDescriptor)
+            print("🔧 OfflineMapsView: Verification - found \(verified.count) regions in context")
+            
+            if verified.isEmpty {
+                print("⚠️ OfflineMapsView: WARNING - Regions were saved but cannot be retrieved")
+                print("⚠️ OfflineMapsView: This might be a SwiftData synchronization issue")
+            } else {
+                print("✅ OfflineMapsView: Successfully verified \(verified.count) regions")
+                for region in verified {
+                    print("   - \(region.name)")
+                }
+            }
+            
+            print("🔧 OfflineMapsView: ViewModel regions count after save: \(viewModel.regions.count)")
+            
+            // 强制刷新 ViewModel
+            if verified.count > 0 {
+                print("⚠️ OfflineMapsView: Context has data, refreshing ViewModel...")
+                viewModel.refreshRegions()
+                print("✅ OfflineMapsView: After refresh, ViewModel has \(viewModel.regions.count) regions")
+            }
+        } catch {
+            print("❌ OfflineMapsView: Failed to save regions: \(error)")
         }
     }
     

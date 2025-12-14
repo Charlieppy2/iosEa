@@ -25,7 +25,7 @@ final class OfflineMapsViewModel: ObservableObject {
         self.downloadService = downloadService
     }
     
-    func configureIfNeeded(context: ModelContext) {
+    func configureIfNeeded(context: ModelContext) async {
         // 如果已经配置过，只刷新区域列表
         if let existingStore = offlineMapsStore {
             do {

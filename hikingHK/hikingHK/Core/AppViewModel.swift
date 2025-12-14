@@ -53,12 +53,28 @@ final class AppViewModel: ObservableObject {
     }
 
     func markFavorite(_ trail: Trail) {
-        guard let index = trails.firstIndex(of: trail) else { return }
-        trails[index].isFavorite.toggle()
+        guard let index = trails.firstIndex(of: trail) else {
+            print("⚠️ AppViewModel: Trail not found in array")
+            return
+        }
+        
+        // 因为 Trail 是 struct（值类型），需要创建新的实例
+        var updatedTrail = trails[index]
+        updatedTrail.isFavorite.toggle()
+        trails[index] = updatedTrail
+        
+        // 如果这是 featured trail，也需要更新
+        if featuredTrail?.id == trail.id {
+            featuredTrail = updatedTrail
+        }
+        
+        print("✅ AppViewModel: Toggled favorite for trail \(trail.name), isFavorite: \(updatedTrail.isFavorite)")
+        
         do {
-            try trailDataStore?.setFavorite(trails[index].isFavorite, trailId: trail.id)
+            try trailDataStore?.setFavorite(updatedTrail.isFavorite, trailId: trail.id)
+            print("✅ AppViewModel: Favorite status saved to database")
         } catch {
-            print("Favorite persistence error: \(error)")
+            print("❌ Favorite persistence error: \(error)")
         }
     }
 

@@ -38,10 +38,13 @@ final class OfflineMapsStore {
     }
     
     func loadAllRegions() throws -> [OfflineMapRegion] {
-        let descriptor = FetchDescriptor<OfflineMapRegion>(
-            sortBy: [SortDescriptor(\.name)]
-        )
-        return try context.fetch(descriptor)
+        // 先尝试不使用排序的简单查询
+        let simpleDescriptor = FetchDescriptor<OfflineMapRegion>()
+        let allRegions = try context.fetch(simpleDescriptor)
+        print("OfflineMapsStore: loadAllRegions() fetched \(allRegions.count) regions (no sort)")
+        
+        // 手动排序
+        return allRegions.sorted { $0.name < $1.name }
     }
     
     func getRegion(named name: String) throws -> OfflineMapRegion? {
