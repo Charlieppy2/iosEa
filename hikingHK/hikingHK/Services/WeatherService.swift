@@ -190,6 +190,39 @@ struct HKORealTimeWeather: Decodable {
         case warningMessage
         // 忽略其他字段：rainfall, icon, iconUpdateTime, updateTime, tcmessage 等
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        temperature = try container.decode(WeatherDataset.self, forKey: .temperature)
+        humidity = try container.decode(WeatherDataset.self, forKey: .humidity)
+        warningMessage = try container.decodeIfPresent([String].self, forKey: .warningMessage)
+        
+        // 处理 uvindex 字段：可能是字典、空字符串或 null
+        if container.contains(.uvindex) {
+            // 尝试解码为字典
+            if let uvindexDict = try? container.decode(UVIndexDataset.self, forKey: .uvindex) {
+                uvindex = uvindexDict
+            } else {
+                // 如果不是字典，尝试解码为字符串（可能是空字符串）
+                if let uvindexString = try? container.decode(String.self, forKey: .uvindex) {
+                    // 如果是空字符串或无效值，设置为 nil
+                    if uvindexString.isEmpty {
+                        uvindex = nil
+                    } else {
+                        // 如果不是空字符串，尝试解析（虽然通常应该是空字符串）
+                        print("⚠️ WeatherService: uvindex is a non-empty string: \(uvindexString)")
+                        uvindex = nil
+                    }
+                } else {
+                    // 如果既不是字典也不是字符串，设置为 nil
+                    uvindex = nil
+                }
+            }
+        } else {
+            uvindex = nil
+        }
+    }
 }
 
 struct WeatherDataset: Decodable {

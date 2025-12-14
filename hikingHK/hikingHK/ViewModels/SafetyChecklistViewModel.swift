@@ -11,54 +11,41 @@ import Combine
 
 @MainActor
 final class SafetyChecklistViewModel: ObservableObject {
-    @Published var items: [SafetyChecklistItem] = []
-    @Published var isLoading = false
-    
     private var safetyChecklistStore: SafetyChecklistStore?
+    private var hasSeeded = false
     
-    func configureIfNeeded(context: ModelContext) {
-        guard safetyChecklistStore == nil else { return }
+    func configureIfNeeded(context: ModelContext) async {
+        // 防止重复初始化
+        guard safetyChecklistStore == nil else {
+            print("🔧 SafetyChecklistViewModel: Already configured")
+            return
+        }
+        
+        print("🔧 SafetyChecklistViewModel: configureIfNeeded called")
+        
         let store = SafetyChecklistStore(context: context)
         safetyChecklistStore = store
         
         do {
+            print("🔧 SafetyChecklistViewModel: Seeding default items...")
             try store.seedDefaultsIfNeeded()
-            items = try store.loadAllItems()
+            hasSeeded = true
+            print("✅ SafetyChecklistViewModel: Seeding completed")
         } catch {
-            print("Safety checklist load error: \(error)")
+            print("❌ Safety checklist seeding error: \(error)")
+            print("❌ Error details: \(error.localizedDescription)")
         }
     }
     
-    func toggleItem(_ item: SafetyChecklistItem) {
-        guard let store = safetyChecklistStore else { return }
+    func toggleItem(_ item: SafetyChecklistItem, context: ModelContext) {
+        // 直接使用 context 更新，@Query 会自动刷新
+        item.isCompleted.toggle()
+        item.lastUpdated = Date()
         do {
-            try store.toggleItem(id: item.id)
-            // Refresh items to ensure UI is in sync with SwiftData
-            refreshItems()
+            try context.save()
         } catch {
-            print("Toggle safety item error: \(error)")
+            print("❌ Toggle safety item error: \(error)")
         }
-    }
-    
-    func refreshItems() {
-        guard let store = safetyChecklistStore else { return }
-        do {
-            items = try store.loadAllItems()
-        } catch {
-            print("Refresh safety items error: \(error)")
-        }
-    }
-    
-    var completedCount: Int {
-        items.filter { $0.isCompleted }.count
-    }
-    
-    var totalCount: Int {
-        items.count
-    }
-    
-    var isAllCompleted: Bool {
-        !items.isEmpty && items.allSatisfy { $0.isCompleted }
     }
 }
 

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import CoreLocation
 
 struct HomeView: View {
@@ -75,6 +76,18 @@ struct HomeView: View {
                         Label(languageManager.localizedString(for: "home.safety"), systemImage: "cross.case.fill")
                             .foregroundStyle(Color.hikingGreen)
                     }
+                }
+            }
+            .onAppear {
+                // 使用当前语言刷新天气数据
+                Task {
+                    await viewModel.refreshWeather(language: languageManager.currentLanguage.rawValue)
+                }
+            }
+            .onChange(of: languageManager.currentLanguage) { oldValue, newValue in
+                // 当语言改变时，使用新语言刷新天气数据
+                Task {
+                    await viewModel.refreshWeather(language: newValue.rawValue)
                 }
             }
             .alert(languageManager.localizedString(for: "home.sos"), isPresented: $isShowingSOSConfirmation) {
@@ -558,54 +571,75 @@ struct SafetyChecklistView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
+    @Query private var items: [SafetyChecklistItem]
     @StateObject private var viewModel = SafetyChecklistViewModel()
+    
+    private var completedCount: Int {
+        items.filter { $0.isCompleted }.count
+    }
+    
+    private var totalCount: Int {
+        items.count
+    }
+    
+    private var isAllCompleted: Bool {
+        !items.isEmpty && items.allSatisfy { $0.isCompleted }
+    }
     
     var body: some View {
         NavigationStack {
-            List {
-                if !viewModel.items.isEmpty {
-                    Section {
-                        HStack {
-                            Text(languageManager.localizedString(for: "safety.progress"))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Text("\(viewModel.completedCount) / \(viewModel.totalCount)")
-                                .font(.subheadline.weight(.semibold))
+            Group {
+                if items.isEmpty {
+                    ContentUnavailableView(
+                        languageManager.localizedString(for: "safety.checklist.title"),
+                        systemImage: "checklist",
+                        description: Text(languageManager.localizedString(for: "safety.complete.all"))
+                    )
+                } else {
+                    List {
+                        Section {
+                            HStack {
+                                Text(languageManager.localizedString(for: "safety.progress"))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text("\(completedCount) / \(totalCount)")
+                                    .font(.subheadline.weight(.semibold))
+                            }
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
-                    }
-                }
-                
-                Section {
-                    ForEach(viewModel.items) { item in
-                        HStack(spacing: 12) {
-                            Image(systemName: item.iconName)
-                                .foregroundStyle(item.isCompleted ? .green : .secondary)
-                                .frame(width: 24)
-                            
-                            Text(languageManager.localizedString(for: "safety.item.\(item.id)"))
-                                .strikethrough(item.isCompleted)
-                                .foregroundStyle(item.isCompleted ? .secondary : .primary)
-                            
-                            Spacer()
-                            
-                            if item.isCompleted {
-                                Image(systemName: "checkmark.circle.fill")
+                        
+                        Section {
+                            ForEach(items.sorted(by: { $0.id < $1.id })) { item in
+                                HStack(spacing: 12) {
+                                    Image(systemName: item.iconName)
+                                        .foregroundStyle(item.isCompleted ? .green : .secondary)
+                                        .frame(width: 24)
+                                    
+                                    Text(languageManager.localizedString(for: "safety.item.\(item.id)"))
+                                        .strikethrough(item.isCompleted)
+                                        .foregroundStyle(item.isCompleted ? .secondary : .primary)
+                                    
+                                    Spacer()
+                                    
+                                    if item.isCompleted {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.green)
+                                    }
+                                }
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    viewModel.toggleItem(item, context: modelContext)
+                                }
+                            }
+                        } footer: {
+                            if isAllCompleted {
+                                Text(languageManager.localizedString(for: "safety.all.complete"))
                                     .foregroundStyle(.green)
+                            } else {
+                                Text(languageManager.localizedString(for: "safety.complete.all"))
                             }
                         }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            viewModel.toggleItem(item)
-                        }
-                    }
-                } footer: {
-                    if viewModel.isAllCompleted {
-                        Text(languageManager.localizedString(for: "safety.all.complete"))
-                            .foregroundStyle(.green)
-                    } else {
-                        Text(languageManager.localizedString(for: "safety.complete.all"))
                     }
                 }
             }
@@ -618,10 +652,8 @@ struct SafetyChecklistView: View {
                 }
             }
             .task {
-                viewModel.configureIfNeeded(context: modelContext)
-            }
-            .onAppear {
-                viewModel.refreshItems()
+                // 在 task 中配置和初始化数据
+                await viewModel.configureIfNeeded(context: modelContext)
             }
         }
     }

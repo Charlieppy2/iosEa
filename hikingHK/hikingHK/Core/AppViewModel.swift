@@ -34,9 +34,9 @@ final class AppViewModel: ObservableObject {
         self.featuredTrail = trails.first
         self.weatherService = weatherService
 
-        // Initial weather fetch will use default language (en)
-        // Language will be updated when user changes language preference
-        Task { await refreshWeather(language: "en") }
+        // Initial weather fetch will use saved language preference or default to "en"
+        let savedLanguage = UserDefaults.standard.string(forKey: "appLanguage") ?? "en"
+        Task { await refreshWeather(language: savedLanguage) }
     }
 
     func configurePersistenceIfNeeded(context: ModelContext) {
