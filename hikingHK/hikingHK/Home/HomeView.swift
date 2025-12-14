@@ -1010,6 +1010,12 @@ struct TrailAlertsView: View {
             .task {
                 viewModel.updateLanguageManager(languageManager)
                 await viewModel.fetchAlerts()
+                // 启动自动刷新
+                viewModel.startAutoRefresh()
+            }
+            .onDisappear {
+                // 停止自动刷新以节省资源
+                viewModel.stopAutoRefresh()
             }
             .onChange(of: languageManager.currentLanguage) { _, _ in
                 viewModel.updateLanguageManager(languageManager)

@@ -85,16 +85,40 @@ final class SessionManager: ObservableObject {
     }
 
     func signOut() {
+        print("🔐 SessionManager: signOut() called, current user: \(currentUser?.email ?? "nil")")
+        
+        // 清除用户状态 - 这会触发 @Published 更新
         currentUser = nil
-        storedEmail = ""
+        
+        // 完全清除 UserDefaults 中的存储值
+        UserDefaults.standard.removeObject(forKey: storedEmailKey)
+        UserDefaults.standard.synchronize() // 确保立即同步
+        
         authError = nil
+        
+        // 显式触发视图更新（@Published 应该自动处理，但确保一下）
+        objectWillChange.send()
+        
+        print("✅ SessionManager: User signed out, cleared stored email. currentUser is now: \(currentUser?.email ?? "nil")")
     }
 
     private func restoreSession() {
-        guard !storedEmail.isEmpty,
-              let store = accountStore,
-              let credential = try? store.credential(for: storedEmail.lowercased())
-        else { return }
+        let email = storedEmail
+        guard !email.isEmpty else {
+            print("🔍 SessionManager: No stored email, skipping session restore")
+            return
+        }
+        
+        guard let store = accountStore else {
+            print("⚠️ SessionManager: Account store not available, skipping session restore")
+            return
+        }
+        
+        guard let credential = try? store.credential(for: email.lowercased()) else {
+            print("⚠️ SessionManager: No credential found for stored email, clearing stored email")
+            UserDefaults.standard.removeObject(forKey: storedEmailKey)
+            return
+        }
 
         currentUser = UserAccount(
             id: credential.accountId,
@@ -102,6 +126,7 @@ final class SessionManager: ObservableObject {
             email: credential.email,
             avatarSymbol: credential.avatarSymbol
         )
+        print("✅ SessionManager: Session restored for user: \(credential.email)")
     }
 
     private var storedEmail: String {

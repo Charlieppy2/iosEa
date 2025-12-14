@@ -22,11 +22,16 @@ struct RootView: View {
                     .environmentObject(appViewModel)
                     .environmentObject(sessionManager)
                     .environmentObject(languageManager)
+                    .id("logged_in_\(sessionManager.currentUser?.id.uuidString ?? "")") // 强制在用户变化时刷新
             } else {
                 AuthView()
                     .environmentObject(sessionManager)
                     .environmentObject(languageManager)
+                    .id("logged_out") // 确保登出视图有唯一 ID
             }
+        }
+        .onChange(of: sessionManager.currentUser) { oldValue, newValue in
+            print("🔄 RootView: currentUser changed from \(oldValue?.email ?? "nil") to \(newValue?.email ?? "nil")")
         }
         .task {
             guard !didConfigure else { return }

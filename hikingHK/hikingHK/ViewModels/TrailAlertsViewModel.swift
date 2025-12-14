@@ -16,6 +16,8 @@ final class TrailAlertsViewModel: ObservableObject {
     
     private let alertsService: TrailAlertsServiceProtocol
     private var languageManager: LanguageManager?
+    private var autoRefreshTask: Task<Void, Never>?
+    private let autoRefreshInterval: TimeInterval = 300 // 5分钟自动刷新
     
     init(alertsService: TrailAlertsServiceProtocol = TrailAlertsService(), languageManager: LanguageManager? = nil) {
         self.alertsService = alertsService
@@ -44,10 +46,29 @@ final class TrailAlertsViewModel: ObservableObject {
                 }
                 return lhs.issuedAt > rhs.issuedAt
             }
+            print("✅ TrailAlertsViewModel: Fetched \(alerts.count) active alerts")
         } catch {
             self.error = "Failed to load alerts"
-            print("Trail alerts fetch error: \(error)")
+            print("❌ Trail alerts fetch error: \(error)")
         }
+    }
+    
+    func startAutoRefresh() {
+        stopAutoRefresh()
+        autoRefreshTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: UInt64(autoRefreshInterval * 1_000_000_000))
+                if !Task.isCancelled {
+                    await fetchAlerts()
+                }
+            }
+        }
+        print("🔄 TrailAlertsViewModel: Started auto-refresh (every \(Int(autoRefreshInterval)) seconds)")
+    }
+    
+    func stopAutoRefresh() {
+        autoRefreshTask?.cancel()
+        autoRefreshTask = nil
     }
     
     var activeAlertsCount: Int {
