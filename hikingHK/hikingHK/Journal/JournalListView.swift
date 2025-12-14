@@ -50,6 +50,12 @@ struct JournalListView: View {
             .onAppear {
                 viewModel.configureIfNeeded(context: modelContext)
             }
+            .onChange(of: isShowingCreateJournal) { oldValue, newValue in
+                // 当创建日记的 sheet 关闭时，刷新列表
+                if oldValue == true && newValue == false {
+                    viewModel.refreshJournals()
+                }
+            }
             .sheet(isPresented: $isShowingCreateJournal) {
                 CreateJournalView(viewModel: viewModel)
             }

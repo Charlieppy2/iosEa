@@ -26,6 +26,21 @@ final class OfflineMapRegion {
         case downloaded = "Downloaded"
         case failed = "Failed"
         case updating = "Updating"
+        
+        func localizedDescription(languageManager: LanguageManager) -> String {
+            switch self {
+            case .notDownloaded:
+                return languageManager.localizedString(for: "offline.maps.status.not.downloaded")
+            case .downloading:
+                return languageManager.localizedString(for: "offline.maps.status.downloading")
+            case .downloaded:
+                return languageManager.localizedString(for: "offline.maps.status.downloaded")
+            case .failed:
+                return languageManager.localizedString(for: "offline.maps.status.failed")
+            case .updating:
+                return languageManager.localizedString(for: "offline.maps.status.updating")
+            }
+        }
     }
     
     init(
@@ -55,6 +70,22 @@ extension OfflineMapRegion {
         "Sai Kung East",
         "Lantau North"
     ]
+    
+    // 获取本地化的区域名称
+    func localizedName(languageManager: LanguageManager) -> String {
+        switch name {
+        case "Hong Kong Island":
+            return languageManager.localizedString(for: "offline.maps.region.hong.kong.island")
+        case "Kowloon Ridge":
+            return languageManager.localizedString(for: "offline.maps.region.kowloon.ridge")
+        case "Sai Kung East":
+            return languageManager.localizedString(for: "offline.maps.region.sai.kung.east")
+        case "Lantau North":
+            return languageManager.localizedString(for: "offline.maps.region.lantau.north")
+        default:
+            return name
+        }
+    }
     
     // 定义每个区域的坐标边界
     var coordinateRegion: MKCoordinateRegion {

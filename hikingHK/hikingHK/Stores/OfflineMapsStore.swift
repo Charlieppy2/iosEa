@@ -19,14 +19,22 @@ final class OfflineMapsStore {
     func seedDefaultsIfNeeded() throws {
         let descriptor = FetchDescriptor<OfflineMapRegion>()
         let existing = try context.fetch(descriptor)
-        guard existing.isEmpty else { return }
+        guard existing.isEmpty else {
+            print("OfflineMapsStore: Found \(existing.count) existing regions, skipping seed")
+            return
+        }
         
+        print("OfflineMapsStore: Seeding default regions...")
         let defaultRegions = OfflineMapRegion.availableRegions.map { name in
             OfflineMapRegion(name: name)
         }
         
-        defaultRegions.forEach { context.insert($0) }
+        for region in defaultRegions {
+            context.insert(region)
+        }
+        
         try context.save()
+        print("OfflineMapsStore: Successfully seeded \(defaultRegions.count) regions")
     }
     
     func loadAllRegions() throws -> [OfflineMapRegion] {
@@ -52,6 +60,21 @@ final class OfflineMapsStore {
     func deleteRegion(_ region: OfflineMapRegion) throws {
         context.delete(region)
         try context.save()
+    }
+    
+    func forceSeedRegions() throws {
+        // 强制创建所有默认区域，即使已存在
+        print("OfflineMapsStore: Force seeding regions...")
+        let defaultRegions = OfflineMapRegion.availableRegions.map { name in
+            OfflineMapRegion(name: name)
+        }
+        
+        for region in defaultRegions {
+            context.insert(region)
+        }
+        
+        try context.save()
+        print("OfflineMapsStore: Force seeded \(defaultRegions.count) regions")
     }
 }
 

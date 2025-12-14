@@ -85,7 +85,7 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
             }
             
             // Add UV index alerts
-            if let uvIndex = payload.uvindex?.data?.compactMap({ Int($0.value ?? "") }).first, uvIndex >= 8 {
+            if let uvIndex = payload.uvindex?.data?.compactMap({ $0.value }).first, uvIndex >= 8 {
                 alerts.append(TrailAlert(
                     id: UUID(),
                     title: "High UV Index",

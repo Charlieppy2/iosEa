@@ -110,14 +110,39 @@ final class AppViewModel: ObservableObject {
     func refreshWeather(language: String = "en") async {
         isLoadingWeather = true
         defer { isLoadingWeather = false }
+        
+        print("🌤️ AppViewModel: Refreshing weather (language: \(language))")
+        
         do {
             let snapshot = try await weatherService.fetchSnapshot(language: language)
             weatherSnapshot = snapshot
             weatherError = nil
-        } catch {
-            // Error message will be localized in the view
+            print("✅ AppViewModel: Weather refreshed successfully")
+        } catch let error as WeatherServiceError {
+            // 根据错误类型提供更详细的信息
+            let errorMessage: String
+            switch error {
+            case .networkError(let urlError):
+                errorMessage = "Network error: \(urlError.localizedDescription)"
+                print("❌ AppViewModel: Network error - \(urlError.localizedDescription)")
+            case .decodingError(let decodingError):
+                errorMessage = "Data parsing error: \(decodingError.localizedDescription)"
+                print("❌ AppViewModel: Decoding error - \(decodingError.localizedDescription)")
+            case .invalidResponse:
+                errorMessage = "Invalid response from weather API"
+                print("❌ AppViewModel: Invalid response")
+            case .missingKeyFields:
+                errorMessage = "Missing required weather data"
+                print("❌ AppViewModel: Missing key fields")
+            }
+            
+            // 保留缓存数据，但显示错误信息
             weatherError = "Unable to load latest weather. Showing cached data."
-            print("Weather fetch error: \(error)")
+            print("⚠️ AppViewModel: Using cached weather data due to error: \(errorMessage)")
+        } catch {
+            // 其他未知错误
+            weatherError = "Unable to load latest weather. Showing cached data."
+            print("❌ AppViewModel: Unknown error - \(error.localizedDescription)")
         }
     }
 

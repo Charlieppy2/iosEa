@@ -9,10 +9,41 @@ import SwiftUI
 import MapKit
 import SwiftData
 import Network
+import Combine
+
+// 网络状态监控器
+class NetworkStatusMonitor: ObservableObject {
+    @Published var status: NWPath.Status = .satisfied
+    private var monitor: NWPathMonitor?
+    
+    func startMonitoring() {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
+            return
+        }
+        #endif
+        
+        let monitor = NWPathMonitor()
+        monitor.pathUpdateHandler = { [weak self] path in
+            DispatchQueue.main.async {
+                self?.status = path.status
+            }
+        }
+        let queue = DispatchQueue(label: "NetworkMonitor")
+        monitor.start(queue: queue)
+        self.monitor = monitor
+    }
+    
+    func stopMonitoring() {
+        monitor?.cancel()
+        monitor = nil
+    }
+}
 
 struct TrailMapView: View {
     let trail: Trail
     @StateObject private var locationManager = LocationManager()
+    @StateObject private var networkMonitor = NetworkStatusMonitor()
     @EnvironmentObject private var languageManager: LanguageManager
     @Environment(\.modelContext) private var modelContext
     @State private var position: MapCameraPosition
@@ -20,12 +51,9 @@ struct TrailMapView: View {
     @State private var offlineMapRegion: OfflineMapRegion?
     @State private var isOfflineMode: Bool = false
     @State private var hasOfflineMap: Bool = false
-    @State private var networkMonitor: NWPathMonitor?
-    @State private var networkStatus: NWPath.Status = .satisfied
     
     private let routeService = MapboxRouteService()
     private let offlineMapLoader = OfflineMapLoader()
-    private var offlineMapsStore: OfflineMapsStore?
 
     init(trail: Trail) {
         self.trail = trail
@@ -117,6 +145,9 @@ struct TrailMapView: View {
             .onDisappear {
                 stopNetworkMonitoring()
             }
+            .onChange(of: networkMonitor.status) { _, _ in
+                updateOfflineModeStatus()
+            }
             HStack {
                 Label(localizedStartLocation, systemImage: "mappin.and.ellipse")
                 Spacer()
@@ -197,12 +228,15 @@ struct TrailMapView: View {
     
     // 检查离线地图可用性
     private func checkOfflineMapAvailability() async {
-        // 初始化 store
-        if offlineMapsStore == nil {
-            offlineMapsStore = OfflineMapsStore(context: modelContext)
+        // 在预览模式下跳过检查
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
+            return
         }
+        #endif
         
-        guard let store = offlineMapsStore else { return }
+        // 创建 store（需要 ModelContext）
+        let store = OfflineMapsStore(context: modelContext)
         
         // 加载所有离线地图区域
         guard let allRegions = try? store.loadAllRegions() else { return }
@@ -237,32 +271,24 @@ struct TrailMapView: View {
     
     // 设置网络监控
     private func setupNetworkMonitoring() {
-        let monitor = NWPathMonitor()
-        monitor.pathUpdateHandler = { [self] path in
-            DispatchQueue.main.async {
-                networkStatus = path.status
-                updateOfflineModeStatus()
-            }
-        }
-        let queue = DispatchQueue(label: "NetworkMonitor")
-        monitor.start(queue: queue)
-        networkMonitor = monitor
+        networkMonitor.startMonitoring()
     }
     
     // 停止网络监控
     private func stopNetworkMonitoring() {
-        networkMonitor?.cancel()
-        networkMonitor = nil
+        networkMonitor.stopMonitoring()
     }
     
     // 更新离线模式状态
     private func updateOfflineModeStatus() {
         // 如果网络不可用且有离线地图，启用离线模式
-        isOfflineMode = (networkStatus != .satisfied) && hasOfflineMap
+        isOfflineMode = (networkMonitor.status != .satisfied) && hasOfflineMap
     }
 }
 
 #Preview {
     TrailMapView(trail: Trail.sampleData[0])
+        .environmentObject(LanguageManager.shared)
+        .modelContainer(for: [OfflineMapRegion.self], inMemory: true)
 }
 

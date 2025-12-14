@@ -26,15 +26,41 @@ final class OfflineMapsViewModel: ObservableObject {
     }
     
     func configureIfNeeded(context: ModelContext) {
-        guard offlineMapsStore == nil else { return }
+        // 如果已经配置过，只刷新区域列表
+        if let existingStore = offlineMapsStore {
+            do {
+                regions = try existingStore.loadAllRegions()
+                if regions.isEmpty {
+                    // 如果列表为空，尝试重新初始化
+                    try existingStore.seedDefaultsIfNeeded()
+                    regions = try existingStore.loadAllRegions()
+                }
+            } catch {
+                print("Offline maps refresh error: \(error)")
+            }
+            return
+        }
+        
+        // 首次配置
         let store = OfflineMapsStore(context: context)
         offlineMapsStore = store
         
         do {
             try store.seedDefaultsIfNeeded()
             regions = try store.loadAllRegions()
+            
+            // 如果区域列表仍然为空，强制创建
+            if regions.isEmpty {
+                print("⚠️ OfflineMapsViewModel: Regions list is still empty after seeding, forcing creation...")
+                try store.forceSeedRegions()
+                regions = try store.loadAllRegions()
+                print("✅ OfflineMapsViewModel: Force created \(regions.count) regions")
+            } else {
+                print("✅ OfflineMapsViewModel: Loaded \(regions.count) regions")
+            }
         } catch {
-            print("Offline maps load error: \(error)")
+            print("❌ Offline maps load error: \(error)")
+            self.error = "Failed to load offline map regions: \(error.localizedDescription)"
         }
     }
     
@@ -105,15 +131,18 @@ final class OfflineMapsViewModel: ObservableObject {
             // 删除文件数据
             try downloadService.deleteRegionData(region)
             
-            // 更新状态
+            // 更新状态（不删除，只重置）
             region.downloadStatus = .notDownloaded
             region.downloadProgress = 0
             region.downloadedSize = 0
             region.downloadedAt = nil
+            region.totalSize = 0
             
-            // 从数据库删除
-            try store.deleteRegion(region)
-            regions.removeAll { $0.id == region.id }
+            // 更新数据库
+            try store.updateRegion(region)
+            
+            // 刷新列表
+            refreshRegions()
         } catch {
             print("Delete region error: \(error)")
             self.error = "Failed to delete region: \(error.localizedDescription)"

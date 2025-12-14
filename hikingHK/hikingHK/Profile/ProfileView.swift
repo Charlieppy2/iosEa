@@ -91,10 +91,10 @@ struct ProfileView: View {
                     goalRow(goal: monthlyDistanceGoal)
                 }
                 Section(languageManager.localizedString(for: "profile.data.services")) {
-                    serviceStatusRow(
+                    apiStatusRow(
                         title: languageManager.localizedString(for: "service.weather.api"),
                         icon: "cloud.sun",
-                        status: servicesStatus.weatherServiceStatus
+                        status: apiChecker.weatherAPIStatus
                     )
                     serviceStatusRow(
                         title: languageManager.localizedString(for: "service.gps.tracking"),

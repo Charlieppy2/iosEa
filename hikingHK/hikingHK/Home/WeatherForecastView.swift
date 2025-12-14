@@ -81,7 +81,7 @@ struct WeatherForecastView: View {
     private func bestTimeCard(_ bestTime: BestHikingTime) -> some View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(bestTime.date, style: .date)
+                Text(formattedDate(bestTime.date))
                     .font(.headline)
                     .foregroundStyle(Color.hikingDarkGreen)
                 Text(bestTime.timeSlot.displayTime)
@@ -135,7 +135,7 @@ struct WeatherForecastView: View {
         VStack(spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(forecast.date, style: .date)
+                    Text(formattedDate(forecast.date))
                         .font(.headline)
                         .foregroundStyle(Color.hikingDarkGreen)
                     if forecast.date < Date().addingTimeInterval(86400) {
@@ -263,6 +263,15 @@ struct WeatherForecastView: View {
             }
         }
         .padding()
+    }
+    
+    // 本地化日期格式
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US")
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
 }
 

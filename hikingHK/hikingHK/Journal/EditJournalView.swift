@@ -11,6 +11,7 @@ import PhotosUI
 
 struct EditJournalView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
     @ObservedObject var viewModel: JournalViewModel
     let journal: HikeJournal
@@ -107,6 +108,21 @@ struct EditJournalView: View {
                     .disabled(title.isEmpty || content.isEmpty || isSaving)
                 }
             }
+            .onAppear {
+                viewModel.configureIfNeeded(context: modelContext)
+            }
+            .alert(languageManager.localizedString(for: "journal.save.error"), isPresented: Binding(
+                get: { viewModel.error != nil },
+                set: { if !$0 { viewModel.error = nil } }
+            )) {
+                Button(languageManager.localizedString(for: "ok")) {
+                    viewModel.error = nil
+                }
+            } message: {
+                if let error = viewModel.error {
+                    Text(error)
+                }
+            }
         }
     }
     
@@ -129,13 +145,14 @@ struct EditJournalView: View {
                 hikeDate: hikeDate,
                 photos: photoData
             )
+            isSaving = false
             dismiss()
         } catch {
             // Handle error
             print("Error updating journal: \(error)")
+            viewModel.error = "Failed to update journal: \(error.localizedDescription)"
+            isSaving = false
         }
-        
-        isSaving = false
     }
 }
 

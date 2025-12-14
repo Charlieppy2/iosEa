@@ -83,7 +83,7 @@ struct TrailRecommendationView: View {
                 .foregroundStyle(Color.hikingDarkGreen)
             
             VStack(alignment: .leading, spacing: 12) {
-                Text("\(languageManager.localizedString(for: "recommendations.available.time")): \(Int(availableHours)) \(languageManager.localizedString(for: "recommendations.hours"))")
+                Text("\(languageManager.localizedString(for: "recommendations.available.time")): \(formatAvailableTime(availableHours))")
                     .font(.subheadline)
                     .foregroundStyle(Color.hikingBrown)
                 
@@ -115,6 +115,22 @@ struct TrailRecommendationView: View {
         .padding()
         .background(Color.hikingCardGradient, in: RoundedRectangle(cornerRadius: 16))
         .hikingCard()
+    }
+    
+    private func formatAvailableTime(_ hours: Double) -> String {
+        let wholeHours = Int(hours)
+        let hasHalfHour = abs(hours.truncatingRemainder(dividingBy: 1.0) - 0.5) < 0.01
+        
+        if hasHalfHour {
+            if wholeHours == 0 {
+                return languageManager.localizedString(for: "recommendations.half.hour")
+            } else {
+                // 格式：1小時30分鐘 或 1 hour 30 minutes
+                return "\(wholeHours)\(languageManager.localizedString(for: "recommendations.hour.and.half"))"
+            }
+        } else {
+            return "\(wholeHours)\(languageManager.localizedString(for: "recommendations.hours"))"
+        }
     }
     
     private var emptyStateView: some View {
@@ -160,10 +176,10 @@ struct RecommendationCard: View {
             // 標題和匹配度
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(recommendation.trail.name)
+                    Text(recommendation.trail.localizedName(languageManager: languageManager))
                         .font(.headline)
                         .foregroundStyle(Color.hikingDarkGreen)
-                    Text(recommendation.trail.district)
+                    Text(recommendation.trail.localizedDistrict(languageManager: languageManager))
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
                 }
@@ -213,9 +229,9 @@ struct RecommendationCard: View {
             
             // 路線信息
             HStack(spacing: 16) {
-                Label("\(recommendation.trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km", systemImage: "ruler")
-                Label("\(recommendation.trail.estimatedDurationMinutes / 60)h", systemImage: "clock")
-                Label(recommendation.trail.difficulty.rawValue, systemImage: recommendation.trail.difficulty.icon)
+                Label("\(recommendation.trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) \(languageManager.localizedString(for: "unit.km"))", systemImage: "ruler")
+                Label("\(recommendation.trail.estimatedDurationMinutes / 60)\(languageManager.localizedString(for: "unit.h"))", systemImage: "clock")
+                Label(recommendation.trail.difficulty.localizedRawValue(languageManager: languageManager), systemImage: recommendation.trail.difficulty.icon)
             }
             .font(.caption)
             .foregroundStyle(Color.hikingStone)

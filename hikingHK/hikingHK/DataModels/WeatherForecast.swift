@@ -91,6 +91,12 @@ enum WeatherCondition: String, Codable {
         case .windy: return "wind"
         }
     }
+    
+    func localizedName(languageManager: LanguageManager) -> String {
+        let key = "weather.condition.\(rawValue.lowercased().replacingOccurrences(of: " ", with: "."))"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : rawValue
+    }
 }
 
 struct BestHikingTime: Identifiable {
@@ -115,6 +121,11 @@ struct BestHikingTime: Identifiable {
             case .lateAfternoon: return "15:00 - 18:00"
             case .evening: return "18:00 - 21:00"
             }
+        }
+        
+        func localizedDisplayTime(languageManager: LanguageManager) -> String {
+            // 时间格式不需要本地化，但可以添加本地化的时间段名称
+            return displayTime
         }
     }
 }

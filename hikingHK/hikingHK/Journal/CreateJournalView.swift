@@ -120,6 +120,21 @@ struct CreateJournalView: View {
             .sheet(isPresented: $isShowingTrailPicker) {
                 TrailPickerView(selectedTrail: $selectedTrail)
             }
+            .onAppear {
+                viewModel.configureIfNeeded(context: modelContext)
+            }
+            .alert(languageManager.localizedString(for: "journal.save.error"), isPresented: Binding(
+                get: { viewModel.error != nil },
+                set: { if !$0 { viewModel.error = nil } }
+            )) {
+                Button(languageManager.localizedString(for: "ok")) {
+                    viewModel.error = nil
+                }
+            } message: {
+                if let error = viewModel.error {
+                    Text(error)
+                }
+            }
         }
     }
     
@@ -157,13 +172,20 @@ struct CreateJournalView: View {
                 locationName: selectedTrail?.district,
                 photos: photoData
             )
-            dismiss()
+            print("✅ CreateJournalView: Journal saved successfully")
+            isSaving = false
+            
+            // 等待一小段时间确保数据已保存，然后关闭
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
+                dismiss()
+            }
         } catch {
             // Handle error
-            print("Error saving journal: \(error)")
+            print("❌ CreateJournalView: Error saving journal: \(error)")
+            viewModel.error = "Failed to save journal: \(error.localizedDescription)"
+            isSaving = false
         }
-        
-        isSaving = false
     }
 }
 

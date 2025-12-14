@@ -177,6 +177,18 @@ struct LocalizedStrings {
         "retry": "Retry",
         "weather.humidity": "Humidity",
         "weather.uv.index": "UV Index",
+        
+        // Weather Conditions
+        "weather.condition.sunny": "Sunny",
+        "weather.condition.partly.cloudy": "Partly Cloudy",
+        "weather.condition.cloudy": "Cloudy",
+        "weather.condition.overcast": "Overcast",
+        "weather.condition.light.rain": "Light Rain",
+        "weather.condition.moderate.rain": "Moderate Rain",
+        "weather.condition.heavy.rain": "Heavy Rain",
+        "weather.condition.thunderstorm": "Thunderstorm",
+        "weather.condition.foggy": "Foggy",
+        "weather.condition.windy": "Windy",
         "weather.error.cached": "Unable to load latest weather. Showing cached data.",
         "weather.suggestion.warning": "Weather warning in force. Re-plan or carry full rain gear.",
         "weather.suggestion.extreme.uv": "Extreme UV. Start pre-dawn and bring SPF/umbrella.",
@@ -484,6 +496,8 @@ struct LocalizedStrings {
         "recommendations.settings": "Recommendation Settings",
         "recommendations.available.time": "Available Time",
         "recommendations.hours": "hours",
+        "recommendations.half.hour": "30 minutes",
+        "recommendations.hour.and.half": " hour 30 minutes",
         "recommendations.regenerate": "Regenerate Recommendations",
         "recommendations.no.recommendations": "No Recommendations",
         "recommendations.adjust.preferences": "Please adjust your preferences or available time",
@@ -548,6 +562,15 @@ struct LocalizedStrings {
         "offline.maps.clear.all": "Clear All Downloads",
         "offline.maps.downloading": "Downloading...",
         "offline.maps.download.error": "Download Error",
+        "offline.maps.region.hong.kong.island": "Hong Kong Island",
+        "offline.maps.region.kowloon.ridge": "Kowloon Ridge",
+        "offline.maps.region.sai.kung.east": "Sai Kung East",
+        "offline.maps.region.lantau.north": "Lantau North",
+        "offline.maps.status.not.downloaded": "Not Downloaded",
+        "offline.maps.status.downloading": "Downloading",
+        "offline.maps.status.downloaded": "Downloaded",
+        "offline.maps.status.failed": "Failed",
+        "offline.maps.status.updating": "Updating",
         
         // AR Identify
         "ar.scanning.skyline": "Scanning skyline…",
@@ -640,6 +663,7 @@ struct LocalizedStrings {
         "journal.no.entries": "No Journal Entries",
         "journal.start.documenting": "Start documenting your hiking adventures!",
         "journal.create.first.entry": "Create First Entry",
+        "journal.save.error": "Save Error",
         
         // Anomaly Severity
         "anomaly.severity.low": "Low",
@@ -793,6 +817,18 @@ struct LocalizedStrings {
         "retry": "重試",
         "weather.humidity": "濕度",
         "weather.uv.index": "紫外線指數",
+        
+        // Weather Conditions
+        "weather.condition.sunny": "晴天",
+        "weather.condition.partly.cloudy": "部分多雲",
+        "weather.condition.cloudy": "多雲",
+        "weather.condition.overcast": "陰天",
+        "weather.condition.light.rain": "小雨",
+        "weather.condition.moderate.rain": "中雨",
+        "weather.condition.heavy.rain": "大雨",
+        "weather.condition.thunderstorm": "雷暴",
+        "weather.condition.foggy": "有霧",
+        "weather.condition.windy": "有風",
         "weather.error.cached": "無法載入最新天氣。顯示緩存數據。",
         "weather.suggestion.warning": "天氣警告生效。重新計劃或攜帶全套雨具。",
         "weather.suggestion.extreme.uv": "極高紫外線。建議清晨出發並攜帶防曬霜/雨傘。",
@@ -1103,6 +1139,8 @@ struct LocalizedStrings {
         "recommendations.settings": "推薦設置",
         "recommendations.available.time": "可用時間",
         "recommendations.hours": "小時",
+        "recommendations.half.hour": "30分鐘",
+        "recommendations.hour.and.half": "小時30分鐘",
         "recommendations.regenerate": "重新生成推薦",
         "recommendations.no.recommendations": "暫無推薦",
         "recommendations.adjust.preferences": "請調整您的偏好設置或可用時間",
@@ -1167,6 +1205,15 @@ struct LocalizedStrings {
         "offline.maps.clear.all": "清除所有下載",
         "offline.maps.downloading": "下載中...",
         "offline.maps.download.error": "下載錯誤",
+        "offline.maps.region.hong.kong.island": "香港島",
+        "offline.maps.region.kowloon.ridge": "九龍山脊",
+        "offline.maps.region.sai.kung.east": "西貢東",
+        "offline.maps.region.lantau.north": "大嶼山北",
+        "offline.maps.status.not.downloaded": "未下載",
+        "offline.maps.status.downloading": "下載中",
+        "offline.maps.status.downloaded": "已下載",
+        "offline.maps.status.failed": "失敗",
+        "offline.maps.status.updating": "更新中",
         
         // AR Identify
         "ar.scanning.skyline": "正在掃描天際線…",
@@ -1259,6 +1306,7 @@ struct LocalizedStrings {
         "journal.no.entries": "尚無日記條目",
         "journal.start.documenting": "開始記錄您的行山冒險！",
         "journal.create.first.entry": "創建第一條日記",
+        "journal.save.error": "保存錯誤",
         
         // Anomaly Severity
         "anomaly.severity.low": "低",

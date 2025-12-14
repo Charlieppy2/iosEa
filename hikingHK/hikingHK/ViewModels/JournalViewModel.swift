@@ -10,6 +10,17 @@ import SwiftData
 import Combine
 import CoreLocation
 
+enum JournalError: LocalizedError {
+    case storeNotConfigured
+    
+    var errorDescription: String? {
+        switch self {
+        case .storeNotConfigured:
+            return "Journal store is not configured. Please try again."
+        }
+    }
+}
+
 @MainActor
 final class JournalViewModel: ObservableObject {
     @Published var journals: [HikeJournal] = []
@@ -27,11 +38,17 @@ final class JournalViewModel: ObservableObject {
     }
     
     func refreshJournals() {
-        guard let store = store else { return }
+        guard let store = store else {
+            print("⚠️ JournalViewModel: Store is nil, cannot refresh")
+            return
+        }
         do {
-            journals = try store.loadAllJournals()
+            let loadedJournals = try store.loadAllJournals()
+            self.journals = loadedJournals
+            print("✅ JournalViewModel: Refreshed \(loadedJournals.count) journals")
         } catch {
             self.error = "Failed to load journals: \(error.localizedDescription)"
+            print("❌ JournalViewModel: Failed to refresh journals: \(error)")
         }
     }
     
@@ -49,7 +66,9 @@ final class JournalViewModel: ObservableObject {
         hikeRecordId: UUID? = nil,
         photos: [Data] = []
     ) throws {
-        guard let store = store else { return }
+        guard let store = store else {
+            throw JournalError.storeNotConfigured
+        }
         
         let journal = HikeJournal(
             title: title,
@@ -76,6 +95,9 @@ final class JournalViewModel: ObservableObject {
         }
         
         try store.saveJournal(journal)
+        print("✅ JournalViewModel: Saved journal '\(title)'")
+        
+        // 立即刷新列表
         refreshJournals()
     }
     
@@ -86,7 +108,9 @@ final class JournalViewModel: ObservableObject {
         hikeDate: Date,
         photos: [Data] = []
     ) throws {
-        guard let store = store else { return }
+        guard let store = store else {
+            throw JournalError.storeNotConfigured
+        }
         
         journal.title = title
         journal.content = content

@@ -14,12 +14,10 @@ struct HomeView: View {
     @State private var isShowingSafetySheet = false
     @State private var isShowingTrailAlerts = false
     @State private var isShowingOfflineMaps = false
-    @State private var isShowingARIdentify = false
     @State private var isShowingLocationSharing = false
     @State private var isShowingHikeTracking = false
     @State private var isShowingHikeRecords = false
     @State private var isShowingRecommendations = false
-    @State private var isShowingSpeciesIdentification = false
     @State private var isShowingJournal = false
     @State private var isShowingWeatherForecast = false
     @State private var selectedSavedHike: SavedHike?
@@ -99,10 +97,6 @@ struct HomeView: View {
                 OfflineMapsView()
                     .presentationDetents([.medium, .large])
             }
-            .sheet(isPresented: $isShowingARIdentify) {
-                ARIdentifyView()
-                    .presentationDetents([.medium, .large])
-            }
             .sheet(isPresented: $isShowingLocationSharing) {
                 LocationSharingView(locationManager: locationManager)
                     .environmentObject(languageManager)
@@ -121,11 +115,6 @@ struct HomeView: View {
             }
             .sheet(isPresented: $isShowingRecommendations) {
                 TrailRecommendationView(appViewModel: viewModel)
-                    .environmentObject(languageManager)
-                    .presentationDetents([.large])
-            }
-            .sheet(isPresented: $isShowingSpeciesIdentification) {
-                SpeciesIdentificationView(locationManager: locationManager)
                     .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
@@ -395,7 +384,7 @@ struct HomeView: View {
                     .foregroundStyle(Color.hikingDarkGreen)
             }
             
-            // Row 1: Safety & Navigation (4 items)
+            // Row 1: 4 items
             HStack(spacing: 12) {
                 quickAction(icon: "exclamationmark.triangle.fill", title: languageManager.localizedString(for: "home.trail.alerts"), color: .orange) {
                     isShowingTrailAlerts = true
@@ -403,39 +392,28 @@ struct HomeView: View {
                 quickAction(icon: "map.fill", title: languageManager.localizedString(for: "home.offline.maps"), color: Color.hikingGreen) {
                     isShowingOfflineMaps = true
                 }
-                quickAction(icon: "camera.viewfinder", title: languageManager.localizedString(for: "home.ar.identify"), color: Color.hikingSky) {
-                    isShowingARIdentify = true
-                }
                 quickAction(icon: "location.fill", title: languageManager.localizedString(for: "home.location.share"), color: .red) {
                     isShowingLocationSharing = true
                 }
-            }
-            
-            // Row 2: Tracking & Records (4 items)
-            HStack(spacing: 12) {
                 quickAction(icon: "record.circle.fill", title: languageManager.localizedString(for: "home.start.tracking"), color: Color.hikingGreen) {
                     isShowingHikeTracking = true
                 }
+            }
+            
+            // Row 2: 4 items
+            HStack(spacing: 12) {
                 quickAction(icon: "list.bullet.rectangle", title: languageManager.localizedString(for: "home.hike.records"), color: Color.hikingSky) {
                     isShowingHikeRecords = true
                 }
                 quickAction(icon: "sparkles", title: languageManager.localizedString(for: "home.recommendations"), color: Color.hikingBrown) {
                     isShowingRecommendations = true
                 }
-                quickAction(icon: "camera.macro", title: languageManager.localizedString(for: "home.species.id"), color: Color.hikingTan) {
-                    isShowingSpeciesIdentification = true
-                }
-            }
-            
-            // Row 3: Journal & Weather (2 items, left-aligned)
-            HStack(spacing: 12) {
                 quickAction(icon: "book.fill", title: languageManager.localizedString(for: "home.journal"), color: Color.hikingBrown) {
                     isShowingJournal = true
                 }
                 quickAction(icon: "cloud.sun.fill", title: languageManager.localizedString(for: "home.weather.forecast"), color: Color.hikingSky) {
                     isShowingWeatherForecast = true
                 }
-                Spacer()
             }
         }
     }
@@ -955,10 +933,12 @@ struct OfflineMapsView: View {
                 }
             }
             .task {
-                viewModel.configureIfNeeded(context: modelContext)
+                await MainActor.run {
+                    viewModel.configureIfNeeded(context: modelContext)
+                }
             }
             .onAppear {
-                viewModel.refreshRegions()
+                viewModel.configureIfNeeded(context: modelContext)
             }
             .alert(languageManager.localizedString(for: "offline.maps.download.error"), isPresented: Binding(
                 get: { viewModel.error != nil },
@@ -979,7 +959,7 @@ struct OfflineMapsView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(region.name)
+                    Text(region.localizedName(languageManager: languageManager))
                         .font(.headline)
                     
                     HStack(spacing: 12) {
@@ -1042,7 +1022,7 @@ struct OfflineMapsView: View {
         HStack(spacing: 4) {
             Image(systemName: statusIcon(for: status))
                 .font(.caption2)
-            Text(status.rawValue)
+            Text(status.localizedDescription(languageManager: languageManager))
                 .font(.caption2)
         }
         .padding(.horizontal, 6)
@@ -1077,272 +1057,6 @@ struct OfflineMapsView: View {
     }
 }
 
-struct ARIdentifyView: View {
-    @StateObject private var locationManager = LocationManager()
-    @StateObject private var identifier: ARLandmarkIdentifier
-    @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var languageManager: LanguageManager
-    @State private var selectedLandmark: ARLandmarkIdentifier.IdentifiedLandmark?
-    
-    init() {
-        let locationManager = LocationManager()
-        _locationManager = StateObject(wrappedValue: locationManager)
-        _identifier = StateObject(wrappedValue: ARLandmarkIdentifier(locationManager: locationManager))
-    }
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                // Camera preview area (simulated)
-                ZStack {
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.black.opacity(0.3),
-                                    Color.black.opacity(0.1)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .overlay {
-                            if identifier.isScanning {
-                                VStack(spacing: 16) {
-                                    ProgressView()
-                                        .tint(.white)
-                                    Text(languageManager.localizedString(for: "ar.scanning.skyline"))
-                                        .font(.headline)
-                                        .foregroundStyle(.white)
-                                    if let closest = identifier.closestLandmark {
-                                        Text("\(languageManager.localizedString(for: "ar.found")): \(closest.landmark.name)")
-                                            .font(.subheadline)
-                                            .foregroundStyle(.white.opacity(0.8))
-                                    }
-                                }
-                            } else {
-                                VStack(spacing: 12) {
-                                    Image(systemName: "camera.viewfinder")
-                                        .font(.system(size: 48))
-                                        .foregroundStyle(.white.opacity(0.8))
-                                    Text(languageManager.localizedString(for: "ar.point.camera"))
-                                        .font(.subheadline)
-                                        .multilineTextAlignment(.center)
-                                        .foregroundStyle(.white.opacity(0.9))
-                                        .padding(.horizontal)
-                                }
-                            }
-                        }
-                    
-                    // Compass overlay
-                    if identifier.isScanning, let closest = identifier.closestLandmark {
-                        VStack {
-                            HStack {
-                                Spacer()
-                                VStack(spacing: 4) {
-                                    Image(systemName: "location.north.circle.fill")
-                                        .font(.title2)
-                                        .foregroundStyle(.white)
-                                    Text("\(Int(closest.bearing))°")
-                                        .font(.caption.bold())
-                                        .foregroundStyle(.white)
-                                }
-                                .padding()
-                                .background(.ultraThinMaterial, in: Circle())
-                            }
-                            Spacer()
-                        }
-                    }
-                }
-                .frame(height: 300)
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                
-                if identifier.isScanning {
-                    if identifier.identifiedLandmarks.isEmpty {
-                        VStack(spacing: 8) {
-                            ProgressView()
-                            Text(languageManager.localizedString(for: "ar.searching.landmarks"))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding()
-                    } else {
-                        ScrollView {
-                            VStack(spacing: 12) {
-                                ForEach(identifier.identifiedLandmarks) { identified in
-                                    landmarkCard(identified: identified)
-                                        .onTapGesture {
-                                            selectedLandmark = identified
-                                        }
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
-                    }
-                } else {
-                    if !identifier.identifiedLandmarks.isEmpty {
-                        ScrollView {
-                            VStack(spacing: 12) {
-                                Text(languageManager.localizedString(for: "ar.recent.identifications"))
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal)
-                                
-                                ForEach(identifier.identifiedLandmarks.prefix(3)) { identified in
-                                    landmarkCard(identified: identified)
-                                        .onTapGesture {
-                                            selectedLandmark = identified
-                                        }
-                                }
-                            }
-                            .padding(.vertical)
-                        }
-                    } else {
-                        VStack(spacing: 12) {
-                            Image(systemName: "mountain.2.fill")
-                                .font(.system(size: 48))
-                                .foregroundStyle(.secondary)
-                            Text(languageManager.localizedString(for: "ar.no.landmarks"))
-                                .font(.headline)
-                            Text(languageManager.localizedString(for: "ar.start.scanning"))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding()
-                    }
-                }
-                
-                Button {
-                    if identifier.isScanning {
-                        identifier.stopScanning()
-                    } else {
-                        // Request location permission if needed
-                        if locationManager.authorizationStatus == .notDetermined {
-                            locationManager.requestPermission()
-                        } else if locationManager.authorizationStatus == .authorizedAlways || locationManager.authorizationStatus == .authorizedWhenInUse {
-                            locationManager.startUpdates()
-                            identifier.startScanning()
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: identifier.isScanning ? "stop.circle.fill" : "play.circle.fill")
-                        Text(identifier.isScanning ? languageManager.localizedString(for: "ar.stop.scan") : languageManager.localizedString(for: "ar.start.scan"))
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(locationManager.authorizationStatus == .denied || locationManager.authorizationStatus == .restricted)
-            }
-            .padding()
-            .navigationTitle(languageManager.localizedString(for: "home.ar.identify"))
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(languageManager.localizedString(for: "done")) {
-                        identifier.stopScanning()
-                        dismiss()
-                    }
-                }
-            }
-            .sheet(item: $selectedLandmark) { identified in
-                LandmarkDetailView(identified: identified)
-            }
-        }
-    }
-    
-    private func landmarkCard(identified: ARLandmarkIdentifier.IdentifiedLandmark) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(identified.landmark.name)
-                        .font(.headline)
-                    if !identified.landmark.description.isEmpty {
-                        Text(identified.landmark.description)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 4) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "location.north.circle.fill")
-                            .font(.caption)
-                        Text("\(Int(identified.bearing))°")
-                            .font(.caption.bold())
-                    }
-                    .foregroundStyle(.blue)
-                }
-            }
-            
-            HStack(spacing: 16) {
-                Label("\(identified.landmark.elevation) m", systemImage: "ruler")
-                Label("\(identified.distance.formatted(.number.precision(.fractionLength(1)))) km", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
-                Label("\(Int(identified.distance * 12)) min", systemImage: "clock")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-        .padding()
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-}
-
-struct LandmarkDetailView: View {
-    let identified: ARLandmarkIdentifier.IdentifiedLandmark
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(identified.landmark.name)
-                            .font(.largeTitle.bold())
-                        if !identified.landmark.description.isEmpty {
-                            Text(identified.landmark.description)
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Details")
-                            .font(.headline)
-                        
-                        detailRow(icon: "ruler", title: "Elevation", value: "\(identified.landmark.elevation) m")
-                        detailRow(icon: "point.topleft.down.curvedto.point.bottomright.up", title: "Distance", value: "\(identified.distance.formatted(.number.precision(.fractionLength(2)))) km")
-                        detailRow(icon: "location.north.circle.fill", title: "Bearing", value: "\(Int(identified.bearing))°")
-                        detailRow(icon: "clock", title: "Estimated time", value: "\(Int(identified.distance * 12)) minutes")
-                    }
-                    .padding()
-                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                }
-                .padding()
-            }
-            .navigationTitle("Landmark")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-    
-    private func detailRow(icon: String, title: String, value: String) -> some View {
-        HStack {
-            Label(title, systemImage: icon)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .font(.headline)
-        }
-    }
-}
 
 struct QuickAddTrailPickerView: View {
     @EnvironmentObject private var viewModel: AppViewModel
