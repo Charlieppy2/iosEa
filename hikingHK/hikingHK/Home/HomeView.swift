@@ -715,7 +715,7 @@ struct SafetyChecklistView: View {
                     .frame(width: 28)
                 
                 // 文本
-                Text(languageManager.localizedString(for: "safety.item.\(item.id)"))
+                Text(itemTitle(for: item))
                     .font(.body)
                     .strikethrough(item.isCompleted)
                     .foregroundStyle(item.isCompleted ? Color.secondary : Color.primary)
@@ -727,6 +727,25 @@ struct SafetyChecklistView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+    
+    // 获取项目标题（支持本地化和自定义项目）
+    private func itemTitle(for item: SafetyChecklistItem) -> String {
+        // 如果是自定义项目（ID 以 "custom_" 开头），直接使用 title
+        if item.id.hasPrefix("custom_") {
+            return item.title
+        }
+        
+        // 否则尝试本地化
+        let localizedKey = "safety.item.\(item.id)"
+        let localized = languageManager.localizedString(for: localizedKey)
+        
+        // 如果本地化键不存在（返回的字符串等于键本身），使用 title
+        if localized == localizedKey {
+            return item.title
+        }
+        
+        return localized
     }
     
 }
