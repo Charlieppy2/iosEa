@@ -577,6 +577,7 @@ struct SafetyChecklistView: View {
     @EnvironmentObject private var languageManager: LanguageManager
     @StateObject private var viewModel = SafetyChecklistViewModel()
     @State private var isCreatingItems = false
+    @State private var isShowingAddItem = false
     
     // 使用 ViewModel 的 items 而不是 @Query
     private var items: [SafetyChecklistItem] {
@@ -598,77 +599,54 @@ struct SafetyChecklistView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if items.isEmpty {
-                    VStack(spacing: 20) {
-                        ContentUnavailableView(
-                            languageManager.localizedString(for: "safety.checklist.title"),
-                            systemImage: "checklist",
-                            description: Text(languageManager.localizedString(for: "safety.complete.all"))
-                        )
-                        
-                        Button {
-                            guard !isCreatingItems else { return }
-                            isCreatingItems = true
-                            Task {
-                                await viewModel.createDefaultItems(context: modelContext)
-                                isCreatingItems = false
-                            }
-                        } label: {
-                            if isCreatingItems {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .tint(.white)
-                            } else {
-                                Label(
-                                    languageManager.localizedString(for: "safety.create.items"),
-                                    systemImage: "plus.circle.fill"
-                                )
-                            }
-                        }
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(isCreatingItems ? Color.gray : Color.hikingGreen)
-                        .cornerRadius(12)
-                        .disabled(isCreatingItems)
-                        .padding(.horizontal)
+                if items.isEmpty && isCreatingItems {
+                    // 加载状态：正在创建项目
+                    VStack {
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text(languageManager.localizedString(for: "safety.loading"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 16)
+                        Spacer()
                     }
                 } else {
                     List {
                         Section {
-                            HStack {
-                                Text(languageManager.localizedString(for: "safety.progress"))
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text("\(completedCount) / \(totalCount)")
-                                    .font(.subheadline.weight(.semibold))
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(languageManager.localizedString(for: "safety.progress"))
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Text("\(completedCount) / \(totalCount)")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(isAllCompleted ? .green : .primary)
+                                }
+                                
+                                // 进度条
+                                ProgressView(value: Double(completedCount), total: Double(totalCount))
+                                    .tint(isAllCompleted ? .green : .blue)
+                                    .scaleEffect(x: 1, y: 1.5, anchor: .center)
                             }
                             .padding(.vertical, 4)
                         }
                         
                         Section {
                             ForEach(items.sorted(by: { $0.id < $1.id })) { item in
-                                HStack(spacing: 12) {
-                                    Image(systemName: item.iconName)
-                                        .foregroundStyle(item.isCompleted ? .green : .secondary)
-                                        .frame(width: 24)
-                                    
-                                    Text(languageManager.localizedString(for: "safety.item.\(item.id)"))
-                                        .strikethrough(item.isCompleted)
-                                        .foregroundStyle(item.isCompleted ? .secondary : .primary)
-                                    
-                                    Spacer()
-                                    
-                                    if item.isCompleted {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(.green)
-                                    }
-                                }
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    viewModel.toggleItem(item, context: modelContext)
+                                checklistItemRow(item)
+                            }
+                            
+                            // 添加新项目按钮
+                            Button {
+                                isShowingAddItem = true
+                            } label: {
+                                HStack {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundStyle(Color.hikingGreen)
+                                    Text(languageManager.localizedString(for: "safety.add.item"))
+                                        .foregroundStyle(Color.hikingGreen)
                                 }
                             }
                         } footer: {
@@ -690,27 +668,164 @@ struct SafetyChecklistView: View {
                     }
                 }
             }
+            .sheet(isPresented: $isShowingAddItem) {
+                AddSafetyChecklistItemView(viewModel: viewModel, modelContext: modelContext)
+            }
             .task {
                 // 在 task 中配置和初始化数据
+                isCreatingItems = true
                 await viewModel.configureIfNeeded(context: modelContext)
-                viewModel.refreshItems()
-                // 如果项目为空，尝试创建
+                // configureIfNeeded 已经会自动创建项目，如果还是空的才手动创建
                 if viewModel.items.isEmpty {
                     await viewModel.createDefaultItems(context: modelContext)
                 }
+                isCreatingItems = false
             }
-            .onAppear {
-                viewModel.refreshItems()
-                // 如果项目为空，尝试创建
-                if viewModel.items.isEmpty {
-                    Task {
-                        await viewModel.createDefaultItems(context: modelContext)
+        }
+    }
+    
+    // 待办事项列表项视图
+    private func checklistItemRow(_ item: SafetyChecklistItem) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                viewModel.toggleItem(item, context: modelContext)
+            }
+        } label: {
+            HStack(spacing: 16) {
+                // 复选框
+                ZStack {
+                    Circle()
+                        .stroke(item.isCompleted ? Color.green : Color.gray.opacity(0.4), lineWidth: 2)
+                        .frame(width: 24, height: 24)
+                    
+                    if item.isCompleted {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 24, height: 24)
+                            .background(Circle().fill(Color.green))
                     }
+                }
+                .animation(.spring(response: 0.2, dampingFraction: 0.6), value: item.isCompleted)
+                
+                // 图标
+                Image(systemName: item.iconName)
+                    .font(.system(size: 18))
+                    .foregroundStyle(item.isCompleted ? Color.green.opacity(0.7) : Color.hikingGreen)
+                    .frame(width: 28)
+                
+                // 文本
+                Text(languageManager.localizedString(for: "safety.item.\(item.id)"))
+                    .font(.body)
+                    .strikethrough(item.isCompleted)
+                    .foregroundStyle(item.isCompleted ? Color.secondary : Color.primary)
+                    .multilineTextAlignment(.leading)
+                
+                Spacer()
+            }
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+    
+}
+
+// 添加安全检查清单项目视图
+struct AddSafetyChecklistItemView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var languageManager: LanguageManager
+    let viewModel: SafetyChecklistViewModel
+    let modelContext: ModelContext
+    
+    @State private var itemTitle: String = ""
+    @State private var selectedIcon: String = "checkmark.circle"
+    @State private var errorMessage: String?
+    
+    // 可用的图标选项
+    private let iconOptions = [
+        "checkmark.circle", "exclamationmark.triangle", "heart.fill",
+        "star.fill", "bell.fill", "shield.fill", "bolt.fill",
+        "flame.fill", "drop.fill", "sun.max.fill", "moon.fill",
+        "cloud.fill", "location.fill", "map.fill", "camera.fill"
+    ]
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField(
+                        languageManager.localizedString(for: "safety.item.title.placeholder"),
+                        text: $itemTitle
+                    )
+                } header: {
+                    Text(languageManager.localizedString(for: "safety.item.title"))
+                }
+                
+                Section {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 16) {
+                            ForEach(iconOptions, id: \.self) { icon in
+                                Button {
+                                    selectedIcon = icon
+                                } label: {
+                                    Image(systemName: icon)
+                                        .font(.title2)
+                                        .foregroundStyle(selectedIcon == icon ? .white : Color.hikingGreen)
+                                        .frame(width: 50, height: 50)
+                                        .background(
+                                            Circle()
+                                                .fill(selectedIcon == icon ? Color.hikingGreen : Color.gray.opacity(0.1))
+                                        )
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                } header: {
+                    Text(languageManager.localizedString(for: "safety.item.icon"))
+                }
+                
+                if let errorMessage = errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
+                }
+            }
+            .navigationTitle(languageManager.localizedString(for: "safety.add.item"))
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(languageManager.localizedString(for: "cancel")) {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(languageManager.localizedString(for: "save")) {
+                        saveItem()
+                    }
+                    .disabled(itemTitle.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
         }
     }
     
+    private func saveItem() {
+        let trimmedTitle = itemTitle.trimmingCharacters(in: .whitespaces)
+        guard !trimmedTitle.isEmpty else {
+            errorMessage = languageManager.localizedString(for: "safety.item.title.required")
+            return
+        }
+        
+        do {
+            try viewModel.addItem(title: trimmedTitle, iconName: selectedIcon, context: modelContext)
+            dismiss()
+        } catch {
+            errorMessage = languageManager.localizedString(for: "safety.item.save.error")
+            print("❌ Failed to add item: \(error)")
+        }
+    }
 }
 
 struct SavedHikeDetailSheet: View {

@@ -18,6 +18,12 @@ final class SafetyChecklistViewModel: ObservableObject {
     func configureIfNeeded(context: ModelContext) async {
         // 如果已经配置过，只刷新项目列表
         if let existingStore = safetyChecklistStore {
+            // 如果 items 已经有数据，不需要刷新
+            if !items.isEmpty {
+                print("✅ SafetyChecklistViewModel: Already configured with \(items.count) items")
+                return
+            }
+            // 只有在 items 为空时才刷新
             refreshItems()
             return
         }
@@ -29,11 +35,12 @@ final class SafetyChecklistViewModel: ObservableObject {
         
         do {
             print("🔧 SafetyChecklistViewModel: Seeding default items...")
-            try store.seedDefaultsIfNeeded()
+            let seededItems = try store.seedDefaultsIfNeeded()
             hasSeeded = true
-            print("✅ SafetyChecklistViewModel: Seeding completed")
-            // 刷新项目列表
-            refreshItems()
+            print("✅ SafetyChecklistViewModel: Seeding completed, got \(seededItems.count) items")
+            // 直接使用返回的项目，而不是查询
+            items = seededItems
+            print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
         } catch {
             print("❌ Safety checklist seeding error: \(error)")
             print("❌ Error details: \(error.localizedDescription)")
@@ -70,8 +77,9 @@ final class SafetyChecklistViewModel: ObservableObject {
             let newStore = SafetyChecklistStore(context: context)
             safetyChecklistStore = newStore
             do {
-                try newStore.seedDefaultsIfNeeded()
-                refreshItems()
+                let seededItems = try newStore.seedDefaultsIfNeeded()
+                items = seededItems
+                print("✅ SafetyChecklistViewModel: Created store and seeded \(seededItems.count) items")
             } catch {
                 print("❌ SafetyChecklistViewModel: Failed to seed items: \(error)")
             }
@@ -79,29 +87,66 @@ final class SafetyChecklistViewModel: ObservableObject {
         }
         
         do {
-            // 使用 Store 的 seedDefaultsIfNeeded 方法
-            try store.seedDefaultsIfNeeded()
-            // 等待一小段时间
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
-            // 刷新项目列表
-            refreshItems()
-            print("✅ SafetyChecklistViewModel: Created and refreshed items")
+            // 使用 Store 的 seedDefaultsIfNeeded 方法，直接获取返回的项目
+            let createdItems = try store.seedDefaultsIfNeeded()
+            print("✅ SafetyChecklistViewModel: Created \(createdItems.count) items")
+            // 直接设置 items，而不是查询
+            items = createdItems
+            print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
         } catch {
             print("❌ SafetyChecklistViewModel: Failed to create items: \(error)")
+            // 如果失败，尝试刷新
+            refreshItems()
         }
     }
     
     func toggleItem(_ item: SafetyChecklistItem, context: ModelContext) {
-        // 直接使用 context 更新
+        // 直接更新 item 状态
         item.isCompleted.toggle()
         item.lastUpdated = Date()
+        
+        // 手动触发 @Published 更新，因为修改引用类型对象不会自动触发
+        objectWillChange.send()
+        
         do {
             try context.save()
-            // 刷新项目列表
-            refreshItems()
+            let completedCount = items.filter { $0.isCompleted }.count
+            print("✅ SafetyChecklistViewModel: Toggled item \(item.id), isCompleted: \(item.isCompleted), progress: \(completedCount)/\(items.count)")
         } catch {
             print("❌ Toggle safety item error: \(error)")
+            // 如果保存失败，恢复状态
+            item.isCompleted.toggle()
+            objectWillChange.send() // 触发更新以恢复 UI
         }
+    }
+    
+    func addItem(title: String, iconName: String = "checkmark.circle", context: ModelContext) throws {
+        guard let store = safetyChecklistStore else {
+            throw NSError(domain: "SafetyChecklistViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Store not configured"])
+        }
+        
+        // 生成唯一的 ID
+        let newId = "custom_\(UUID().uuidString)"
+        let newItem = try store.createItem(id: newId, iconName: iconName, title: title)
+        
+        // 添加到 items 数组
+        items.append(newItem)
+        items = items.sorted { $0.id < $1.id } // 重新排序
+        
+        print("✅ SafetyChecklistViewModel: Added new item, total: \(items.count)")
+    }
+    
+    func deleteItem(_ item: SafetyChecklistItem, context: ModelContext) throws {
+        guard let store = safetyChecklistStore else {
+            throw NSError(domain: "SafetyChecklistViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Store not configured"])
+        }
+        
+        try store.deleteItem(item)
+        
+        // 从 items 数组中移除
+        items.removeAll { $0.id == item.id }
+        
+        print("✅ SafetyChecklistViewModel: Deleted item, total: \(items.count)")
     }
 }
 

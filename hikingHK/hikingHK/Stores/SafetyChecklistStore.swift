@@ -16,14 +16,15 @@ final class SafetyChecklistStore {
         self.context = context
     }
     
-    func seedDefaultsIfNeeded() throws {
+    func seedDefaultsIfNeeded() throws -> [SafetyChecklistItem] {
         // 先检查是否已存在数据
         var descriptor = FetchDescriptor<SafetyChecklistItem>()
         descriptor.fetchLimit = 1
         let existing = try context.fetch(descriptor)
         guard existing.isEmpty else {
             print("SafetyChecklistStore: Found \(existing.count) existing items, skipping seed")
-            return
+            // 返回所有现有项目
+            return try loadAllItems()
         }
         
         print("SafetyChecklistStore: Seeding default safety checklist items...")
@@ -46,16 +47,30 @@ final class SafetyChecklistStore {
         print("SafetyChecklistStore: Saving context...")
         try context.save()
         print("SafetyChecklistStore: Context saved successfully")
+        
+        // 立即返回已插入的项目，而不是查询
+        print("SafetyChecklistStore: Returning \(defaultItems.count) inserted items directly")
+        return defaultItems.sorted { $0.id < $1.id }
     }
     
     func loadAllItems() throws -> [SafetyChecklistItem] {
-        // 先尝试不使用排序的简单查询
-        let simpleDescriptor = FetchDescriptor<SafetyChecklistItem>()
-        let allItems = try context.fetch(simpleDescriptor)
-        print("SafetyChecklistStore: loadAllItems() fetched \(allItems.count) items (no sort)")
+        // 使用简单的查询，不使用排序
+        let descriptor = FetchDescriptor<SafetyChecklistItem>()
+        // 不设置 fetchLimit，获取所有项目
+        let allItems = try context.fetch(descriptor)
+        print("SafetyChecklistStore: loadAllItems() fetched \(allItems.count) items")
+        
+        // 如果查询结果为空，尝试强制刷新 context
+        if allItems.isEmpty {
+            print("⚠️ SafetyChecklistStore: Query returned 0 items, trying to refresh context...")
+            // 手动排序并返回（即使为空）
+            return []
+        }
         
         // 手动排序
-        return allItems.sorted { $0.id < $1.id }
+        let sorted = allItems.sorted { $0.id < $1.id }
+        print("SafetyChecklistStore: Returning \(sorted.count) sorted items")
+        return sorted
     }
     
     func toggleItem(id: String) throws {
@@ -80,6 +95,20 @@ final class SafetyChecklistStore {
         item.isCompleted = isCompleted
         item.lastUpdated = Date()
         try context.save()
+    }
+    
+    func createItem(id: String, iconName: String, title: String) throws -> SafetyChecklistItem {
+        let newItem = SafetyChecklistItem(id: id, iconName: iconName, title: title)
+        context.insert(newItem)
+        try context.save()
+        print("SafetyChecklistStore: Created new item with id: \(id), title: \(title)")
+        return newItem
+    }
+    
+    func deleteItem(_ item: SafetyChecklistItem) throws {
+        context.delete(item)
+        try context.save()
+        print("SafetyChecklistStore: Deleted item with id: \(item.id)")
     }
 }
 
