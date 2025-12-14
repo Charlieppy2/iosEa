@@ -16,12 +16,13 @@ final class OfflineMapsStore {
         self.context = context
     }
     
-    func seedDefaultsIfNeeded() throws {
+    func seedDefaultsIfNeeded() throws -> [OfflineMapRegion] {
         let descriptor = FetchDescriptor<OfflineMapRegion>()
         let existing = try context.fetch(descriptor)
         guard existing.isEmpty else {
             print("OfflineMapsStore: Found \(existing.count) existing regions, skipping seed")
-            return
+            // 返回所有现有区域
+            return try loadAllRegions()
         }
         
         print("OfflineMapsStore: Seeding default regions...")
@@ -35,6 +36,10 @@ final class OfflineMapsStore {
         
         try context.save()
         print("OfflineMapsStore: Successfully seeded \(defaultRegions.count) regions")
+        
+        // 立即返回已插入的区域，而不是查询
+        print("OfflineMapsStore: Returning \(defaultRegions.count) inserted regions directly")
+        return defaultRegions.sorted { $0.name < $1.name }
     }
     
     func loadAllRegions() throws -> [OfflineMapRegion] {
@@ -65,7 +70,7 @@ final class OfflineMapsStore {
         try context.save()
     }
     
-    func forceSeedRegions() throws {
+    func forceSeedRegions() throws -> [OfflineMapRegion] {
         // 强制创建所有默认区域，即使已存在
         print("OfflineMapsStore: Force seeding regions...")
         let defaultRegions = OfflineMapRegion.availableRegions.map { name in
@@ -78,6 +83,10 @@ final class OfflineMapsStore {
         
         try context.save()
         print("OfflineMapsStore: Force seeded \(defaultRegions.count) regions")
+        
+        // 立即返回已插入的区域，而不是查询
+        print("OfflineMapsStore: Returning \(defaultRegions.count) inserted regions directly")
+        return defaultRegions.sorted { $0.name < $1.name }
     }
 }
 

@@ -25,7 +25,7 @@ hikingHK/
 │
 ├── Trails/                  # 路线模块
 │   ├── TrailListView.swift # 路线列表视图
-│   ├── TrailDetailView.swift # 路线详情视图
+│   ├── TrailDetailView.swift # 路线详情视图女
 │   ├── TrailMapView.swift  # 路线地图视图
 │   ├── Trail.swift         # 路线数据模型
 │   ├── TrailDataStore.swift # 路线数据存储

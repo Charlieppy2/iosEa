@@ -50,12 +50,8 @@ struct JournalListView: View {
             .onAppear {
                 viewModel.configureIfNeeded(context: modelContext)
             }
-            .onChange(of: isShowingCreateJournal) { oldValue, newValue in
-                // 当创建日记的 sheet 关闭时，刷新列表
-                if oldValue == true && newValue == false {
-                    viewModel.refreshJournals()
-                }
-            }
+            // 移除 onChange 中的自动刷新，因为 createJournal 已经手动更新了数组
+            // 这样可以避免 SwiftData 同步延迟导致刚保存的日记被覆盖
             .sheet(isPresented: $isShowingCreateJournal) {
                 CreateJournalView(viewModel: viewModel)
             }

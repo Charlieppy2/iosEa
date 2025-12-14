@@ -97,8 +97,15 @@ final class JournalViewModel: ObservableObject {
         try store.saveJournal(journal)
         print("✅ JournalViewModel: Saved journal '\(title)'")
         
-        // 立即刷新列表
-        refreshJournals()
+        // 直接将新创建的 journal 添加到数组中，而不是查询
+        // 这样可以避免 SwiftData 同步延迟问题
+        journals.insert(journal, at: 0) // 插入到开头，因为按日期倒序排列
+        journals.sort { $0.hikeDate > $1.hikeDate } // 确保按日期排序
+        
+        // 手动触发视图更新
+        objectWillChange.send()
+        
+        print("✅ JournalViewModel: Added journal to array, total count: \(journals.count)")
     }
     
     func updateJournal(
@@ -132,20 +139,39 @@ final class JournalViewModel: ObservableObject {
         }
         
         try store.updateJournal(journal)
-        refreshJournals()
+        
+        // 更新数组中的 journal（因为是引用类型，直接修改即可）
+        // 但为了确保视图更新，重新排序
+        journals.sort { $0.hikeDate > $1.hikeDate }
+        
+        // 手动触发视图更新
+        objectWillChange.send()
+        
+        print("✅ JournalViewModel: Updated journal, total count: \(journals.count)")
     }
     
     func deleteJournal(_ journal: HikeJournal) throws {
         guard let store = store else { return }
         try store.deleteJournal(journal)
-        refreshJournals()
+        
+        // 从数组中移除 journal
+        journals.removeAll { $0.id == journal.id }
+        
+        // 手动触发视图更新
+        objectWillChange.send()
+        
+        print("✅ JournalViewModel: Deleted journal, total count: \(journals.count)")
     }
     
     func toggleShare(_ journal: HikeJournal) throws {
         guard let store = store else { return }
         journal.isShared.toggle()
         try store.updateJournal(journal)
-        refreshJournals()
+        
+        // 手动触发视图更新（journal 是引用类型，已自动更新）
+        objectWillChange.send()
+        
+        print("✅ JournalViewModel: Toggled share for journal")
     }
     
     var journalsByMonth: [String: [HikeJournal]] {

@@ -32,8 +32,8 @@ final class OfflineMapsViewModel: ObservableObject {
                 regions = try existingStore.loadAllRegions()
                 if regions.isEmpty {
                     // 如果列表为空，尝试重新初始化
-                    try existingStore.seedDefaultsIfNeeded()
-                    regions = try existingStore.loadAllRegions()
+                    let seededRegions = try existingStore.seedDefaultsIfNeeded()
+                    regions = seededRegions
                 }
             } catch {
                 print("Offline maps refresh error: \(error)")
@@ -46,14 +46,15 @@ final class OfflineMapsViewModel: ObservableObject {
         offlineMapsStore = store
         
         do {
-            try store.seedDefaultsIfNeeded()
-            regions = try store.loadAllRegions()
+            let seededRegions = try store.seedDefaultsIfNeeded()
+            // 直接使用返回的区域，而不是查询
+            regions = seededRegions
             
             // 如果区域列表仍然为空，强制创建
             if regions.isEmpty {
                 print("⚠️ OfflineMapsViewModel: Regions list is still empty after seeding, forcing creation...")
-                try store.forceSeedRegions()
-                regions = try store.loadAllRegions()
+                let forceSeededRegions = try store.forceSeedRegions()
+                regions = forceSeededRegions
                 print("✅ OfflineMapsViewModel: Force created \(regions.count) regions")
             } else {
                 print("✅ OfflineMapsViewModel: Loaded \(regions.count) regions")
@@ -146,6 +147,44 @@ final class OfflineMapsViewModel: ObservableObject {
         } catch {
             print("Delete region error: \(error)")
             self.error = "Failed to delete region: \(error.localizedDescription)"
+        }
+    }
+    
+    func createDefaultRegions(context: ModelContext) async {
+        print("🔧 OfflineMapsViewModel: Creating default regions...")
+        
+        // 检查是否已有区域
+        if !regions.isEmpty {
+            print("⚠️ OfflineMapsViewModel: Regions already exist (\(regions.count) regions), skipping creation")
+            return
+        }
+        
+        // 使用 Store 来创建区域
+        guard let store = offlineMapsStore else {
+            print("⚠️ OfflineMapsViewModel: Store is nil, creating store...")
+            let newStore = OfflineMapsStore(context: context)
+            offlineMapsStore = newStore
+            do {
+                let seededRegions = try newStore.seedDefaultsIfNeeded()
+                regions = seededRegions
+                print("✅ OfflineMapsViewModel: Created store and seeded \(seededRegions.count) regions")
+            } catch {
+                print("❌ OfflineMapsViewModel: Failed to seed regions: \(error)")
+            }
+            return
+        }
+        
+        do {
+            // 使用 Store 的 seedDefaultsIfNeeded 方法，直接获取返回的区域
+            let createdRegions = try store.seedDefaultsIfNeeded()
+            print("✅ OfflineMapsViewModel: Created \(createdRegions.count) regions")
+            // 直接设置 regions，而不是查询
+            regions = createdRegions
+            print("✅ OfflineMapsViewModel: Set regions directly, count: \(regions.count)")
+        } catch {
+            print("❌ OfflineMapsViewModel: Failed to create regions: \(error)")
+            // 如果失败，尝试刷新
+            refreshRegions()
         }
     }
     

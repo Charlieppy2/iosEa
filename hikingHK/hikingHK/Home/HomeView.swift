@@ -1134,60 +1134,45 @@ struct OfflineMapsView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    if regions.isEmpty {
-                        VStack(spacing: 16) {
-                            Text(languageManager.localizedString(for: "offline.maps.no.regions"))
-                                .foregroundStyle(.secondary)
-                            
-                            Button {
-                                Task {
-                                    await createDefaultRegions()
-                                }
-                            } label: {
-                                if isCreatingRegions {
-                                    ProgressView()
-                                        .progressViewStyle(.circular)
-                                        .tint(.white)
-                                } else {
-                                    Label(
-                                        languageManager.localizedString(for: "offline.maps.create.regions"),
-                                        systemImage: "plus.circle.fill"
-                                    )
+            Group {
+                if regions.isEmpty && isCreatingRegions {
+                    // 加载状态：正在创建区域
+                    VStack {
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text(languageManager.localizedString(for: "offline.maps.loading"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 16)
+                        Spacer()
+                    }
+                } else {
+                    Form {
+                        Section {
+                            ForEach(regions.sorted(by: { $0.name < $1.name })) { region in
+                                regionRow(region: region)
+                            }
+                        } header: {
+                            Text(languageManager.localizedString(for: "offline.maps.available.regions"))
+                        } footer: {
+                            if hasDownloadedMaps {
+                                Text("\(languageManager.localizedString(for: "offline.maps.total.downloaded")): \(formatSize(totalDownloadedSize))")
+                                    .font(.caption)
+                            }
+                        }
+                        
+                        if hasDownloadedMaps {
+                            Section {
+                                Button(role: .destructive) {
+                                    // Delete all downloaded maps
+                                    for region in regions.filter({ $0.downloadStatus == .downloaded }) {
+                                        viewModel.deleteRegion(region)
+                                    }
+                                } label: {
+                                    Label(languageManager.localizedString(for: "offline.maps.clear.all"), systemImage: "trash")
                                 }
                             }
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(isCreatingRegions ? Color.gray : Color.hikingGreen)
-                            .cornerRadius(12)
-                            .disabled(isCreatingRegions)
-                        }
-                    } else {
-                        ForEach(regions.sorted(by: { $0.name < $1.name })) { region in
-                            regionRow(region: region)
-                        }
-                    }
-                } header: {
-                    Text(languageManager.localizedString(for: "offline.maps.available.regions"))
-                } footer: {
-                    if hasDownloadedMaps {
-                        Text("\(languageManager.localizedString(for: "offline.maps.total.downloaded")): \(formatSize(totalDownloadedSize))")
-                            .font(.caption)
-                    }
-                }
-                
-                if hasDownloadedMaps {
-                    Section {
-                        Button(role: .destructive) {
-                            // Delete all downloaded maps
-                            for region in regions.filter({ $0.downloadStatus == .downloaded }) {
-                                viewModel.deleteRegion(region)
-                            }
-                        } label: {
-                            Label(languageManager.localizedString(for: "offline.maps.clear.all"), systemImage: "trash")
                         }
                     }
                 }
@@ -1201,30 +1186,14 @@ struct OfflineMapsView: View {
                 }
             }
             .task {
+                // 在 task 中配置和初始化数据
+                isCreatingRegions = true
                 await viewModel.configureIfNeeded(context: modelContext)
-                viewModel.refreshRegions()
-                // 如果区域为空，尝试创建
+                // configureIfNeeded 已经会自动创建区域，如果还是空的才手动创建
                 if viewModel.regions.isEmpty {
-                    print("🔧 OfflineMapsView: Regions are empty in task, creating...")
-                    await createDefaultRegions()
-                    // 创建后刷新
-                    viewModel.refreshRegions()
-                } else {
-                    print("✅ OfflineMapsView: Found \(viewModel.regions.count) regions in task")
+                    await viewModel.createDefaultRegions(context: modelContext)
                 }
-            }
-            .onAppear {
-                viewModel.refreshRegions()
-                // 在 onAppear 时也检查并创建（如果为空）
-                if viewModel.regions.isEmpty {
-                    print("🔧 OfflineMapsView: Regions are empty on appear, creating...")
-                    Task {
-                        await createDefaultRegions()
-                        viewModel.refreshRegions()
-                    }
-                } else {
-                    print("✅ OfflineMapsView: Found \(viewModel.regions.count) regions on appear")
-                }
+                isCreatingRegions = false
             }
             .alert(languageManager.localizedString(for: "offline.maps.download.error"), isPresented: Binding(
                 get: { viewModel.error != nil },
@@ -1238,94 +1207,6 @@ struct OfflineMapsView: View {
                     Text(error)
                 }
             }
-        }
-    }
-    
-    private func createDefaultRegions() async {
-        // 防止重复创建
-        guard !isCreatingRegions else {
-            print("⚠️ OfflineMapsView: Already creating regions, skipping...")
-            return
-        }
-        
-        // 检查是否已有区域
-        if !regions.isEmpty {
-            print("⚠️ OfflineMapsView: Regions already exist (\(regions.count) regions), skipping creation")
-            return
-        }
-        
-        isCreatingRegions = true
-        defer { 
-            isCreatingRegions = false
-            print("🔧 OfflineMapsView: isCreatingRegions set to false")
-        }
-        
-        print("🔧 OfflineMapsView: Creating default regions directly...")
-        print("🔧 OfflineMapsView: Current regions count: \(regions.count)")
-        
-        // 检查是否已经有这些区域存在（通过查询）
-        let existingNames = Set(regions.map { $0.name })
-        let availableNames = Set(OfflineMapRegion.availableRegions)
-        let missingNames = availableNames.subtracting(existingNames)
-        
-        guard !missingNames.isEmpty else {
-            print("⚠️ OfflineMapsView: All regions already exist")
-            return
-        }
-        
-        print("🔧 OfflineMapsView: Missing regions: \(missingNames)")
-        
-        let defaultRegions = missingNames.map { name in
-            OfflineMapRegion(name: name)
-        }
-        
-        print("🔧 OfflineMapsView: Creating \(defaultRegions.count) new regions...")
-        
-        for region in defaultRegions {
-            modelContext.insert(region)
-            print("✅ OfflineMapsView: Inserted region: \(region.name)")
-        }
-        
-        do {
-            // 先保存一次
-            try modelContext.save()
-            print("✅ OfflineMapsView: First save completed")
-            
-            // 等待一小段时间
-            try? await Task.sleep(nanoseconds: 50_000_000) // 0.05秒
-            
-            // 再次保存确保数据持久化
-            try modelContext.save()
-            print("✅ OfflineMapsView: Second save completed")
-            
-            // 等待更长时间让 SwiftData 和 @Query 同步
-            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2秒
-            
-            // 验证数据是否已保存 - 使用不同的查询方式
-            let verifyDescriptor = FetchDescriptor<OfflineMapRegion>()
-            let verified = try modelContext.fetch(verifyDescriptor)
-            print("🔧 OfflineMapsView: Verification - found \(verified.count) regions in context")
-            
-            if verified.isEmpty {
-                print("⚠️ OfflineMapsView: WARNING - Regions were saved but cannot be retrieved")
-                print("⚠️ OfflineMapsView: This might be a SwiftData synchronization issue")
-            } else {
-                print("✅ OfflineMapsView: Successfully verified \(verified.count) regions")
-                for region in verified {
-                    print("   - \(region.name)")
-                }
-            }
-            
-            print("🔧 OfflineMapsView: ViewModel regions count after save: \(viewModel.regions.count)")
-            
-            // 强制刷新 ViewModel
-            if verified.count > 0 {
-                print("⚠️ OfflineMapsView: Context has data, refreshing ViewModel...")
-                viewModel.refreshRegions()
-                print("✅ OfflineMapsView: After refresh, ViewModel has \(viewModel.regions.count) regions")
-            }
-        } catch {
-            print("❌ OfflineMapsView: Failed to save regions: \(error)")
         }
     }
     
