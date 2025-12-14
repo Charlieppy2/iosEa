@@ -4,17 +4,22 @@ A comprehensive iOS hiking companion app for Hong Kong trails, built with SwiftU
 
 ## Overview
 
-HikingHK is a feature-rich mobile application designed to help hikers discover, plan, and track their hiking adventures across Hong Kong's beautiful trails. The app provides real-time weather information, trail details, offline maps, safety checklists, and AR landmark identification.
+HikingHK is a feature-rich mobile application designed to help hikers discover, plan, and track their hiking adventures across Hong Kong's beautiful trails. The app provides real-time weather information, trail details, offline maps, safety checklists, location sharing, hike tracking, and intelligent trail recommendations.
 
 ## Features
 
 ### 🏠 Home
 - **Weather Dashboard**: Real-time weather conditions from Hong Kong Observatory
 - **Featured Trails**: Discover recommended hiking routes
-- **Quick Actions**: 
-  - Trail Alerts - Real-time weather and route warnings
-  - Offline Maps - Download maps for offline use
-  - AR Identify - Identify nearby peaks using AR technology
+- **Quick Actions** (4 buttons per row):
+  - 🚨 Trail Alerts - Real-time weather and route warnings
+  - 🗺️ Offline Maps - Download maps for offline use
+  - 📍 Location Sharing - Share your location with emergency contacts
+  - 🎯 Start Tracking - Begin recording your hike
+  - 📋 Hike Records - View your hiking history
+  - ✨ Smart Recommendations - AI-powered trail suggestions
+  - 📖 Journal - Document your hiking adventures
+  - ☁️ Weather Forecast - 7-day weather forecast
 - **Next Plans**: View and manage your scheduled hikes
 - **Safety Checklist**: Pre-hike safety preparation
 
@@ -30,6 +35,7 @@ HikingHK is a feature-rich mobile application designed to help hikers discover, 
   - Popular routes: Dragon's Back, Peak Circle Walk, Tai Tam Reservoir
 - **Trail Details**: 
   - Interactive maps with route visualization
+  - Offline map support with network detection
   - Checkpoints and route information
   - Facilities and transportation tips
   - Highlights and descriptions
@@ -50,8 +56,73 @@ HikingHK is a feature-rich mobile application designed to help hikers discover, 
   - Complete 4 Ridge Lines (Challenging trails)
   - Log 50 km this month
   - Progress visualization with progress bars
+- **Achievements & Badges**: Track your hiking achievements
 - **Service Status**: Monitor connection status for weather API, GPS, and offline maps
 - **API Connection Checker**: Real-time API connection status monitoring
+- **Language Selection**: Switch between English and Traditional Chinese
+
+### 📖 Journal
+- **Hike Journal**: Document your hiking adventures
+- **Photo Support**: Add photos to journal entries
+- **Trail Association**: Link journal entries to specific trails
+- **Weather Data**: Automatically record weather conditions
+- **Timeline View**: Browse entries by month
+- **Edit & Delete**: Manage your journal entries
+
+### 🎯 Smart Recommendations
+- **AI-Powered Suggestions**: Get personalized trail recommendations
+- **Time-Based**: Select available time (30-minute intervals from 1-8 hours)
+- **Preference-Based**: Recommendations based on:
+  - Fitness level
+  - Preferred scenery (sea view, mountain view, forest, etc.)
+  - Difficulty preference
+  - Distance preference
+- **Weather Integration**: Considers current weather conditions
+- **History Learning**: Learns from your hiking history
+
+### 📍 Location Sharing
+- **Real-Time Sharing**: Share your location with emergency contacts
+- **SOS Feature**: One-tap emergency SOS with location
+- **Anomaly Detection**: Automatic detection of unusual movement patterns
+- **Emergency Contacts**: Manage your emergency contact list
+- **Session Management**: Start and stop sharing sessions
+
+### 🎯 Hike Tracking
+- **GPS Tracking**: Record your hiking route in real-time
+- **Statistics**: Track distance, time, speed, and altitude
+- **Trail Selection**: Associate tracking with specific trails
+- **Live Map**: View your current location and route
+- **Track Points**: Detailed GPS point recording
+
+### 📋 Hike Records
+- **History View**: Browse all your recorded hikes
+- **Detailed Statistics**: View comprehensive hike data
+- **Route Visualization**: See your recorded routes on maps
+- **Elevation Profile**: View altitude changes during hikes
+- **3D Playback**: Replay your hiking route in 3D
+
+### ☁️ Weather Forecast
+- **7-Day Forecast**: Extended weather predictions
+- **Best Hiking Times**: Recommendations for optimal hiking periods
+- **Comfort Index**: Weather comfort level calculations
+- **Condition Details**: Temperature, humidity, and conditions
+
+### 🎒 Smart Gear Checklist
+- **Intelligent Suggestions**: Gear recommendations based on:
+  - Trail difficulty
+  - Weather conditions
+  - Season
+- **Category Organization**: Essential, clothing, navigation, safety, food, tools
+- **Progress Tracking**: Visual progress indicators
+
+### 🏆 Achievements
+- **Badge System**: Unlock achievements as you hike
+- **Categories**:
+  - Distance achievements (10km, 50km, 100km, 500km)
+  - Peak conquests (Lion Rock, Tai Mo Shan, Sunset Peak, Sharp Peak)
+  - Streak achievements (1 week, 2 weeks, 1 month)
+  - Exploration achievements (3, 5, 10 districts)
+- **Progress Tracking**: Visual progress indicators
 
 ## Technical Stack
 
@@ -60,11 +131,14 @@ HikingHK is a feature-rich mobile application designed to help hikers discover, 
 - **SwiftData**: Persistent data storage
 - **CoreLocation**: GPS and location services
 - **Combine**: Reactive programming
+- **MapKit**: Map display and offline map support
+- **Network Framework**: Network status monitoring
 
 ### Architecture
 - **MVVM Pattern**: Model-View-ViewModel architecture
 - **Protocol-Oriented**: Service protocols for testability
 - **Async/Await**: Modern concurrency for network and data operations
+- **MainActor Isolation**: Proper thread safety for UI updates
 
 ### Data Models
 - `UserCredential`: User authentication data
@@ -72,12 +146,20 @@ HikingHK is a feature-rich mobile application designed to help hikers discover, 
 - `FavoriteTrailRecord`: User's favorite trails
 - `SafetyChecklistItem`: Safety checklist items
 - `OfflineMapRegion`: Offline map download status
+- `HikeRecord`: Recorded hiking sessions
+- `HikeTrackPoint`: GPS tracking points
+- `HikeJournal`: Journal entries
+- `JournalPhoto`: Journal entry photos
+- `EmergencyContact`: Emergency contacts
+- `LocationShareSession`: Location sharing sessions
+- `UserPreference`: User preferences for recommendations
+- `Achievement`: Achievement and badge data
 
 ## Installation
 
 ### Requirements
 - iOS 17.0+
-- Xcode 15.0+
+- Xcode 15.0+ (tested with Xcode 26.1)
 - Swift 5.9+
 
 ### Setup
@@ -98,149 +180,32 @@ open hikingHK.xcodeproj
 - **Mapbox API**: Set `MAPBOX_ACCESS_TOKEN` environment variable for route services (optional)
 - **Location Services**: The app will request location permissions when needed
 
-## Project Structure
-
-```
-hikingHK/
-├── hikingHK/
-│   ├── Core/
-│   │   ├── hikingHKApp.swift          # App entry point
-│   │   ├── RootView.swift             # Root navigation
-│   │   └── ContentView.swift          # Main tab view
-│   │
-│   ├── Authentication/
-│   │   ├── AuthView.swift             # Login/Register UI
-│   │   ├── SessionManager.swift       # Session management
-│   │   ├── AccountStore.swift         # Account data store
-│   │   ├── UserAccount.swift          # User model
-│   │   └── UserCredential.swift       # Credential model (SwiftData)
-│   │
-│   ├── Views/
-│   │   ├── HomeView.swift             # Home screen
-│   │   ├── TrailListView.swift        # Trail browser
-│   │   ├── TrailDetailView.swift      # Trail details
-│   │   ├── TrailMapView.swift         # Interactive map
-│   │   ├── PlannerView.swift          # Hike planner
-│   │   └── ProfileView.swift          # User profile
-│   │
-│   ├── Models/
-│   │   ├── Trail.swift                # Trail data model
-│   │   ├── ExperienceModels.swift     # Weather, SavedHike models
-│   │   ├── Goal.swift                 # Goals tracking
-│   │   ├── Landmark.swift             # Landmark data
-│   │   └── TrailAlert.swift           # Alert model
-│   │
-│   ├── ViewModels/
-│   │   ├── AppViewModel.swift         # Main app state
-│   │   ├── SafetyChecklistViewModel.swift
-│   │   ├── OfflineMapsViewModel.swift
-│   │   ├── TrailAlertsViewModel.swift
-│   │   ├── ServicesStatusViewModel.swift
-│   │   └── ARLandmarkIdentifier.swift
-│   │
-│   ├── Services/
-│   │   ├── WeatherService.swift       # Weather API integration
-│   │   ├── LocationManager.swift      # Location services
-│   │   ├── MapboxRouteService.swift   # Route calculation
-│   │   ├── TrailAlertsService.swift   # Alert fetching
-│   │   └── OfflineMapsDownloadService.swift
-│   │
-│   └── Data/
-│       ├── TrailDataStore.swift       # Trail persistence
-│       ├── SafetyChecklistStore.swift
-│       ├── OfflineMapsStore.swift
-│       ├── SavedHikeRecord.swift      # SwiftData models
-│       ├── FavoriteTrailRecord.swift
-│       ├── SafetyChecklistItem.swift
-│       └── OfflineMapRegion.swift
-│
-└── hikingHKTests/                     # Unit tests
-```
-
-## Key Features in Detail
-
-### 🔐 Authentication
-- Secure user registration and login
-- SwiftData-based credential storage
-- Automatic session restoration
-- User profile management
-
-### 📊 Data Persistence
-All user data is persisted using SwiftData:
-- User credentials
-- Saved hikes and completion status
-- Favorite trails
-- Safety checklist progress
-- Offline map downloads
-
-### 🌤️ Weather Integration
-- Real-time weather data from Hong Kong Observatory API
-- Temperature, humidity, UV index
-- Weather warnings and suggestions
-- Automatic refresh capability
-
-### 🗺️ Trail Management
-- **17+ hiking trails** covering major Hong Kong routes
-- Difficulty levels (Easy, Moderate, Challenging)
-- Interactive maps with route visualization
-- Checkpoints and elevation profiles
-- Transportation and facility information
-- Coverage of four major long-distance trails (MacLehose, Wilson, Lantau, Hong Kong Trail)
-
-### 📱 Offline Maps
-- Download maps for offline use
-- Multiple regions available
-- Download progress tracking
-- Storage management
-
-### ⚠️ Trail Alerts
-- Real-time weather warnings
-- Route maintenance notifications
-- Alert categorization and severity levels
-- Automatic updates from HKO API
-
-### 🎯 Goals & Statistics
-- Track hiking goals
-- Monthly distance logging
-- Ridge line completion tracking
-- Visual progress indicators
-
-### 🧭 AR Landmark Identification
-- Identify nearby peaks using GPS
-- Distance and bearing calculations
-- Landmark information display
-- Real-time scanning
-
-### 🎨 UI/UX Design
-- **Hiking Theme**: Natural color palette (forest green, earth brown, sky blue)
-- **Pattern Backgrounds**: Subtle mountain, tree, cloud, and path patterns
-- **Card-based Design**: Modern card layouts with gradients and shadows
-- **Responsive Layout**: Adapts to different screen sizes
-
-## Development
-
-### Adding New Features
-1. Create models in appropriate directory
-2. Implement ViewModels following MVVM pattern
-3. Create SwiftUI views with proper state management
-4. Add SwiftData models if persistence is needed
-5. Update `modelContainer` in `hikingHKApp.swift`
-
-### Testing
-Run tests using:
-```bash
-xcodebuild test -scheme hikingHK -destination 'platform=iOS Simulator,name=iPhone 15'
-```
-
 ## API Integration
 
 ### Weather API ✅
-- **Endpoint**: `https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en`
+- **Endpoint**: `https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang={lang}`
 - **Status**: Connected
+- **Languages**: English (`en`) and Traditional Chinese (`tc`)
 - **Data Type**: Real-time weather readings
 - **Features**: Temperature, humidity, UV index, weather warnings
 - **Update Frequency**: Manual refresh or on app launch
 - **Connection Check**: Available in Profile → API Status
+- **Error Handling**: Comprehensive error handling with detailed logging
+
+### Weather Warning API ✅
+- **Endpoint**: `https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang={lang}`
+- **Status**: Connected
+- **Languages**: English (`en`) and Traditional Chinese (`tc`)
+- **Features**: Active weather warnings and alerts
+
+### CSDI Geoportal API ✅
+- **Endpoints**: 
+  - `https://portal.csdi.gov.hk/geoportal/?datasetId=afcd_rcd_1665568199103_4360&lang={lang}`
+  - `https://portal.csdi.gov.hk/geoportal/?datasetId=afcd_rcd_1635136039113_86105&lang={lang}`
+  - `https://portal.csdi.gov.hk/geoportal/?datasetId=cas_rcd_1640314527589_15538&lang={lang}`
+- **Status**: Connected
+- **Languages**: English (`en`) and Traditional Chinese (`zh-hk`)
+- **Features**: Trail information and government data
 
 ### Mapbox API ⚠️
 - **Endpoint**: `https://api.mapbox.com/directions/v5/mapbox/walking/`
@@ -254,14 +219,26 @@ xcodebuild test -scheme hikingHK -destination 'platform=iOS Simulator,name=iPhon
 - Connection status display in Profile page
 - Manual refresh capability
 - Last check time tracking
+- Detailed error reporting
+
+## Localization
+
+The app fully supports two languages:
+- **English** (`en`)
+- **Traditional Chinese** (`zh-Hant` / `tc`)
+
+All UI elements, trail names, weather conditions, and error messages are localized. Users can switch languages in Profile → Language.
 
 ## Data Privacy
 
 - All user data is stored locally using SwiftData
 - No data is transmitted to external servers except:
   - Weather API (public data)
+  - Weather Warning API (public data)
+  - CSDI Geoportal API (public data)
   - Mapbox API (route calculation, optional)
 - User credentials are encrypted and stored securely
+- Location sharing is user-initiated and can be stopped at any time
 
 ## Trail Database
 
@@ -275,7 +252,19 @@ The app currently includes **17 hiking trails** covering:
 
 > **Note**: Hong Kong has over 300 hiking trails. The app currently includes major routes. More trails can be added in future updates.
 
-See [TRAILS_LIST.md](TRAILS_LIST.md) for complete trail details.
+## Offline Maps
+
+- **Download Regions**: 
+  - Hong Kong Island (香港島)
+  - Kowloon Ridge (九龍山脊)
+  - Sai Kung East (西貢東)
+  - Lantau North (大嶼山北)
+- **Features**:
+  - Download progress tracking
+  - Storage management
+  - Automatic offline mode detection
+  - Network status monitoring
+  - Map tile caching
 
 ## Future Enhancements
 
@@ -315,4 +304,3 @@ Created with ❤️ for Hong Kong hikers
 ---
 
 **Language**: [English](README.md) | [繁體中文](README_zh_TW.md)
-

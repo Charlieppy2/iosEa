@@ -4,17 +4,22 @@
 
 ## 概述
 
-HikingHK 是一個功能豐富的行山應用程式，旨在幫助行山愛好者探索、計劃和追蹤他們在香港美麗山徑上的冒險。應用程式提供實時天氣資訊、路線詳情、離線地圖、安全檢查清單和 AR 地標識別功能。
+HikingHK 是一個功能豐富的行山應用程式，旨在幫助行山愛好者探索、計劃和追蹤他們在香港美麗山徑上的冒險。應用程式提供實時天氣資訊、路線詳情、離線地圖、安全檢查清單、位置分享、行山追蹤和智能路線推薦。
 
 ## 功能特色
 
 ### 🏠 首頁
 - **天氣儀表板**：來自香港天文台的實時天氣狀況
 - **精選路線**：發現推薦的行山路線
-- **快速操作**：
-  - 路線警示 - 實時天氣和路線警告
-  - 離線地圖 - 下載地圖供離線使用
-  - AR 識別 - 使用 AR 技術識別附近山峰
+- **快速操作**（每行 4 個按鈕）：
+  - 🚨 路線警示 - 實時天氣和路線警告
+  - 🗺️ 離線地圖 - 下載地圖供離線使用
+  - 📍 位置分享 - 與緊急聯絡人分享您的位置
+  - 🎯 開始追蹤 - 開始記錄您的行山
+  - 📋 行山記錄 - 查看您的行山歷史
+  - ✨ 智能推薦 - AI 驅動的路線建議
+  - 📖 日記 - 記錄您的行山冒險
+  - ☁️ 天氣預報 - 7 天天氣預報
 - **即將計劃**：查看和管理您已安排的行程
 - **安全檢查清單**：行山前的安全準備
 
@@ -30,6 +35,7 @@ HikingHK 是一個功能豐富的行山應用程式，旨在幫助行山愛好�
   - 熱門路線：龍脊、山頂環回步行徑、大潭水塘
 - **路線詳情**：
   - 互動地圖與路線視覺化
+  - 離線地圖支援與網絡檢測
   - 檢查點和路線資訊
   - 設施和交通提示
   - 亮點和描述
@@ -50,8 +56,73 @@ HikingHK 是一個功能豐富的行山應用程式，旨在幫助行山愛好�
   - 完成 4 條山脊線（困難路線）
   - 本月記錄 50 公里
   - 進度條視覺化
+- **成就與徽章**：追蹤您的行山成就
 - **服務狀態**：監控天氣 API、GPS 和離線地圖的連接狀態
 - **API 連接檢查器**：實時 API 連接狀態監控
+- **語言選擇**：在英文和繁體中文之間切換
+
+### 📖 日記
+- **行山日記**：記錄您的行山冒險
+- **照片支援**：為日記條目添加照片
+- **路線關聯**：將日記條目連結到特定路線
+- **天氣數據**：自動記錄天氣狀況
+- **時間軸視圖**：按月瀏覽條目
+- **編輯與刪除**：管理您的日記條目
+
+### 🎯 智能推薦
+- **AI 驅動建議**：獲得個人化路線推薦
+- **基於時間**：選擇可用時間（從 1-8 小時，每 30 分鐘間隔）
+- **基於偏好**：根據以下因素推薦：
+  - 體能水平
+  - 偏好風景（海景、山景、森林等）
+  - 難度偏好
+  - 距離偏好
+- **天氣整合**：考慮當前天氣狀況
+- **歷史學習**：從您的行山歷史中學習
+
+### 📍 位置分享
+- **實時分享**：與緊急聯絡人分享您的位置
+- **SOS 功能**：一鍵緊急求救並發送位置
+- **異常檢測**：自動檢測異常移動模式
+- **緊急聯絡人**：管理您的緊急聯絡人列表
+- **會話管理**：開始和停止分享會話
+
+### 🎯 行山追蹤
+- **GPS 追蹤**：實時記錄您的行山路線
+- **統計數據**：追蹤距離、時間、速度和海拔
+- **路線選擇**：將追蹤與特定路線關聯
+- **實時地圖**：查看您當前的位置和路線
+- **軌跡點**：詳細的 GPS 點記錄
+
+### 📋 行山記錄
+- **歷史視圖**：瀏覽所有記錄的行山
+- **詳細統計**：查看全面的行山數據
+- **路線視覺化**：在地圖上查看記錄的路線
+- **海拔剖面**：查看行山期間的海拔變化
+- **3D 回放**：以 3D 方式回放您的行山路線
+
+### ☁️ 天氣預報
+- **7 天預報**：延長天氣預測
+- **最佳行山時間**：推薦最佳行山時段
+- **舒適度指數**：天氣舒適度計算
+- **狀況詳情**：溫度、濕度和天氣狀況
+
+### 🎒 智能裝備清單
+- **智能建議**：根據以下因素推薦裝備：
+  - 路線難度
+  - 天氣狀況
+  - 季節
+- **分類組織**：必需品、服裝、導航、安全、食物、工具
+- **進度追蹤**：視覺進度指示器
+
+### 🏆 成就
+- **徽章系統**：在行山時解鎖成就
+- **類別**：
+  - 距離成就（10 公里、50 公里、100 公里、500 公里）
+  - 山峰征服（獅子山、大帽山、大东山、蚺蛇尖）
+  - 連續成就（1 週、2 週、1 個月）
+  - 探索成就（3、5、10 個地區）
+- **進度追蹤**：視覺進度指示器
 
 ## 技術架構
 
@@ -60,11 +131,14 @@ HikingHK 是一個功能豐富的行山應用程式，旨在幫助行山愛好�
 - **SwiftData**：持久化數據存儲
 - **CoreLocation**：GPS 和位置服務
 - **Combine**：響應式編程
+- **MapKit**：地圖顯示和離線地圖支援
+- **Network Framework**：網絡狀態監控
 
 ### 架構模式
 - **MVVM 模式**：Model-View-ViewModel 架構
 - **協議導向**：服務協議以提高可測試性
 - **Async/Await**：現代並發處理網絡和數據操作
+- **MainActor 隔離**：UI 更新的正確線程安全
 
 ### 數據模型
 - `UserCredential`：用戶認證數據
@@ -72,12 +146,20 @@ HikingHK 是一個功能豐富的行山應用程式，旨在幫助行山愛好�
 - `FavoriteTrailRecord`：用戶收藏的路線
 - `SafetyChecklistItem`：安全檢查清單項目
 - `OfflineMapRegion`：離線地圖下載狀態
+- `HikeRecord`：記錄的行山會話
+- `HikeTrackPoint`：GPS 追蹤點
+- `HikeJournal`：日記條目
+- `JournalPhoto`：日記條目照片
+- `EmergencyContact`：緊急聯絡人
+- `LocationShareSession`：位置分享會話
+- `UserPreference`：用戶推薦偏好
+- `Achievement`：成就和徽章數據
 
 ## 安裝
 
 ### 系統要求
 - iOS 17.0+
-- Xcode 15.0+
+- Xcode 15.0+（已測試 Xcode 26.1）
 - Swift 5.9+
 
 ### 設置步驟
@@ -98,154 +180,32 @@ open hikingHK.xcodeproj
 - **Mapbox API**：設置 `MAPBOX_ACCESS_TOKEN` 環境變量以使用路線服務（可選）
 - **位置服務**：應用程式會在需要時請求位置權限
 
-## 專案結構
-
-```
-hikingHK/
-├── Core/                    # 核心文件
-│   ├── hikingHKApp.swift   # 應用入口
-│   ├── RootView.swift      # 根視圖
-│   ├── ContentView.swift   # 主內容視圖
-│   ├── AppViewModel.swift  # 主應用視圖模型
-│   ├── HikingTheme.swift   # 遠足主題樣式
-│   └── APIConnectionChecker.swift # API 連接檢查器
-│
-├── Authentication/          # 認證模組
-│   ├── AuthView.swift      # 登入/註冊界面
-│   ├── SessionManager.swift # 會話管理
-│   ├── AccountStore.swift  # 帳戶數據存儲
-│   ├── UserAccount.swift   # 用戶帳戶模型
-│   └── UserCredential.swift # 用戶憑證模型
-│
-├── Home/                    # 首頁模組
-│   └── HomeView.swift      # 首頁視圖
-│
-├── Trails/                  # 路線模組
-│   ├── TrailListView.swift # 路線列表視圖
-│   ├── TrailDetailView.swift # 路線詳情視圖
-│   ├── TrailMapView.swift  # 路線地圖視圖
-│   ├── Trail.swift         # 路線數據模型
-│   ├── TrailDataStore.swift # 路線數據存儲
-│   └── FavoriteTrailRecord.swift # 收藏路線記錄
-│
-├── Planner/                 # 計劃模組
-│   ├── PlannerView.swift   # 計劃視圖
-│   ├── SavedHikeRecord.swift # 保存的行程記錄
-│   └── ExperienceModels.swift # 體驗相關模型
-│
-├── Profile/                 # 個人資料模組
-│   ├── ProfileView.swift   # 個人資料視圖
-│   └── Goal.swift          # 目標追蹤模型
-│
-├── Services/                # 服務層
-│   ├── WeatherService.swift # 天氣服務
-│   ├── LocationManager.swift # 位置管理服務
-│   ├── MapboxRouteService.swift # Mapbox 路線服務
-│   ├── TrailAlertsService.swift # 路線警示服務
-│   └── OfflineMapsDownloadService.swift # 離線地圖下載服務
-│
-├── ViewModels/              # 視圖模型
-│   ├── TrailAlertsViewModel.swift
-│   ├── OfflineMapsViewModel.swift
-│   ├── SafetyChecklistViewModel.swift
-│   ├── ServicesStatusViewModel.swift
-│   └── ARLandmarkIdentifier.swift
-│
-├── DataModels/              # 數據模型
-│   ├── TrailAlert.swift    # 路線警示模型
-│   ├── Landmark.swift      # 地標模型
-│   ├── OfflineMapRegion.swift # 離線地圖區域模型
-│   └── SafetyChecklistItem.swift # 安全檢查清單項模型
-│
-└── Stores/                  # 數據存儲層
-    ├── OfflineMapsStore.swift
-    └── SafetyChecklistStore.swift
-```
-
-## 主要功能詳述
-
-### 🔐 認證
-- 安全的用戶註冊和登入
-- 基於 SwiftData 的憑證存儲
-- 自動會話恢復
-- 用戶資料管理
-
-### 📊 數據持久化
-所有用戶數據使用 SwiftData 持久化：
-- 用戶憑證
-- 已保存的行程和完成狀態
-- 收藏的路線
-- 安全檢查清單進度
-- 離線地圖下載
-
-### 🌤️ 天氣整合
-- 來自香港天文台 API 的實時天氣數據
-- 溫度、濕度、UV 指數
-- 天氣警告和建議
-- 自動刷新功能
-
-### 🗺️ 路線管理
-- **17+ 條行山路線**涵蓋香港主要路線
-- 難度等級（簡單、中等、困難）
-- 互動地圖與路線視覺化
-- 檢查點和海拔剖面
-- 交通和設施資訊
-- 涵蓋四大長途遠足徑（麥理浩徑、衛奕信徑、鳳凰徑、港島徑）
-
-### 📱 離線地圖
-- 下載地圖供離線使用
-- 多個區域可用
-- 下載進度追蹤
-- 存儲管理
-
-### ⚠️ 路線警示
-- 實時天氣警告
-- 路線維護通知
-- 警示分類和嚴重程度等級
-- 從 HKO API 自動更新
-
-### 🎯 目標與統計
-- 追蹤行山目標
-- 每月距離記錄
-- 山脊線完成追蹤
-- 視覺進度指示器
-
-### 🧭 AR 地標識別
-- 使用 GPS 識別附近山峰
-- 距離和方位計算
-- 地標資訊顯示
-- 實時掃描
-
-### 🎨 UI/UX 設計
-- **遠足主題**：自然色調（森林綠、大地棕、天空藍）
-- **圖案背景**：微妙的山脈、樹木、雲朵和路徑圖案
-- **卡片式設計**：現代卡片佈局，帶漸變和陰影
-- **響應式佈局**：適應不同屏幕尺寸
-
-## 開發
-
-### 添加新功能
-1. 在適當的目錄中創建模型
-2. 遵循 MVVM 模式實現 ViewModels
-3. 使用適當的狀態管理創建 SwiftUI 視圖
-4. 如需持久化，添加 SwiftData 模型
-5. 在 `hikingHKApp.swift` 中更新 `modelContainer`
-
-### 測試
-運行測試：
-```bash
-xcodebuild test -scheme hikingHK -destination 'platform=iOS Simulator,name=iPhone 15'
-```
-
 ## API 整合
 
 ### 天氣 API ✅
-- **端點**：`https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en`
+- **端點**：`https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang={lang}`
 - **狀態**：已連接
+- **語言**：英文（`en`）和繁體中文（`tc`）
 - **數據類型**：實時天氣讀數
 - **功能**：溫度、濕度、UV 指數、天氣警告
 - **更新頻率**：手動刷新或應用啟動時
 - **連接檢查**：在個人資料 → API 狀態中可用
+- **錯誤處理**：全面的錯誤處理和詳細日誌記錄
+
+### 天氣警告 API ✅
+- **端點**：`https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang={lang}`
+- **狀態**：已連接
+- **語言**：英文（`en`）和繁體中文（`tc`）
+- **功能**：活躍的天氣警告和警示
+
+### CSDI 地理資訊平台 API ✅
+- **端點**：
+  - `https://portal.csdi.gov.hk/geoportal/?datasetId=afcd_rcd_1665568199103_4360&lang={lang}`
+  - `https://portal.csdi.gov.hk/geoportal/?datasetId=afcd_rcd_1635136039113_86105&lang={lang}`
+  - `https://portal.csdi.gov.hk/geoportal/?datasetId=cas_rcd_1640314527589_15538&lang={lang}`
+- **狀態**：已連接
+- **語言**：英文（`en`）和繁體中文（`zh-hk`）
+- **功能**：路線資訊和政府數據
 
 ### Mapbox API ⚠️
 - **端點**：`https://api.mapbox.com/directions/v5/mapbox/walking/`
@@ -259,14 +219,26 @@ xcodebuild test -scheme hikingHK -destination 'platform=iOS Simulator,name=iPhon
 - 在個人資料頁面顯示連接狀態
 - 手動刷新功能
 - 最後檢查時間追蹤
+- 詳細錯誤報告
+
+## 本地化
+
+應用程式完全支援兩種語言：
+- **英文**（`en`）
+- **繁體中文**（`zh-Hant` / `tc`）
+
+所有 UI 元素、路線名稱、天氣狀況和錯誤訊息都已本地化。用戶可以在個人資料 → 語言中切換語言。
 
 ## 數據隱私
 
 - 所有用戶數據使用 SwiftData 本地存儲
 - 除以下情況外，不會將數據傳輸到外部服務器：
   - 天氣 API（公開數據）
+  - 天氣警告 API（公開數據）
+  - CSDI 地理資訊平台 API（公開數據）
   - Mapbox API（路線計算，可選）
 - 用戶憑證經過加密並安全存儲
+- 位置分享由用戶發起，可隨時停止
 
 ## 路線資料庫
 
@@ -280,7 +252,19 @@ xcodebuild test -scheme hikingHK -destination 'platform=iOS Simulator,name=iPhon
 
 > **注意**：香港有超過 300 條行山路線。應用程式目前包含主要路線。更多路線可在未來更新中添加。
 
-詳見 [TRAILS_LIST.md](TRAILS_LIST.md) 查看完整路線詳情。
+## 離線地圖
+
+- **下載區域**：
+  - 香港島
+  - 九龍山脊
+  - 西貢東
+  - 大嶼山北
+- **功能**：
+  - 下載進度追蹤
+  - 存儲管理
+  - 自動離線模式檢測
+  - 網絡狀態監控
+  - 地圖瓦片緩存
 
 ## 未來增強功能
 
@@ -320,4 +304,3 @@ xcodebuild test -scheme hikingHK -destination 'platform=iOS Simulator,name=iPhon
 ---
 
 **語言**：[English](README.md) | [繁體中文](README_zh_TW.md)
-
