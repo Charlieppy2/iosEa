@@ -26,34 +26,46 @@ struct HikeTrackingView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 地圖背景
-                if let location = viewModel.currentLocation {
-                    Map(position: .constant(.camera(MapCamera(
-                        centerCoordinate: location.coordinate,
-                        distance: 500,
-                        heading: 0,
-                        pitch: 0
-                    )))) {
-                        // 顯示軌跡線
-                        if viewModel.trackPoints.count > 1 {
-                            MapPolyline(coordinates: viewModel.routeCoordinates)
-                                .stroke(Color.hikingGreen, lineWidth: 4)
-                        }
+                // 地圖背景 - 始終顯示地圖
+                Map(position: .constant(mapCameraPosition)) {
+                    // 顯示已選路線（如果有）
+                    if let trail = selectedTrail, let polyline = trail.mkPolyline {
+                        MapPolyline(polyline)
+                            .stroke(Color.blue.opacity(0.5), lineWidth: 3)
                         
-                        // 顯示當前位置
-                        Annotation(languageManager.localizedString(for: "hike.tracking.current.location"), coordinate: location.coordinate) {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 12, height: 12)
-                                .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                        // 顯示路線起點
+                        if let startCoordinate = trail.routeLocations.first {
+                            Annotation(languageManager.localizedString(for: "map.start"), coordinate: startCoordinate) {
+                                Image(systemName: "flag.circle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(.blue)
+                                    .shadow(radius: 3)
+                            }
                         }
                     }
-                    .mapStyle(.standard(elevation: .realistic))
-                    .ignoresSafeArea()
-                } else {
-                    Color.hikingBackgroundGradient
-                        .ignoresSafeArea()
+                    
+                    // 顯示軌跡線
+                    if viewModel.trackPoints.count > 1 {
+                        MapPolyline(coordinates: viewModel.routeCoordinates)
+                            .stroke(Color.hikingGreen, lineWidth: 4)
+                    }
+                    
+                    // 顯示當前位置
+                    if let location = viewModel.currentLocation {
+                        Annotation(languageManager.localizedString(for: "hike.tracking.current.location"), coordinate: location.coordinate) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 16, height: 16)
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 3)
+                                    .frame(width: 20, height: 20)
+                            }
+                        }
+                    }
                 }
+                .mapStyle(.standard(elevation: .realistic))
+                .ignoresSafeArea()
                 
                 VStack {
                     Spacer()
@@ -207,6 +219,68 @@ struct HikeTrackingView: View {
     
     private var routeCoordinates: [CLLocationCoordinate2D] {
         viewModel.trackPoints.map { $0.coordinate }
+    }
+    
+    // 計算地圖相機位置
+    private var mapCameraPosition: MapCameraPosition {
+        // 如果有當前位置，使用當前位置
+        if let location = viewModel.currentLocation {
+            return .camera(MapCamera(
+                centerCoordinate: location.coordinate,
+                distance: 1000,
+                heading: 0,
+                pitch: 0
+            ))
+        }
+        
+        // 如果有已選路線，使用路線中心
+        if let trail = selectedTrail {
+            return .region(trail.mapRegion)
+        }
+        
+        // 如果有軌跡點，使用軌跡中心
+        if !viewModel.trackPoints.isEmpty {
+            let coordinates = viewModel.trackPoints.map { $0.coordinate }
+            let center = calculateCenter(coordinates: coordinates)
+            let span = calculateSpan(coordinates: coordinates)
+            return .region(MKCoordinateRegion(center: center, span: span))
+        }
+        
+        // 默認：香港中心位置
+        return .region(MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 22.319, longitude: 114.169),
+            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        ))
+    }
+    
+    private func calculateCenter(coordinates: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D {
+        guard !coordinates.isEmpty else {
+            return CLLocationCoordinate2D(latitude: 22.319, longitude: 114.169)
+        }
+        
+        let sumLat = coordinates.reduce(0) { $0 + $1.latitude }
+        let sumLon = coordinates.reduce(0) { $0 + $1.longitude }
+        
+        return CLLocationCoordinate2D(
+            latitude: sumLat / Double(coordinates.count),
+            longitude: sumLon / Double(coordinates.count)
+        )
+    }
+    
+    private func calculateSpan(coordinates: [CLLocationCoordinate2D]) -> MKCoordinateSpan {
+        guard !coordinates.isEmpty else {
+            return MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        }
+        
+        let minLat = coordinates.map { $0.latitude }.min() ?? 0
+        let maxLat = coordinates.map { $0.latitude }.max() ?? 0
+        let minLon = coordinates.map { $0.longitude }.min() ?? 0
+        let maxLon = coordinates.map { $0.longitude }.max() ?? 0
+        
+        let latDelta = max(maxLat - minLat, 0.01) * 1.2 // 添加 20% 邊距
+        let lonDelta = max(maxLon - minLon, 0.01) * 1.2
+        
+        return MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
     }
 }
 

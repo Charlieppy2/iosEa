@@ -102,10 +102,21 @@ final class OfflineMapsViewModel: ObservableObject {
     func deleteRegion(_ region: OfflineMapRegion) {
         guard let store = offlineMapsStore else { return }
         do {
+            // 删除文件数据
+            try downloadService.deleteRegionData(region)
+            
+            // 更新状态
+            region.downloadStatus = .notDownloaded
+            region.downloadProgress = 0
+            region.downloadedSize = 0
+            region.downloadedAt = nil
+            
+            // 从数据库删除
             try store.deleteRegion(region)
             regions.removeAll { $0.id == region.id }
         } catch {
             print("Delete region error: \(error)")
+            self.error = "Failed to delete region: \(error.localizedDescription)"
         }
     }
     
@@ -113,6 +124,22 @@ final class OfflineMapsViewModel: ObservableObject {
         guard let store = offlineMapsStore else { return }
         do {
             regions = try store.loadAllRegions()
+            
+            // 检查每个区域的下载状态
+            for region in regions {
+                if downloadService.isRegionDownloaded(region) && region.downloadStatus != .downloaded {
+                    // 文件存在但状态不对，更新状态
+                    region.downloadStatus = .downloaded
+                    region.downloadProgress = 1.0
+                    try? store.updateRegion(region)
+                } else if !downloadService.isRegionDownloaded(region) && region.downloadStatus == .downloaded {
+                    // 状态显示已下载但文件不存在，重置状态
+                    region.downloadStatus = .notDownloaded
+                    region.downloadProgress = 0
+                    region.downloadedSize = 0
+                    try? store.updateRegion(region)
+                }
+            }
         } catch {
             print("Refresh regions error: \(error)")
         }

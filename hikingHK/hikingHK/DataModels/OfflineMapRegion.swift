@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import MapKit
 
 @Model
 final class OfflineMapRegion {
@@ -54,6 +55,37 @@ extension OfflineMapRegion {
         "Sai Kung East",
         "Lantau North"
     ]
+    
+    // 定义每个区域的坐标边界
+    var coordinateRegion: MKCoordinateRegion {
+        switch name {
+        case "Hong Kong Island":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.267, longitude: 114.188),
+                span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15)
+            )
+        case "Kowloon Ridge":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.350, longitude: 114.183),
+                span: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.12)
+            )
+        case "Sai Kung East":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.383, longitude: 114.350),
+                span: MKCoordinateSpan(latitudeDelta: 0.20, longitudeDelta: 0.20)
+            )
+        case "Lantau North":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.267, longitude: 113.950),
+                span: MKCoordinateSpan(latitudeDelta: 0.18, longitudeDelta: 0.18)
+            )
+        default:
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.319, longitude: 114.169),
+                span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15)
+            )
+        }
+    }
     
     var formattedSize: String {
         let mb = Double(downloadedSize) / (1024 * 1024)

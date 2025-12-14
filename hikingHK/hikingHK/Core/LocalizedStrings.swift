@@ -208,6 +208,9 @@ struct LocalizedStrings {
         "map.center.on.me": "Center on me",
         "map.location.disabled": "Location disabled",
         "map.mapbox.token.required": "Set MAPBOX_ACCESS_TOKEN to view live routing overlays.",
+        "map.offline.mode": "Offline",
+        "map.offline.available": "Offline map available",
+        "map.using.offline": "Using offline map",
         
         // Checkpoints
         "checkpoint.trailhead": "Trailhead",
@@ -821,6 +824,9 @@ struct LocalizedStrings {
         "map.center.on.me": "定位到我的位置",
         "map.location.disabled": "位置已禁用",
         "map.mapbox.token.required": "設置 MAPBOX_ACCESS_TOKEN 以查看實時路線疊加層。",
+        "map.offline.mode": "離線模式",
+        "map.offline.available": "離線地圖可用",
+        "map.using.offline": "使用離線地圖",
         
         // Checkpoints
         "checkpoint.trailhead": "起點",
