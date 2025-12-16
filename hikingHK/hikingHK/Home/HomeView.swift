@@ -462,6 +462,7 @@ struct HomeView: View {
                     .font(.caption.weight(.medium))
                     .foregroundStyle(Color.hikingDarkGreen)
                     .multilineTextAlignment(.center)
+                    .frame(height: 32, alignment: .top)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
