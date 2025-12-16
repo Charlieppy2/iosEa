@@ -47,8 +47,40 @@ struct JournalListView: View {
                     }
                 }
             }
-            .onAppear {
+            .task {
+                // 配置 ViewModel
                 viewModel.configureIfNeeded(context: modelContext)
+            }
+            .onAppear {
+                // 每次视图出现时，确保已配置并刷新数据
+                print("🔄 JournalListView: View appeared")
+                viewModel.configureIfNeeded(context: modelContext, skipRefresh: true)
+                // 延迟刷新，给 SwiftData 时间同步，并确保数据已保存
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 300_000_000) // 0.3秒
+                    print("🔄 JournalListView: Refreshing journals on appear...")
+                    viewModel.refreshJournals()
+                }
+            }
+            .onChange(of: isShowingCreateJournal) { oldValue, newValue in
+                // 当创建日记的 sheet 关闭时，延迟刷新以确保数据已保存
+                if oldValue == true && newValue == false {
+                    print("🔄 JournalListView: Create journal sheet closed")
+                    // 不立即刷新，因为 createJournal 已经手动添加到数组了
+                    // 延迟刷新只是为了确保数据库同步，但不覆盖手动添加的数据
+                    Task { @MainActor in
+                        // 等待更长时间确保 SwiftData 已同步
+                        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1秒
+                        print("🔄 JournalListView: Refreshing journals after delay...")
+                        // 只在数组为空时才刷新，避免覆盖手动添加的数据
+                        if viewModel.journals.isEmpty {
+                            print("🔄 JournalListView: Array is empty, refreshing from database...")
+                            viewModel.refreshJournals()
+                        } else {
+                            print("🔄 JournalListView: Array has \(viewModel.journals.count) items, skipping refresh to preserve manual additions")
+                        }
+                    }
+                }
             }
             // 移除 onChange 中的自动刷新，因为 createJournal 已经手动更新了数组
             // 这样可以避免 SwiftData 同步延迟导致刚保存的日记被覆盖

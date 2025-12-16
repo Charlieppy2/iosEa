@@ -121,7 +121,9 @@ struct CreateJournalView: View {
                 TrailPickerView(selectedTrail: $selectedTrail)
             }
             .onAppear {
+                // 确保使用当前的 modelContext 配置
                 viewModel.configureIfNeeded(context: modelContext)
+                print("📋 CreateJournalView: Configured with modelContext")
             }
             .alert(languageManager.localizedString(for: "journal.save.error"), isPresented: Binding(
                 get: { viewModel.error != nil },
@@ -159,6 +161,10 @@ struct CreateJournalView: View {
         let location: CLLocationCoordinate2D? = nil
         
         do {
+            // 确保 viewModel 已配置，并使用当前的 modelContext
+            viewModel.configureIfNeeded(context: modelContext)
+            
+            print("💾 CreateJournalView: Saving journal with modelContext: \(modelContext)")
             try viewModel.createJournal(
                 title: title,
                 content: content,
@@ -170,14 +176,17 @@ struct CreateJournalView: View {
                 humidity: humidity,
                 location: location,
                 locationName: selectedTrail?.district,
-                photos: photoData
+                photos: photoData,
+                context: modelContext  // 明确传递 context
             )
             print("✅ CreateJournalView: Journal saved successfully")
             isSaving = false
             
             // 等待一小段时间确保数据已保存，然后关闭
             Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
+                // 增加等待时间，确保 SwiftData 完全同步
+                try? await Task.sleep(nanoseconds: 200_000_000) // 0.2秒
+                print("✅ CreateJournalView: Dismissing after save delay")
                 dismiss()
             }
         } catch {

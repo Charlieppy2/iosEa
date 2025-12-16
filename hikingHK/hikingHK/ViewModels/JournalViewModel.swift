@@ -2,56 +2,46 @@
 //  JournalViewModel.swift
 //  hikingHK
 //
-//  Created by assistant on 17/11/2025.
+//  用 FileManager + JSON 持久化行山日記，完全不用 SwiftData 讀寫
 //
 
 import Foundation
-import SwiftData
 import Combine
 import CoreLocation
-
-enum JournalError: LocalizedError {
-    case storeNotConfigured
-    
-    var errorDescription: String? {
-        switch self {
-        case .storeNotConfigured:
-            return "Journal store is not configured. Please try again."
-        }
-    }
-}
+import SwiftData // 只為了兼容 configureIfNeeded(context:)，不再用來持久化
 
 @MainActor
 final class JournalViewModel: ObservableObject {
     @Published var journals: [HikeJournal] = []
     @Published var isLoading: Bool = false
     @Published var error: String?
-    
-    private var store: JournalStore?
-    private var modelContext: ModelContext?
-    
-    func configureIfNeeded(context: ModelContext) {
-        guard store == nil else { return }
-        self.modelContext = context
-        store = JournalStore(context: context)
-        refreshJournals()
+
+    private let fileStore = JournalFileStore()
+    private var isConfigured = false
+
+    /// 為兼容舊代碼：context 現在只用來觸發第一次 refresh，實際持久化用 JSON
+    func configureIfNeeded(context: ModelContext, skipRefresh: Bool = false) {
+        guard !isConfigured else { return }
+        isConfigured = true
+        print("📋 JournalViewModel: Configured (file-based)")
+        if !skipRefresh {
+            refreshJournals()
+        }
     }
-    
+
+    /// 從 JSON 讀取所有日記
     func refreshJournals() {
-        guard let store = store else {
-            print("⚠️ JournalViewModel: Store is nil, cannot refresh")
-            return
-        }
         do {
-            let loadedJournals = try store.loadAllJournals()
-            self.journals = loadedJournals
-            print("✅ JournalViewModel: Refreshed \(loadedJournals.count) journals")
-        } catch {
-            self.error = "Failed to load journals: \(error.localizedDescription)"
-            print("❌ JournalViewModel: Failed to refresh journals: \(error)")
+            let loaded = try fileStore.loadAllJournals()
+            journals = loaded
+            print("✅ JournalViewModel: Refreshed \(loaded.count) journals from JSON store")
+        } catch let err {
+            self.error = "Failed to load journals: \(err.localizedDescription)"
+            print("❌ JournalViewModel: Failed to refresh journals: \(err)")
         }
     }
-    
+
+    /// 新增日記
     func createJournal(
         title: String,
         content: String,
@@ -66,10 +56,8 @@ final class JournalViewModel: ObservableObject {
         hikeRecordId: UUID? = nil,
         photos: [Data] = []
     ) throws {
-        guard let store = store else {
-            throw JournalError.storeNotConfigured
-        }
-        
+        print("💾 JournalViewModel: Creating journal (file-based)")
+
         let journal = HikeJournal(
             title: title,
             content: content,
@@ -84,30 +72,55 @@ final class JournalViewModel: ObservableObject {
             locationName: locationName,
             hikeRecordId: hikeRecordId
         )
-        
-        // 添加照片
-        for (index, photoData) in photos.enumerated() {
-            let photo = JournalPhoto(
-                imageData: photoData,
-                order: index
-            )
+
+        // 照片
+        for (index, data) in photos.enumerated() {
+            let photo = JournalPhoto(imageData: data, caption: nil, takenAt: Date(), order: index)
+            photo.journal = journal
             journal.photos.append(photo)
         }
-        
-        try store.saveJournal(journal)
-        print("✅ JournalViewModel: Saved journal '\(title)'")
-        
-        // 直接将新创建的 journal 添加到数组中，而不是查询
-        // 这样可以避免 SwiftData 同步延迟问题
-        journals.insert(journal, at: 0) // 插入到开头，因为按日期倒序排列
-        journals.sort { $0.hikeDate > $1.hikeDate } // 确保按日期排序
-        
-        // 手动触发视图更新
+
+        try fileStore.saveOrUpdateJournal(journal)
+        print("✅ JournalViewModel: Saved journal '\(title)' (ID: \(journal.id)) to JSON store")
+
+        journals.insert(journal, at: 0)
+        journals.sort { $0.hikeDate > $1.hikeDate }
         objectWillChange.send()
-        
-        print("✅ JournalViewModel: Added journal to array, total count: \(journals.count)")
     }
-    
+
+    /// 兼容舊簽名：帶 context 版本會直接調用不帶 context 的實作
+    func createJournal(
+        title: String,
+        content: String,
+        hikeDate: Date,
+        trailId: UUID? = nil,
+        trailName: String? = nil,
+        weatherCondition: String? = nil,
+        temperature: Double? = nil,
+        humidity: Double? = nil,
+        location: CLLocationCoordinate2D? = nil,
+        locationName: String? = nil,
+        hikeRecordId: UUID? = nil,
+        photos: [Data] = [],
+        context: ModelContext
+    ) throws {
+        try createJournal(
+            title: title,
+            content: content,
+            hikeDate: hikeDate,
+            trailId: trailId,
+            trailName: trailName,
+            weatherCondition: weatherCondition,
+            temperature: temperature,
+            humidity: humidity,
+            location: location,
+            locationName: locationName,
+            hikeRecordId: hikeRecordId,
+            photos: photos
+        )
+    }
+
+    /// 更新日記
     func updateJournal(
         _ journal: HikeJournal,
         title: String,
@@ -115,85 +128,59 @@ final class JournalViewModel: ObservableObject {
         hikeDate: Date,
         photos: [Data] = []
     ) throws {
-        guard let store = store else {
-            throw JournalError.storeNotConfigured
-        }
-        
         journal.title = title
         journal.content = content
         journal.hikeDate = hikeDate
-        
-        // 更新照片
+
         if !photos.isEmpty {
-            // 刪除舊照片
             journal.photos.removeAll()
-            
-            // 添加新照片
-            for (index, photoData) in photos.enumerated() {
-                let photo = JournalPhoto(
-                    imageData: photoData,
-                    order: index
-                )
+            for (index, data) in photos.enumerated() {
+                let photo = JournalPhoto(imageData: data, caption: nil, takenAt: Date(), order: index)
+                photo.journal = journal
                 journal.photos.append(photo)
             }
         }
-        
-        try store.updateJournal(journal)
-        
-        // 更新数组中的 journal（因为是引用类型，直接修改即可）
-        // 但为了确保视图更新，重新排序
+
+        try fileStore.saveOrUpdateJournal(journal)
         journals.sort { $0.hikeDate > $1.hikeDate }
-        
-        // 手动触发视图更新
         objectWillChange.send()
-        
-        print("✅ JournalViewModel: Updated journal, total count: \(journals.count)")
     }
-    
+
+    /// 刪除日記
     func deleteJournal(_ journal: HikeJournal) throws {
-        guard let store = store else { return }
-        try store.deleteJournal(journal)
-        
-        // 从数组中移除 journal
+        try fileStore.deleteJournal(journal)
         journals.removeAll { $0.id == journal.id }
-        
-        // 手动触发视图更新
         objectWillChange.send()
-        
-        print("✅ JournalViewModel: Deleted journal, total count: \(journals.count)")
     }
-    
+
+    /// 切換分享狀態
     func toggleShare(_ journal: HikeJournal) throws {
-        guard let store = store else { return }
         journal.isShared.toggle()
-        try store.updateJournal(journal)
-        
-        // 手动触发视图更新（journal 是引用类型，已自动更新）
+        try fileStore.saveOrUpdateJournal(journal)
         objectWillChange.send()
-        
-        print("✅ JournalViewModel: Toggled share for journal")
     }
-    
+
+    // MARK: - 月份分組 / 排序
+
     var journalsByMonth: [String: [HikeJournal]] {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
-        
+
         return Dictionary(grouping: journals) { journal in
             formatter.string(from: journal.hikeDate)
         }
     }
-    
+
     var sortedMonths: [String] {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
-        
-        return journalsByMonth.keys.sorted { month1, month2 in
-            guard let date1 = formatter.date(from: month1),
-                  let date2 = formatter.date(from: month2) else {
-                return false
-            }
-            return date1 > date2
+
+        return journalsByMonth.keys.sorted { m1, m2 in
+            guard let d1 = formatter.date(from: m1),
+                  let d2 = formatter.date(from: m2) else { return false }
+            return d1 > d2
         }
     }
 }
+
 

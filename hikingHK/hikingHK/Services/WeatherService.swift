@@ -14,11 +14,12 @@ protocol WeatherServiceProtocol {
 struct WeatherService: WeatherServiceProtocol {
     private let session: URLSession
     private let decoder: JSONDecoder
+    private let warningService: WeatherWarningServiceProtocol
     
     // Base endpoint - language will be appended
     private let baseEndpoint = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang="
 
-    init(session: URLSession? = nil, decoder: JSONDecoder? = nil) {
+    init(session: URLSession? = nil, decoder: JSONDecoder? = nil, warningService: WeatherWarningServiceProtocol? = nil) {
         // 配置 URLSession 使用超时设置
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 10.0 // 10秒超时
@@ -31,6 +32,7 @@ struct WeatherService: WeatherServiceProtocol {
         let jsonDecoder = decoder ?? JSONDecoder()
         // Swift 的 Decodable 默认会忽略未知键，但我们需要确保正确配置
         self.decoder = jsonDecoder
+        self.warningService = warningService ?? WeatherWarningService()
     }
     
     private func endpointURL(language: String) -> URL {
@@ -78,9 +80,13 @@ struct WeatherService: WeatherServiceProtocol {
             
             let payload = try decoder.decode(HKORealTimeWeather.self, from: data)
             
-            guard let temperatureEntry = payload.temperature.data.first,
+            // 优先使用 "Hong Kong Observatory" 的数据，如果找不到则使用第一个
+            let temperatureEntry = payload.temperature.data.first { $0.place == "Hong Kong Observatory" } ?? payload.temperature.data.first
+            let humidityEntry = payload.humidity.data.first { $0.place == "Hong Kong Observatory" } ?? payload.humidity.data.first
+            
+            guard let temperatureEntry = temperatureEntry,
                   let temperature = temperatureEntry.value,
-                  let humidityEntry = payload.humidity.data.first,
+                  let humidityEntry = humidityEntry,
                   let humidityValue = humidityEntry.value
             else {
                 print("❌ WeatherService: Missing required fields in response")
@@ -88,14 +94,58 @@ struct WeatherService: WeatherServiceProtocol {
             }
 
             let uvIndex = payload.uvindex?.data?.compactMap { $0.value }.first ?? 0
-            let warningMessage = payload.warningMessage?.filter { !$0.isEmpty }.joined(separator: "\n")
+            
+            // 处理警告消息：先从实时天气 API 获取，然后从警告 API 获取并合并
+            var warningMessages: [String] = []
+            
+            // 从实时天气 API 获取警告消息
+            if let messages = payload.warningMessage, !messages.isEmpty {
+                print("📋 WeatherService: Found \(messages.count) warning message(s) from rhrread: \(messages)")
+                // 为每条消息添加⚠️符号
+                warningMessages.append(contentsOf: messages.filter { !$0.isEmpty }.map { "⚠️ \($0)" })
+            }
+            
+            // 从警告 API 获取警告消息
+            do {
+                let warnings = try await warningService.fetchWarnings(language: language)
+                let activeWarnings = warnings.filter { $0.isActive }
+                if !activeWarnings.isEmpty {
+                    print("📋 WeatherService: Found \(activeWarnings.count) active warning(s) from warnsum")
+                    for warning in activeWarnings {
+                        let warningText = "⚠️ \(warning.name) (\(warning.code))"
+                        // 检查是否已存在（去掉⚠️符号比较）
+                        let exists = warningMessages.contains { $0.contains(warning.name) && $0.contains(warning.code) }
+                        if !exists {
+                            warningMessages.append(warningText)
+                        }
+                    }
+                }
+            } catch {
+                print("⚠️ WeatherService: Failed to fetch warnings from warnsum API: \(error)")
+            }
+            
+            // 合并所有警告消息，确保每条消息都有⚠️符号
+            let warningMessage: String? = {
+                guard !warningMessages.isEmpty else {
+                    print("📋 WeatherService: No warning messages found")
+                    return nil
+                }
+                // 确保每条消息都有⚠️符号（如果还没有的话）
+                let messagesWithSymbol = warningMessages.map { message in
+                    message.contains("⚠️") ? message : "⚠️ \(message)"
+                }
+                let joined = messagesWithSymbol.joined(separator: "\n")
+                print("📋 WeatherService: Final warning message with symbols: \(joined)")
+                return joined
+            }()
+            
             let suggestion = WeatherSuggestionBuilder.suggestion(
                 uvIndex: uvIndex,
                 humidity: Int(humidityValue),
-                hasWarning: warningMessage != nil
+                hasWarning: warningMessage != nil && !warningMessage!.isEmpty
             )
 
-            print("✅ WeatherService: Successfully parsed weather data - Temp: \(temperature)°C, Humidity: \(humidityValue)%")
+            print("✅ WeatherService: Successfully parsed weather data - Temp: \(temperature)°C, Humidity: \(humidityValue)%, Location: \(temperatureEntry.place), Warning: \(warningMessage ?? "none")")
             
             return WeatherSnapshot(
                 location: temperatureEntry.place,
@@ -196,7 +246,30 @@ struct HKORealTimeWeather: Decodable {
         
         temperature = try container.decode(WeatherDataset.self, forKey: .temperature)
         humidity = try container.decode(WeatherDataset.self, forKey: .humidity)
-        warningMessage = try container.decodeIfPresent([String].self, forKey: .warningMessage)
+        
+        // 处理 warningMessage 字段：可能是字符串、字符串数组或 null
+        if container.contains(.warningMessage) {
+            // 尝试解码为字符串数组
+            if let warningArray = try? container.decode([String].self, forKey: .warningMessage) {
+                print("📋 WeatherService: warningMessage decoded as array: \(warningArray)")
+                warningMessage = warningArray
+            } else if let warningString = try? container.decode(String.self, forKey: .warningMessage) {
+                // 如果是字符串，转换为数组（如果为空字符串则为空数组）
+                print("📋 WeatherService: warningMessage decoded as string: '\(warningString)'")
+                if warningString.isEmpty {
+                    warningMessage = []
+                } else {
+                    warningMessage = [warningString]
+                }
+            } else {
+                // 如果既不是数组也不是字符串，设置为空数组
+                print("📋 WeatherService: warningMessage could not be decoded as array or string")
+                warningMessage = []
+            }
+        } else {
+            print("📋 WeatherService: warningMessage key not found in response")
+            warningMessage = []
+        }
         
         // 处理 uvindex 字段：可能是字典、空字符串或 null
         if container.contains(.uvindex) {

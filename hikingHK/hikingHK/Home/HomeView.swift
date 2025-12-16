@@ -204,7 +204,7 @@ struct HomeView: View {
             }
             Divider()
                 .background(Color.hikingBrown.opacity(0.2))
-            if let warning = snapshot.warningMessage {
+            if let warning = snapshot.warningMessage, !warning.isEmpty {
                 Label(warning, systemImage: "exclamationmark.triangle.fill")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.orange)
@@ -223,8 +223,16 @@ struct HomeView: View {
     }
     
     private func localizedLocation(_ location: String) -> String {
+        // 优先使用香港天文台
         if location == "Hong Kong Observatory" {
             return languageManager.localizedString(for: "weather.location.hko")
+        }
+        // 其他常见位置的本地化
+        let locationKey = "weather.location.\(location.lowercased().replacingOccurrences(of: " ", with: ".").replacingOccurrences(of: "'", with: ""))"
+        let localized = languageManager.localizedString(for: locationKey)
+        // 如果找到了本地化字符串（不是返回 key 本身），则使用它
+        if localized != locationKey {
+            return localized
         }
         return location
     }

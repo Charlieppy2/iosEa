@@ -31,7 +31,9 @@ struct hikingHKApp: App {
                 HikeJournal.self,
                 JournalPhoto.self,
                 GearItem.self
-            ]
+            ],
+            isAutosaveEnabled: true,
+            isUndoEnabled: false
         )
     }
 }

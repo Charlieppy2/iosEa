@@ -167,6 +167,7 @@ struct LocalizedStrings {
         
         // Weather
         "weather.location.hko": "Hong Kong Observatory",
+        "weather.location.kings.park": "King's Park",
         "weather.forecast.title": "Weather Forecast",
         "weather.forecast.best.times": "Best Hiking Times",
         "weather.forecast.7day": "7-Day Forecast",
@@ -827,6 +828,7 @@ struct LocalizedStrings {
         
         // Weather
         "weather.location.hko": "香港天文台",
+        "weather.location.kings.park": "京士柏",
         "weather.forecast.title": "天氣預測",
         "weather.forecast.best.times": "最佳行山時間",
         "weather.forecast.7day": "7天預測",
