@@ -12,6 +12,7 @@ import Combine
 @MainActor
 final class SafetyChecklistViewModel: ObservableObject {
     @Published var items: [SafetyChecklistItem] = []
+    @Published var itemOrder: [String] = [] // 保存 item 的顯示順序
     private var safetyChecklistStore: SafetyChecklistStore?
     private var hasSeeded = false
     
@@ -19,6 +20,8 @@ final class SafetyChecklistViewModel: ObservableObject {
     private let completionDefaultsKey = "safetyChecklist.completionStates"
     /// 使用 UserDefaults 備份自定義項目內容（標題、圖示），確保重新開啓後仍然存在
     private let customItemsDefaultsKey = "safetyChecklist.customItems"
+    /// 使用 UserDefaults 保存 item 的顯示順序
+    private let itemOrderDefaultsKey = "safetyChecklist.itemOrder"
     
     /// 自定義 checklist item 的簡單 DTO，方便寫入 UserDefaults
     private struct CustomItemDTO: Codable {
@@ -49,6 +52,73 @@ final class SafetyChecklistViewModel: ObservableObject {
             }
         }
         objectWillChange.send()
+    }
+    
+    // MARK: - Item Order Persistence (UserDefaults)
+    
+    private func loadItemOrder() -> [String] {
+        return UserDefaults.standard.stringArray(forKey: itemOrderDefaultsKey) ?? []
+    }
+    
+    private func saveItemOrder(_ order: [String]) {
+        UserDefaults.standard.set(order, forKey: itemOrderDefaultsKey)
+    }
+    
+    /// 根據保存的順序重新排列 items，如果沒有保存的順序則使用默認順序（按 ID 排序）
+    private func applyItemOrder() {
+        let savedOrder = loadItemOrder()
+        
+        if savedOrder.isEmpty {
+            // 如果沒有保存的順序，使用默認順序（按 ID 排序）
+            itemOrder = items.map { $0.id }.sorted { $0 < $1 }
+        } else {
+            // 使用保存的順序，但確保所有現有 items 都在順序中
+            var order = savedOrder.filter { id in items.contains(where: { $0.id == id }) }
+            // 添加任何不在順序中的新 items（按 ID 排序）
+            let missingIds = items.map { $0.id }.filter { !order.contains($0) }.sorted { $0 < $1 }
+            order.append(contentsOf: missingIds)
+            itemOrder = order
+        }
+        
+        // 根據順序重新排列 items
+        let reorderedItems = itemOrder.compactMap { id in
+            items.first(where: { $0.id == id })
+        }
+        
+        // 只有在順序改變時才更新
+        if reorderedItems.map({ $0.id }) != items.map({ $0.id }) {
+            items = reorderedItems
+            objectWillChange.send()
+        }
+    }
+    
+    /// 移動 item 到新位置
+    func moveItem(from source: IndexSet, to destination: Int, context: ModelContext) {
+        // 手動實現移動邏輯（處理單個或多個 item 的移動）
+        var reorderedItems = items
+        var itemsToMove: [SafetyChecklistItem] = []
+        
+        // 按降序移除，避免索引變化問題
+        for index in source.sorted(by: >) {
+            itemsToMove.insert(reorderedItems.remove(at: index), at: 0)
+        }
+        
+        // 計算正確的插入位置
+        let insertIndex = min(destination, reorderedItems.count)
+        
+        // 在目標位置插入
+        for (offset, item) in itemsToMove.enumerated() {
+            reorderedItems.insert(item, at: insertIndex + offset)
+        }
+        
+        items = reorderedItems
+        
+        // 更新順序
+        itemOrder = items.map { $0.id }
+        // 保存順序
+        saveItemOrder(itemOrder)
+        objectWillChange.send()
+        print("✅ SafetyChecklistViewModel: Moved item, new order: \(itemOrder)")
     }
     
     // MARK: - Custom Items Backup (UserDefaults)
@@ -120,7 +190,8 @@ final class SafetyChecklistViewModel: ObservableObject {
         }
         
         if changed {
-            items = items.sorted { $0.id < $1.id }
+            // 應用順序（會自動排序）
+            applyItemOrder()
             objectWillChange.send()
             print("✅ SafetyChecklistViewModel: Restored some custom items, total: \(items.count)")
         } else {
@@ -157,6 +228,8 @@ final class SafetyChecklistViewModel: ObservableObject {
             // 套用已保存的完成狀態並還原自定義項目
             applyCompletionStatesFromDefaults()
             restoreCustomItemsIfNeeded()
+            // 應用保存的順序
+            applyItemOrder()
         } catch {
             print("❌ Safety checklist seeding error: \(error)")
             print("❌ Error details: \(error.localizedDescription)")
@@ -175,6 +248,8 @@ final class SafetyChecklistViewModel: ObservableObject {
             // 套用已保存的完成狀態並還原自定義項目
             applyCompletionStatesFromDefaults()
             restoreCustomItemsIfNeeded()
+            // 應用保存的順序
+            applyItemOrder()
         } catch {
             print("❌ Refresh safety items error: \(error)")
             print("❌ Error details: \(error.localizedDescription)")
@@ -201,6 +276,7 @@ final class SafetyChecklistViewModel: ObservableObject {
                 print("✅ SafetyChecklistViewModel: Created store and seeded \(seededItems.count) items")
                 applyCompletionStatesFromDefaults()
                 restoreCustomItemsIfNeeded()
+                applyItemOrder()
             } catch {
                 print("❌ SafetyChecklistViewModel: Failed to seed items: \(error)")
             }
@@ -216,6 +292,7 @@ final class SafetyChecklistViewModel: ObservableObject {
             print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
             applyCompletionStatesFromDefaults()
             restoreCustomItemsIfNeeded()
+            applyItemOrder()
         } catch {
             print("❌ SafetyChecklistViewModel: Failed to create items: \(error)")
             // 如果失败，尝试刷新
@@ -263,9 +340,12 @@ final class SafetyChecklistViewModel: ObservableObject {
         let newId = "custom_\(UUID().uuidString)"
         let newItem = try store.createItem(id: newId, iconName: iconName, title: title)
         
-        // 添加到 items 数组
-        items.append(newItem)
-        items = items.sorted { $0.id < $1.id } // 重新排序
+        // 添加到 items 数组的最頂部
+        items.insert(newItem, at: 0)
+        
+        // 更新順序：新 item 添加到最頂部（索引 0）
+        itemOrder.insert(newItem.id, at: 0)
+        saveItemOrder(itemOrder)
         
         // 將新 item 的狀態（默認為 false）保存到 UserDefaults
         var states = loadCompletionStates()
@@ -278,7 +358,10 @@ final class SafetyChecklistViewModel: ObservableObject {
         backups.append(dto)
         saveCustomItemsBackup(backups)
         
-        print("✅ SafetyChecklistViewModel: Added new item, total: \(items.count), saved to UserDefaults and backup")
+        // 觸發 UI 更新
+        objectWillChange.send()
+        
+        print("✅ SafetyChecklistViewModel: Added new item at top, total: \(items.count), saved to UserDefaults and backup")
     }
     
     func deleteItem(_ item: SafetyChecklistItem, context: ModelContext) throws {
@@ -290,6 +373,10 @@ final class SafetyChecklistViewModel: ObservableObject {
         
         // 从 items 数组中移除
         items.removeAll { $0.id == item.id }
+        
+        // 從順序中移除
+        itemOrder.removeAll { $0 == item.id }
+        saveItemOrder(itemOrder)
         
         // 從 UserDefaults 中移除對應的狀態
         var states = loadCompletionStates()

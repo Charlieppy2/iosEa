@@ -643,8 +643,22 @@ struct SafetyChecklistView: View {
                         }
                         
                         Section {
-                            ForEach(items.sorted(by: { $0.id < $1.id })) { item in
+                            ForEach(viewModel.items) { item in
                                 checklistItemRow(item)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button(role: .destructive) {
+                                            do {
+                                                try viewModel.deleteItem(item, context: modelContext)
+                                            } catch {
+                                                print("❌ Failed to delete item: \(error)")
+                                            }
+                                        } label: {
+                                            Label(languageManager.localizedString(for: "delete"), systemImage: "trash")
+                                        }
+                                    }
+                            }
+                            .onMove { source, destination in
+                                viewModel.moveItem(from: source, to: destination, context: modelContext)
                             }
                             
                             // 添加新项目按钮
