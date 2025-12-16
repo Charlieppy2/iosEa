@@ -15,6 +15,33 @@ final class SafetyChecklistViewModel: ObservableObject {
     private var safetyChecklistStore: SafetyChecklistStore?
     private var hasSeeded = false
     
+    /// 使用 UserDefaults 額外保存完成狀態，避免 SwiftData 同步問題
+    private let completionDefaultsKey = "safetyChecklist.completionStates"
+    
+    // MARK: - Completion State Persistence (UserDefaults)
+    
+    private func loadCompletionStates() -> [String: Bool] {
+        let dict = UserDefaults.standard.dictionary(forKey: completionDefaultsKey) as? [String: Bool]
+        return dict ?? [:]
+    }
+    
+    private func saveCompletionStates(_ states: [String: Bool]) {
+        UserDefaults.standard.set(states, forKey: completionDefaultsKey)
+    }
+    
+    /// 將 UserDefaults 中的完成狀態套用到當前 items
+    private func applyCompletionStatesFromDefaults() {
+        let states = loadCompletionStates()
+        guard !states.isEmpty else { return }
+        
+        for item in items {
+            if let saved = states[item.id] {
+                item.isCompleted = saved
+            }
+        }
+        objectWillChange.send()
+    }
+    
     func configureIfNeeded(context: ModelContext) async {
         // 如果已经配置过，只刷新项目列表
         if let existingStore = safetyChecklistStore {
@@ -41,6 +68,8 @@ final class SafetyChecklistViewModel: ObservableObject {
             // 直接使用返回的项目，而不是查询
             items = seededItems
             print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
+            // 套用已保存的完成狀態
+            applyCompletionStatesFromDefaults()
         } catch {
             print("❌ Safety checklist seeding error: \(error)")
             print("❌ Error details: \(error.localizedDescription)")
@@ -56,6 +85,8 @@ final class SafetyChecklistViewModel: ObservableObject {
             let loadedItems = try store.loadAllItems()
             items = loadedItems
             print("✅ SafetyChecklistViewModel: Refreshed \(loadedItems.count) items")
+            // 套用已保存的完成狀態
+            applyCompletionStatesFromDefaults()
         } catch {
             print("❌ Refresh safety items error: \(error)")
             print("❌ Error details: \(error.localizedDescription)")
@@ -80,6 +111,7 @@ final class SafetyChecklistViewModel: ObservableObject {
                 let seededItems = try newStore.seedDefaultsIfNeeded()
                 items = seededItems
                 print("✅ SafetyChecklistViewModel: Created store and seeded \(seededItems.count) items")
+                applyCompletionStatesFromDefaults()
             } catch {
                 print("❌ SafetyChecklistViewModel: Failed to seed items: \(error)")
             }
@@ -93,6 +125,7 @@ final class SafetyChecklistViewModel: ObservableObject {
             // 直接设置 items，而不是查询
             items = createdItems
             print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
+            applyCompletionStatesFromDefaults()
         } catch {
             print("❌ SafetyChecklistViewModel: Failed to create items: \(error)")
             // 如果失败，尝试刷新
@@ -108,14 +141,25 @@ final class SafetyChecklistViewModel: ObservableObject {
         // 手动触发 @Published 更新，因为修改引用类型对象不会自动触发
         objectWillChange.send()
         
+        // 更新本地完成狀態緩存（UserDefaults）
+        var states = loadCompletionStates()
+        states[item.id] = item.isCompleted
+        saveCompletionStates(states)
+        
         do {
+            // 強制處理待處理的更改，然後保存到 SwiftData
+            context.processPendingChanges()
             try context.save()
+            
             let completedCount = items.filter { $0.isCompleted }.count
             print("✅ SafetyChecklistViewModel: Toggled item \(item.id), isCompleted: \(item.isCompleted), progress: \(completedCount)/\(items.count)")
         } catch {
             print("❌ Toggle safety item error: \(error)")
             // 如果保存失败，恢复状态
             item.isCompleted.toggle()
+            // 回滾 UserDefaults 狀態
+            states[item.id] = item.isCompleted
+            saveCompletionStates(states)
             objectWillChange.send() // 触发更新以恢复 UI
         }
     }

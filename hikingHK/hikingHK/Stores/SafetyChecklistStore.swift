@@ -82,6 +82,9 @@ final class SafetyChecklistStore {
         
         item.isCompleted.toggle()
         item.lastUpdated = Date()
+        context.processPendingChanges()
+        try context.save()
+        // 再次保存以确保同步
         try context.save()
     }
     
@@ -94,6 +97,9 @@ final class SafetyChecklistStore {
         
         item.isCompleted = isCompleted
         item.lastUpdated = Date()
+        context.processPendingChanges()
+        try context.save()
+        // 再次保存以确保同步
         try context.save()
     }
     

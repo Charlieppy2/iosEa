@@ -690,6 +690,10 @@ struct SafetyChecklistView: View {
                 }
                 isCreatingItems = false
             }
+            .onAppear {
+                // 每次视图出现时，强制刷新数据以确保显示最新状态
+                viewModel.refreshItems()
+            }
         }
     }
     
