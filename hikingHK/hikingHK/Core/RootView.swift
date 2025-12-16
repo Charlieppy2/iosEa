@@ -32,6 +32,14 @@ struct RootView: View {
         }
         .onChange(of: sessionManager.currentUser) { oldValue, newValue in
             print("🔄 RootView: currentUser changed from \(oldValue?.email ?? "nil") to \(newValue?.email ?? "nil")")
+            
+            // 当用户登录时，重新加载数据
+            if oldValue == nil && newValue != nil {
+                print("🔄 RootView: User logged in, reloading data...")
+                appViewModel.configurePersistenceIfNeeded(context: modelContext)
+                // 确保数据已加载
+                appViewModel.reloadUserData()
+            }
         }
         .task {
             guard !didConfigure else { return }

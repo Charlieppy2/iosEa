@@ -43,12 +43,24 @@ final class AppViewModel: ObservableObject {
         guard trailDataStore == nil else { return }
         let store = TrailDataStore(context: context)
         trailDataStore = store
+        reloadUserData()
+    }
+    
+    func reloadUserData() {
+        guard let store = trailDataStore else {
+            print("⚠️ AppViewModel: TrailDataStore not configured, cannot reload data")
+            return
+        }
+        
+        print("🔄 AppViewModel: Reloading user data...")
         do {
             try applyFavorites(ids: store.loadFavoriteTrailIds())
             savedHikes = try store.loadSavedHikes(trails: trails)
             sortSavedHikes()
+            objectWillChange.send()
+            print("✅ AppViewModel: User data reloaded successfully")
         } catch {
-            print("Trail data load error: \(error)")
+            print("❌ AppViewModel: Trail data load error: \(error)")
         }
     }
 
@@ -180,6 +192,7 @@ final class AppViewModel: ObservableObject {
             return !lhs.isCompleted && rhs.isCompleted
         }
     }
+    
 }
 
 extension AppViewModel {

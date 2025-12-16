@@ -18,9 +18,11 @@ final class SessionManager: ObservableObject {
 
     private let storedEmailKey = "auth_email"
     private var accountStore: AccountStore?
+    private var modelContext: ModelContext?
 
     func configureIfNeeded(context: ModelContext) async {
         guard !isConfigured else { return }
+        self.modelContext = context
         let store = AccountStore(context: context)
         do {
             try store.seedDefaultsIfNeeded()
@@ -87,6 +89,7 @@ final class SessionManager: ObservableObject {
     func signOut() {
         print("🔐 SessionManager: signOut() called, current user: \(currentUser?.email ?? "nil")")
         
+        // 只清除会话状态，保留所有数据以便下次登录时恢复
         // 清除用户状态 - 这会触发 @Published 更新
         currentUser = nil
         
@@ -99,7 +102,7 @@ final class SessionManager: ObservableObject {
         // 显式触发视图更新（@Published 应该自动处理，但确保一下）
         objectWillChange.send()
         
-        print("✅ SessionManager: User signed out, cleared stored email. currentUser is now: \(currentUser?.email ?? "nil")")
+        print("✅ SessionManager: User signed out, session cleared. Data preserved for next login. currentUser is now: \(currentUser?.email ?? "nil")")
     }
 
     private func restoreSession() {
