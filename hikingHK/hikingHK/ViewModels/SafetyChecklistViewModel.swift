@@ -22,6 +22,8 @@ final class SafetyChecklistViewModel: ObservableObject {
     private let customItemsDefaultsKey = "safetyChecklist.customItems"
     /// 使用 UserDefaults 保存 item 的顯示順序
     private let itemOrderDefaultsKey = "safetyChecklist.itemOrder"
+    /// 使用 UserDefaults 記錄已刪除的預設項目 ID，避免重新創建
+    private let deletedDefaultItemsKey = "safetyChecklist.deletedDefaultItems"
     
     /// 自定義 checklist item 的簡單 DTO，方便寫入 UserDefaults
     private struct CustomItemDTO: Codable {
@@ -62,6 +64,40 @@ final class SafetyChecklistViewModel: ObservableObject {
     
     private func saveItemOrder(_ order: [String]) {
         UserDefaults.standard.set(order, forKey: itemOrderDefaultsKey)
+    }
+    
+    // MARK: - Deleted Default Items Tracking (UserDefaults)
+    
+    /// 預設項目的 ID 列表
+    private let defaultItemIds = ["location", "water", "heat", "offline", "share"]
+    
+    private func loadDeletedDefaultItems() -> Set<String> {
+        let array = UserDefaults.standard.stringArray(forKey: deletedDefaultItemsKey) ?? []
+        return Set(array)
+    }
+    
+    private func saveDeletedDefaultItems(_ deletedIds: Set<String>) {
+        UserDefaults.standard.set(Array(deletedIds), forKey: deletedDefaultItemsKey)
+    }
+    
+    /// 過濾掉已刪除的預設項目
+    private func filterDeletedDefaultItems(_ items: [SafetyChecklistItem]) -> [SafetyChecklistItem] {
+        let deletedIds = loadDeletedDefaultItems()
+        guard !deletedIds.isEmpty else { return items }
+        
+        let filtered = items.filter { item in
+            // 如果是預設項目且已被刪除，則過濾掉
+            if defaultItemIds.contains(item.id) && deletedIds.contains(item.id) {
+                return false
+            }
+            return true
+        }
+        
+        if filtered.count != items.count {
+            print("🔍 SafetyChecklistViewModel: Filtered out \(items.count - filtered.count) deleted default items")
+        }
+        
+        return filtered
     }
     
     /// 根據保存的順序重新排列 items，如果沒有保存的順序則使用默認順序（按 ID 排序）
@@ -222,9 +258,11 @@ final class SafetyChecklistViewModel: ObservableObject {
             let seededItems = try store.seedDefaultsIfNeeded()
             hasSeeded = true
             print("✅ SafetyChecklistViewModel: Seeding completed, got \(seededItems.count) items")
+            // 過濾掉已刪除的預設項目
+            let filteredItems = filterDeletedDefaultItems(seededItems)
             // 直接使用返回的项目，而不是查询
-            items = seededItems
-            print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
+            items = filteredItems
+            print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count) (after filtering deleted defaults)")
             // 套用已保存的完成狀態並還原自定義項目
             applyCompletionStatesFromDefaults()
             restoreCustomItemsIfNeeded()
@@ -243,8 +281,10 @@ final class SafetyChecklistViewModel: ObservableObject {
         }
         do {
             let loadedItems = try store.loadAllItems()
-            items = loadedItems
-            print("✅ SafetyChecklistViewModel: Refreshed \(loadedItems.count) items")
+            // 過濾掉已刪除的預設項目
+            let filteredItems = filterDeletedDefaultItems(loadedItems)
+            items = filteredItems
+            print("✅ SafetyChecklistViewModel: Refreshed \(filteredItems.count) items (after filtering deleted defaults)")
             // 套用已保存的完成狀態並還原自定義項目
             applyCompletionStatesFromDefaults()
             restoreCustomItemsIfNeeded()
@@ -272,8 +312,10 @@ final class SafetyChecklistViewModel: ObservableObject {
             safetyChecklistStore = newStore
             do {
                 let seededItems = try newStore.seedDefaultsIfNeeded()
-                items = seededItems
-                print("✅ SafetyChecklistViewModel: Created store and seeded \(seededItems.count) items")
+                // 過濾掉已刪除的預設項目
+                let filteredItems = filterDeletedDefaultItems(seededItems)
+                items = filteredItems
+                print("✅ SafetyChecklistViewModel: Created store and seeded \(filteredItems.count) items (after filtering deleted defaults)")
                 applyCompletionStatesFromDefaults()
                 restoreCustomItemsIfNeeded()
                 applyItemOrder()
@@ -286,9 +328,11 @@ final class SafetyChecklistViewModel: ObservableObject {
         do {
             // 使用 Store 的 seedDefaultsIfNeeded 方法，直接获取返回的项目
             let createdItems = try store.seedDefaultsIfNeeded()
-            print("✅ SafetyChecklistViewModel: Created \(createdItems.count) items")
+            // 過濾掉已刪除的預設項目
+            let filteredItems = filterDeletedDefaultItems(createdItems)
+            print("✅ SafetyChecklistViewModel: Created \(filteredItems.count) items (after filtering deleted defaults)")
             // 直接设置 items，而不是查询
-            items = createdItems
+            items = filteredItems
             print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
             applyCompletionStatesFromDefaults()
             restoreCustomItemsIfNeeded()
@@ -389,6 +433,17 @@ final class SafetyChecklistViewModel: ObservableObject {
             backups.removeAll { $0.id == item.id }
             saveCustomItemsBackup(backups)
         }
+        
+        // 如果是預設項目，記錄到已刪除列表，避免重新創建
+        if defaultItemIds.contains(item.id) {
+            var deletedIds = loadDeletedDefaultItems()
+            deletedIds.insert(item.id)
+            saveDeletedDefaultItems(deletedIds)
+            print("✅ SafetyChecklistViewModel: Marked default item '\(item.id)' as deleted, will not recreate")
+        }
+        
+        // 觸發 UI 更新
+        objectWillChange.send()
         
         print("✅ SafetyChecklistViewModel: Deleted item, total: \(items.count), removed from UserDefaults and backup")
     }
