@@ -155,6 +155,7 @@ struct JournalListView: View {
 }
 
 struct JournalRow: View {
+    @EnvironmentObject private var languageManager: LanguageManager
     let journal: HikeJournal
     let onTap: () -> Void
     
@@ -216,13 +217,13 @@ struct JournalRow: View {
                         }
                     }
                     
-                    // 天氣信息
+                    // 天氣信息（本地化）
                     if let weather = journal.weatherCondition {
                         HStack(spacing: 4) {
                             Image(systemName: "cloud.sun.fill")
                                 .font(.caption)
                                 .foregroundStyle(Color.hikingSky)
-                            Text(weather)
+                            Text(localizedWeatherSuggestion(weather))
                                 .font(.caption)
                                 .foregroundStyle(Color.hikingStone)
                         }
@@ -236,6 +237,26 @@ struct JournalRow: View {
             .hikingCard()
         }
         .buttonStyle(.plain)
+    }
+    
+    /// 將保存下來的英文 weather suggestion 轉成當前語言
+    private func localizedWeatherSuggestion(_ suggestion: String) -> String {
+        if suggestion.contains("Weather warning in force") {
+            return languageManager.localizedString(for: "weather.suggestion.warning")
+        }
+        if suggestion.contains("Extreme UV") {
+            return languageManager.localizedString(for: "weather.suggestion.extreme.uv")
+        }
+        if suggestion.contains("Humid conditions") {
+            return languageManager.localizedString(for: "weather.suggestion.humid")
+        }
+        if suggestion.contains("Conditions look stable") || suggestion.contains("great time to tackle") {
+            return languageManager.localizedString(for: "weather.suggestion.stable")
+        }
+        if suggestion.contains("Partly cloudy") || suggestion.contains("Great time to start") {
+            return languageManager.localizedString(for: "weather.suggestion.good")
+        }
+        return suggestion
     }
 }
 
