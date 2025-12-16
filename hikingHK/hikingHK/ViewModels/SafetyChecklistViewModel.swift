@@ -17,6 +17,15 @@ final class SafetyChecklistViewModel: ObservableObject {
     
     /// 使用 UserDefaults 額外保存完成狀態，避免 SwiftData 同步問題
     private let completionDefaultsKey = "safetyChecklist.completionStates"
+    /// 使用 UserDefaults 備份自定義項目內容（標題、圖示），確保重新開啓後仍然存在
+    private let customItemsDefaultsKey = "safetyChecklist.customItems"
+    
+    /// 自定義 checklist item 的簡單 DTO，方便寫入 UserDefaults
+    private struct CustomItemDTO: Codable {
+        let id: String
+        let title: String
+        let iconName: String
+    }
     
     // MARK: - Completion State Persistence (UserDefaults)
     
@@ -40,6 +49,83 @@ final class SafetyChecklistViewModel: ObservableObject {
             }
         }
         objectWillChange.send()
+    }
+    
+    // MARK: - Custom Items Backup (UserDefaults)
+    
+    private func loadCustomItemsBackup() -> [CustomItemDTO] {
+        guard let data = UserDefaults.standard.data(forKey: customItemsDefaultsKey) else {
+            return []
+        }
+        do {
+            let decoded = try JSONDecoder().decode([CustomItemDTO].self, from: data)
+            return decoded
+        } catch {
+            print("⚠️ SafetyChecklistViewModel: Failed to decode custom items backup: \(error)")
+            return []
+        }
+    }
+    
+    private func saveCustomItemsBackup(_ items: [CustomItemDTO]) {
+        do {
+            let data = try JSONEncoder().encode(items)
+            UserDefaults.standard.set(data, forKey: customItemsDefaultsKey)
+        } catch {
+            print("⚠️ SafetyChecklistViewModel: Failed to encode custom items backup: \(error)")
+        }
+    }
+    
+    /// 如果 SwiftData 讀出來的 items 缺少某些自定義項目，根據備份重新建立，同時套用完成狀態
+    private func restoreCustomItemsIfNeeded() {
+        guard let store = safetyChecklistStore else {
+            print("⚠️ SafetyChecklistViewModel: Store is nil, cannot restore custom items")
+            return
+        }
+        
+        let backups = loadCustomItemsBackup()
+        print("🔍 SafetyChecklistViewModel: Checking custom items backup, found \(backups.count) items")
+        guard !backups.isEmpty else {
+            print("ℹ️ SafetyChecklistViewModel: No custom items backup found")
+            return
+        }
+        
+        // 讀取已保存的完成狀態，確保恢復時一併套用（例如 QQQQ 已經剔選過）
+        let states = loadCompletionStates()
+        
+        var changed = false
+        
+        for backup in backups {
+            // 只處理自定義項（id 以 custom_ 開頭）
+            guard backup.id.hasPrefix("custom_") else { continue }
+            
+            if items.first(where: { $0.id == backup.id }) == nil {
+                do {
+                    print("🔧 SafetyChecklistViewModel: Restoring custom item: \(backup.id) - \(backup.title)")
+                    let newItem = try store.createItem(id: backup.id, iconName: backup.iconName, title: backup.title)
+                    
+                    // 套用之前保存的完成狀態（true / false）
+                    if let savedCompleted = states[backup.id] {
+                        newItem.isCompleted = savedCompleted
+                    }
+                    
+                    items.append(newItem)
+                    changed = true
+                    print("✅ SafetyChecklistViewModel: Restored custom item from backup: \(backup.id) - \(backup.title), isCompleted: \(newItem.isCompleted)")
+                } catch {
+                    print("❌ SafetyChecklistViewModel: Failed to restore custom item \(backup.id): \(error)")
+                }
+            } else {
+                print("ℹ️ SafetyChecklistViewModel: Custom item \(backup.id) already exists, skipping")
+            }
+        }
+        
+        if changed {
+            items = items.sorted { $0.id < $1.id }
+            objectWillChange.send()
+            print("✅ SafetyChecklistViewModel: Restored some custom items, total: \(items.count)")
+        } else {
+            print("ℹ️ SafetyChecklistViewModel: No custom items needed restoration")
+        }
     }
     
     func configureIfNeeded(context: ModelContext) async {
@@ -68,8 +154,9 @@ final class SafetyChecklistViewModel: ObservableObject {
             // 直接使用返回的项目，而不是查询
             items = seededItems
             print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
-            // 套用已保存的完成狀態
+            // 套用已保存的完成狀態並還原自定義項目
             applyCompletionStatesFromDefaults()
+            restoreCustomItemsIfNeeded()
         } catch {
             print("❌ Safety checklist seeding error: \(error)")
             print("❌ Error details: \(error.localizedDescription)")
@@ -85,8 +172,9 @@ final class SafetyChecklistViewModel: ObservableObject {
             let loadedItems = try store.loadAllItems()
             items = loadedItems
             print("✅ SafetyChecklistViewModel: Refreshed \(loadedItems.count) items")
-            // 套用已保存的完成狀態
+            // 套用已保存的完成狀態並還原自定義項目
             applyCompletionStatesFromDefaults()
+            restoreCustomItemsIfNeeded()
         } catch {
             print("❌ Refresh safety items error: \(error)")
             print("❌ Error details: \(error.localizedDescription)")
@@ -112,6 +200,7 @@ final class SafetyChecklistViewModel: ObservableObject {
                 items = seededItems
                 print("✅ SafetyChecklistViewModel: Created store and seeded \(seededItems.count) items")
                 applyCompletionStatesFromDefaults()
+                restoreCustomItemsIfNeeded()
             } catch {
                 print("❌ SafetyChecklistViewModel: Failed to seed items: \(error)")
             }
@@ -126,6 +215,7 @@ final class SafetyChecklistViewModel: ObservableObject {
             items = createdItems
             print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
             applyCompletionStatesFromDefaults()
+            restoreCustomItemsIfNeeded()
         } catch {
             print("❌ SafetyChecklistViewModel: Failed to create items: \(error)")
             // 如果失败，尝试刷新
@@ -177,7 +267,18 @@ final class SafetyChecklistViewModel: ObservableObject {
         items.append(newItem)
         items = items.sorted { $0.id < $1.id } // 重新排序
         
-        print("✅ SafetyChecklistViewModel: Added new item, total: \(items.count)")
+        // 將新 item 的狀態（默認為 false）保存到 UserDefaults
+        var states = loadCompletionStates()
+        states[newItem.id] = newItem.isCompleted
+        saveCompletionStates(states)
+        
+        // 保存自定義項目備份（title 和 iconName）
+        var backups = loadCustomItemsBackup()
+        let dto = CustomItemDTO(id: newItem.id, title: newItem.title, iconName: newItem.iconName)
+        backups.append(dto)
+        saveCustomItemsBackup(backups)
+        
+        print("✅ SafetyChecklistViewModel: Added new item, total: \(items.count), saved to UserDefaults and backup")
     }
     
     func deleteItem(_ item: SafetyChecklistItem, context: ModelContext) throws {
@@ -190,7 +291,19 @@ final class SafetyChecklistViewModel: ObservableObject {
         // 从 items 数组中移除
         items.removeAll { $0.id == item.id }
         
-        print("✅ SafetyChecklistViewModel: Deleted item, total: \(items.count)")
+        // 從 UserDefaults 中移除對應的狀態
+        var states = loadCompletionStates()
+        states.removeValue(forKey: item.id)
+        saveCompletionStates(states)
+        
+        // 從備份中移除自定義項目（如果是自定義項目的話）
+        if item.id.hasPrefix("custom_") {
+            var backups = loadCustomItemsBackup()
+            backups.removeAll { $0.id == item.id }
+            saveCustomItemsBackup(backups)
+        }
+        
+        print("✅ SafetyChecklistViewModel: Deleted item, total: \(items.count), removed from UserDefaults and backup")
     }
 }
 
