@@ -7,10 +7,13 @@
 
 import Foundation
 
+/// Abstraction for fetching active weather warnings from the HKO warnsum API.
 protocol WeatherWarningServiceProtocol {
     func fetchWarnings(language: String) async throws -> [WeatherWarning]
 }
 
+/// Concrete implementation that calls the HKO warning summary endpoint
+/// and converts raw warning entries into strongly-typed models.
 struct WeatherWarningService: WeatherWarningServiceProtocol {
     private let session: URLSession
     private let decoder: JSONDecoder
@@ -38,7 +41,7 @@ struct WeatherWarningService: WeatherWarningServiceProtocol {
         
         let payload = try decoder.decode(HKOWarningSummary.self, from: data)
         
-        // Convert to WeatherWarning array
+        // Convert DTOs into the app's `WeatherWarning` model.
         return payload.warnings.map { warning in
             WeatherWarning(
                 code: warning.code,
@@ -51,6 +54,7 @@ struct WeatherWarningService: WeatherWarningServiceProtocol {
     }
 }
 
+/// Errors that can occur while fetching or decoding weather warnings.
 enum WeatherWarningServiceError: Error {
     case invalidResponse
     case decodingError
@@ -58,6 +62,7 @@ enum WeatherWarningServiceError: Error {
 
 // MARK: - Data Models
 
+/// Simplified weather warning model used by trail alerts and UI.
 struct WeatherWarning: Identifiable {
     let id = UUID()
     let code: String
@@ -66,12 +71,14 @@ struct WeatherWarning: Identifiable {
     let issueTime: String
     let updateTime: String
     
+    /// Indicates whether the warning is currently in force (ISSUE / EXTEND).
     var isActive: Bool {
         actionCode == "ISSUE" || actionCode == "EXTEND"
     }
     
+    /// Maps HKO warning codes to a `TrailAlert.Severity` used in the app.
     var severity: TrailAlert.Severity {
-        // Map warning codes to severity
+        // Map warning codes (e.g. typhoon signals, rain colours) to severity levels.
         if code.contains("8") || code.contains("9") || code.contains("10") {
             return .critical
         } else if code.contains("3") || code.contains("7") {
@@ -85,9 +92,10 @@ struct WeatherWarning: Identifiable {
 
 // MARK: - DTOs
 
+/// DTO representing the dynamic dictionary-style response from the warnsum API.
 struct HKOWarningSummary: Decodable {
-    // The API returns a dictionary where keys are warning codes
-    // We need to decode this dynamically
+    // The API returns a dictionary where keys are warning codes;
+    // we need a custom CodingKey to decode this dynamically.
     private struct CodingKeys: CodingKey {
         var stringValue: String
         var intValue: Int?
@@ -117,6 +125,7 @@ struct HKOWarningSummary: Decodable {
     }
 }
 
+/// DTO for a single warning entry from HKO warnsum.
 struct HKOWarning: Decodable {
     let name: String
     let code: String

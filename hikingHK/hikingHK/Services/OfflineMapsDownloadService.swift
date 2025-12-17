@@ -9,6 +9,7 @@ import Foundation
 import MapKit
 import UIKit
 
+/// Abstraction for downloading, estimating and managing offline map regions on disk.
 protocol OfflineMapsDownloadServiceProtocol {
     func downloadRegion(_ region: OfflineMapRegion, progressHandler: @escaping (Double, Int64, Int64) -> Void) async throws
     func getEstimatedSize(for region: String) -> Int64
@@ -16,16 +17,18 @@ protocol OfflineMapsDownloadServiceProtocol {
     func deleteRegionData(_ region: OfflineMapRegion) throws
 }
 
+/// Concrete implementation that generates map snapshots and metadata
+/// for predefined regions so they can be used completely offline.
 struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
     private let session: URLSession
     private let fileManager = FileManager.default
     
-    // 離線地圖存儲根目錄（Documents/OfflineMaps）
+    /// Root directory where all offline map data is stored (Documents/OfflineMaps).
     private var offlineMapsDirectory: URL {
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let mapsDir = documentsPath.appendingPathComponent("OfflineMaps", isDirectory: true)
         
-        // 確保目錄存在
+        // Ensure the directory exists
         if !fileManager.fileExists(atPath: mapsDir.path) {
             try? fileManager.createDirectory(at: mapsDir, withIntermediateDirectories: true)
         }
@@ -33,11 +36,11 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
         return mapsDir
     }
     
-    /// 生成穩定且檔案系統安全的子目錄名稱
-    /// 使用區域名稱而不是 UUID，確保即使 SwiftData 重新建立 OfflineMapRegion 物件，
-    /// 也可以透過相同名稱找到之前下載好的離線地圖。
+    /// Generates a stable and filesystem-safe subdirectory name.
+    /// Uses the region name instead of the UUID so that even if SwiftData recreates
+    /// `OfflineMapRegion` objects, previously downloaded offline maps can still be found.
     private func directoryName(for region: OfflineMapRegion) -> String {
-        // 目前區域名稱僅包含英文與空格，簡單將空格替換為底線即可
+        // Region names currently only contain English and spaces, so replacing spaces is enough.
         return region.name.replacingOccurrences(of: " ", with: "_")
     }
     
@@ -45,11 +48,11 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
         self.session = session
     }
     
+    /// Roughly estimates the download size for a given region name.
     func getEstimatedSize(for region: String) -> Int64 {
-        // 基于区域大小估算（不同缩放级别的地图瓦片）
-        // 每个区域需要下载多个缩放级别的地图快照
-        let baseSize: Int64 = 5 * 1024 * 1024 // 每个缩放级别约 5MB
-        let zoomLevels = 5 // 下载 5 个缩放级别
+        // Estimate based on multiple zoom levels of map tiles for the region
+        let baseSize: Int64 = 5 * 1024 * 1024 // Around 5MB per zoom level
+        let zoomLevels = 5 // Download 5 zoom levels
         
         let regionMultiplier: [String: Double] = [
             "Hong Kong Island": 1.0,
@@ -67,13 +70,13 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
         var downloaded: Int64 = 0
         let coordinateRegion = region.coordinateRegion
         
-        // 創建對應區域的資料夾（使用穩定的名稱，而不是 UUID）
+        // Create a folder for this region using a stable name instead of the UUID
         let regionDir = offlineMapsDirectory.appendingPathComponent(directoryName(for: region), isDirectory: true)
         if !fileManager.fileExists(atPath: regionDir.path) {
             try fileManager.createDirectory(at: regionDir, withIntermediateDirectories: true)
         }
         
-        // 保存區域元數據
+        // Save region metadata as JSON
         let metadata = [
             "name": region.name,
             "centerLat": String(coordinateRegion.center.latitude),
@@ -89,9 +92,9 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
             downloaded += Int64(metadataData.count)
         }
         
-        // 下载多个缩放级别的地图快照
-        let zoomLevels: [Double] = [0.05, 0.02, 0.01, 0.005, 0.002] // 不同的缩放级别
-        let snapshotsPerLevel = 4 // 每个级别生成 4 个快照（覆盖整个区域）
+        // Download map snapshots across several zoom levels
+        let zoomLevels: [Double] = [0.05, 0.02, 0.01, 0.005, 0.002] // Different zoom levels for coverage
+        let snapshotsPerLevel = 4 // Generate 4 snapshots per level to cover the whole region
         
         for (levelIndex, zoomLevel) in zoomLevels.enumerated() {
             let span = MKCoordinateSpan(
@@ -99,7 +102,7 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
                 longitudeDelta: coordinateRegion.span.longitudeDelta * zoomLevel
             )
             
-            // 为每个缩放级别生成多个快照以覆盖整个区域
+            // For each zoom level, generate multiple snapshots to cover the entire region
             for snapshotIndex in 0..<snapshotsPerLevel {
                 let offsetLat = (Double(snapshotIndex / 2) - 0.5) * coordinateRegion.span.latitudeDelta * 0.3
                 let offsetLon = (Double(snapshotIndex % 2) - 0.5) * coordinateRegion.span.longitudeDelta * 0.3
@@ -111,7 +114,7 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
                 
                 let snapshotRegion = MKCoordinateRegion(center: center, span: span)
                 
-                // 生成地图快照
+                // Generate a map snapshot for this region slice
                 let options = MKMapSnapshotter.Options()
                 options.region = snapshotRegion
                 options.size = CGSize(width: 1024, height: 1024)
@@ -123,7 +126,7 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
                 do {
                     let snapshot = try await snapshotter.start()
                     
-                    // 保存快照图像
+                    // Persist the snapshot image to disk
                     let imageData = snapshot.image.pngData()
                     let imagePath = regionDir.appendingPathComponent("snapshot_\(levelIndex)_\(snapshotIndex).png")
                     try imageData?.write(to: imagePath)
@@ -132,20 +135,20 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
                         downloaded += Int64(data.count)
                     }
                     
-                    // 更新进度
+                    // Update overall download progress
                     let progress = Double(downloaded) / Double(totalSize)
                     progressHandler(min(progress, 0.99), downloaded, totalSize)
                     
-                    // 添加小延迟以避免过快请求
-                    try await Task.sleep(nanoseconds: 200_000_000) // 0.2 秒
+                    // Add a small delay to avoid sending snapshot requests too quickly
+                    try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
                 } catch {
                     print("Failed to generate snapshot for level \(levelIndex), snapshot \(snapshotIndex): \(error)")
-                    // 继续下载其他快照，不中断整个下载过程
+                    // Continue with remaining snapshots without cancelling the whole download
                 }
             }
         }
         
-        // 标记下载完成
+        // Mark the download as completed
         progressHandler(1.0, totalSize, totalSize)
     }
     

@@ -8,12 +8,14 @@
 import Foundation
 import SwiftData
 
+/// SwiftData model representing an achievement badge and its progress state.
 @Model
 final class Achievement {
     var id: String
     var badgeType: BadgeType
     var title: String
-    var achievementDescription: String  // 重命名為 achievementDescription，避免與 @Model 宏衝突
+    /// Description field renamed to `achievementDescription` to avoid clashing with @Model macro internals.
+    var achievementDescription: String
     var icon: String
     var targetValue: Double
     var currentValue: Double

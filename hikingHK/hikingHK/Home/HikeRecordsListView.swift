@@ -37,7 +37,7 @@ struct HikeRecordsListView: View {
                                     .multilineTextAlignment(.center)
                             }
                             
-                            // 功能说明
+                            // Feature descriptions
                             VStack(alignment: .leading, spacing: 12) {
                                 FeatureRow(
                                     icon: "list.bullet",
@@ -58,7 +58,7 @@ struct HikeRecordsListView: View {
                             .padding()
                             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
                             
-                            // 开始追踪按钮
+                            // Start tracking button
                             Button {
                                 isShowingHikeTracking = true
                             } label: {

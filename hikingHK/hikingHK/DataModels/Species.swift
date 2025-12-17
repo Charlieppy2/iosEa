@@ -8,11 +8,12 @@
 import Foundation
 import CoreLocation
 
+/// Simple value type describing a plant or animal species that can be referenced in the app.
 struct Species: Identifiable, Codable {
     let id: UUID
     let name: String
     let scientificName: String
-    let commonName: String // 中文名
+    let commonName: String // Localized common name (e.g. Chinese name)
     let category: Category
     let description: String
     let habitat: String

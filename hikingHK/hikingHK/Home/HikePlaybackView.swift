@@ -15,7 +15,7 @@ struct HikePlaybackView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var playbackProgress: Double = 0
     @State private var isPlaying: Bool = false
-    @State private var playbackSpeed: Double = 1.0 // 回放速度倍數
+    @State private var playbackSpeed: Double = 1.0 // Playback speed multiplier
     @State private var currentIndex: Int = 0
     
     private var currentPoint: HikeTrackPoint? {
@@ -32,7 +32,7 @@ struct HikePlaybackView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 3D 地圖
+                // 3D map showing the hike route and current position
                 if let current = currentPoint {
                     Map(position: .constant(.camera(MapCamera(
                         centerCoordinate: current.coordinate,
@@ -40,21 +40,21 @@ struct HikePlaybackView: View {
                         heading: calculateHeading(),
                         pitch: 60
                     )))) {
-                        // 已走過的路線
+                        // Completed segment of the route
                         if displayedPoints.count > 1 {
                             MapPolyline(coordinates: displayedPoints.map { $0.coordinate })
                                 .stroke(Color.hikingGreen, lineWidth: 4)
                         }
                         
-                        // 未走的路線（灰色）
+                        // Remaining segment of the route (gray)
                         if currentIndex < record.trackPoints.count - 1 {
                             let remainingPoints = Array(record.trackPoints[currentIndex..<record.trackPoints.count])
                             MapPolyline(coordinates: remainingPoints.map { $0.coordinate })
                                 .stroke(Color.gray.opacity(0.3), lineWidth: 2)
                         }
                         
-                        // 當前位置
-                        Annotation("當前位置", coordinate: current.coordinate) {
+                        // Current position
+                        Annotation("Current Location", coordinate: current.coordinate) {
                             ZStack {
                                 Circle()
                                     .fill(Color.red)
@@ -65,7 +65,7 @@ struct HikePlaybackView: View {
                             }
                         }
                         
-                        // 起點
+                        // Start point
                         if let start = record.trackPoints.first {
                             Annotation("起點", coordinate: start.coordinate) {
                                 Image(systemName: "flag.fill")
@@ -74,7 +74,7 @@ struct HikePlaybackView: View {
                             }
                         }
                         
-                        // 終點
+                        // End point
                         if let end = record.trackPoints.last {
                             Annotation("終點", coordinate: end.coordinate) {
                                 Image(systemName: "flag.checkered")
@@ -93,7 +93,7 @@ struct HikePlaybackView: View {
                 VStack {
                     Spacer()
                     
-                    // 控制面板
+                    // Playback control panel
                     controlPanel
                         .padding()
                 }
@@ -116,7 +116,7 @@ struct HikePlaybackView: View {
     
     private var controlPanel: some View {
         VStack(spacing: 16) {
-            // 進度條
+            // Progress bar
             VStack(spacing: 8) {
                 HStack {
                     Text("Progress")
@@ -146,7 +146,7 @@ struct HikePlaybackView: View {
                 }
             }
             
-            // 統計信息
+            // Live statistics at the current playback point
             if let current = currentPoint {
                 HStack(spacing: 16) {
                     InfoBadge(icon: "mountain.2.fill", value: String(format: "%.0f m", current.altitude), color: Color.hikingGreen)
@@ -155,9 +155,9 @@ struct HikePlaybackView: View {
                 }
             }
             
-            // 控制按鈕
+            // Playback controls
             HStack(spacing: 12) {
-                // 速度控制
+                // Speed control
                 Menu {
                     Button("0.5x") { playbackSpeed = 0.5 }
                     Button("1x") { playbackSpeed = 1.0 }
@@ -173,7 +173,7 @@ struct HikePlaybackView: View {
                     .foregroundStyle(Color.hikingGreen)
                 }
                 
-                // 播放/暫停
+                // Play / pause
                 Button {
                     isPlaying.toggle()
                     if isPlaying {
@@ -187,7 +187,7 @@ struct HikePlaybackView: View {
                         .foregroundStyle(.white)
                 }
                 
-                // 重置
+                // Reset
                 Button {
                     currentIndex = 0
                     playbackProgress = 0
@@ -217,7 +217,7 @@ struct HikePlaybackView: View {
         
         Task {
             while isPlaying && currentIndex < record.trackPoints.count - 1 {
-                try? await Task.sleep(nanoseconds: UInt64(1_000_000_000 / playbackSpeed)) // 根據速度調整間隔
+                try? await Task.sleep(nanoseconds: UInt64(1_000_000_000 / playbackSpeed)) // Adjust interval based on playback speed
                 
                 if isPlaying {
                     currentIndex += 1
@@ -299,7 +299,7 @@ extension Double {
     }
 }
 
-// 辅助函数：创建示例轨迹点
+// Helper: create sample track points for the preview
 private func createSampleTrackPoints(startTime: Date) -> [HikeTrackPoint] {
     var points: [HikeTrackPoint] = []
     for index in 0..<10 {
@@ -320,7 +320,7 @@ private func createSampleTrackPoints(startTime: Date) -> [HikeTrackPoint] {
     return points
 }
 
-// 辅助函数：创建示例记录
+// Helper: create a sample record for the preview
 private func createSampleRecord() -> HikeRecord {
     let startTime = Date()
     let trackPoints = createSampleTrackPoints(startTime: startTime)

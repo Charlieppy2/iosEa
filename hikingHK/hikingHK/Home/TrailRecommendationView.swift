@@ -24,10 +24,10 @@ struct TrailRecommendationView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // 推薦設置卡片
+                    // Recommendation settings card
                     recommendationSettingsCard
                     
-                    // 推薦結果
+                    // Recommendation results
                     if viewModel.isLoading {
                         ProgressView(languageManager.localizedString(for: "recommendations.generating"))
                             .frame(maxWidth: .infinity)
@@ -125,7 +125,7 @@ struct TrailRecommendationView: View {
             if wholeHours == 0 {
                 return languageManager.localizedString(for: "recommendations.half.hour")
             } else {
-                // 格式：1小時30分鐘 或 1 hour 30 minutes
+                // Format: "1.5 hours" with localized suffix
                 return "\(wholeHours)\(languageManager.localizedString(for: "recommendations.hour.and.half"))"
             }
         } else {
@@ -173,7 +173,7 @@ struct RecommendationCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 標題和匹配度
+            // Title and match percentage
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(recommendation.trail.localizedName(languageManager: languageManager))
@@ -194,7 +194,7 @@ struct RecommendationCard: View {
                 }
             }
             
-            // 進度條
+            // Match progress bar
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
@@ -213,7 +213,7 @@ struct RecommendationCard: View {
             }
             .frame(height: 8)
             
-            // 推薦理由
+            // Recommendation reasons
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(recommendation.reasons.prefix(3), id: \.self) { reason in
                     HStack(alignment: .top, spacing: 8) {
@@ -227,7 +227,7 @@ struct RecommendationCard: View {
                 }
             }
             
-            // 路線信息
+            // Basic trail information
             HStack(spacing: 16) {
                 Label("\(recommendation.trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) \(languageManager.localizedString(for: "unit.km"))", systemImage: "ruler")
                 Label("\(recommendation.trail.estimatedDurationMinutes / 60)\(languageManager.localizedString(for: "unit.h"))", systemImage: "clock")
@@ -236,7 +236,7 @@ struct RecommendationCard: View {
             .font(.caption)
             .foregroundStyle(Color.hikingStone)
             
-            // 操作按鈕
+            // Action buttons
             HStack(spacing: 12) {
                 Button {
                     isShowingDetail = true

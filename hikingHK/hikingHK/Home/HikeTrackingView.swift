@@ -26,14 +26,14 @@ struct HikeTrackingView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 地圖背景 - 始終顯示地圖
+                // Map background – always visible behind stats and controls
                 Map(position: .constant(mapCameraPosition)) {
-                    // 顯示已選路線（如果有）
+                    // Show selected trail polyline (if any)
                     if let trail = selectedTrail, let polyline = trail.mkPolyline {
                         MapPolyline(polyline)
                             .stroke(Color.blue.opacity(0.5), lineWidth: 3)
                         
-                        // 顯示路線起點
+                        // Show trail start point
                         if let startCoordinate = trail.routeLocations.first {
                             Annotation(languageManager.localizedString(for: "map.start"), coordinate: startCoordinate) {
                                 Image(systemName: "flag.circle.fill")
@@ -44,13 +44,13 @@ struct HikeTrackingView: View {
                         }
                     }
                     
-                    // 顯示軌跡線
+                    // Show live tracking polyline
                     if viewModel.trackPoints.count > 1 {
                         MapPolyline(coordinates: viewModel.routeCoordinates)
                             .stroke(Color.hikingGreen, lineWidth: 4)
                     }
                     
-                    // 顯示當前位置
+                    // Show current user location
                     if let location = viewModel.currentLocation {
                         Annotation(languageManager.localizedString(for: "hike.tracking.current.location"), coordinate: location.coordinate) {
                             ZStack {
@@ -70,7 +70,7 @@ struct HikeTrackingView: View {
                 VStack {
                     Spacer()
                     
-                    // 統計卡片
+                    // Statistics card over the map
                     statsCard
                         .padding()
                 }
@@ -124,7 +124,7 @@ struct HikeTrackingView: View {
     
     private var statsCard: some View {
         VStack(spacing: 16) {
-            // 主要統計
+            // Primary statistics
             HStack(spacing: 24) {
                 StatItem(
                     icon: "clock.fill",
@@ -148,7 +148,7 @@ struct HikeTrackingView: View {
             
             Divider()
             
-            // 次要統計
+            // Secondary statistics
             HStack(spacing: 24) {
                 StatItem(
                     icon: "mountain.2.fill",
@@ -164,7 +164,7 @@ struct HikeTrackingView: View {
                 )
             }
             
-            // 控制按鈕
+            // Tracking control buttons
             if viewModel.isTracking {
                 HStack(spacing: 12) {
                     Button {
@@ -221,9 +221,9 @@ struct HikeTrackingView: View {
         viewModel.trackPoints.map { $0.coordinate }
     }
     
-    // 計算地圖相機位置
+    // Compute the camera position for the map based on current data
     private var mapCameraPosition: MapCameraPosition {
-        // 如果有當前位置，使用當前位置
+        // If we have a current location, center on it
         if let location = viewModel.currentLocation {
             return .camera(MapCamera(
                 centerCoordinate: location.coordinate,
@@ -233,12 +233,12 @@ struct HikeTrackingView: View {
             ))
         }
         
-        // 如果有已選路線，使用路線中心
+        // If a trail is selected, use its map region
         if let trail = selectedTrail {
             return .region(trail.mapRegion)
         }
         
-        // 如果有軌跡點，使用軌跡中心
+        // If there are recorded track points, fit the route
         if !viewModel.trackPoints.isEmpty {
             let coordinates = viewModel.trackPoints.map { $0.coordinate }
             let center = calculateCenter(coordinates: coordinates)
@@ -246,7 +246,7 @@ struct HikeTrackingView: View {
             return .region(MKCoordinateRegion(center: center, span: span))
         }
         
-        // 默認：香港中心位置
+        // Default: center on Hong Kong
         return .region(MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 22.319, longitude: 114.169),
             span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
@@ -277,7 +277,7 @@ struct HikeTrackingView: View {
         let minLon = coordinates.map { $0.longitude }.min() ?? 0
         let maxLon = coordinates.map { $0.longitude }.max() ?? 0
         
-        let latDelta = max(maxLat - minLat, 0.01) * 1.2 // 添加 20% 邊距
+        let latDelta = max(maxLat - minLat, 0.01) * 1.2 // Add 20% padding
         let lonDelta = max(maxLon - minLon, 0.01) * 1.2
         
         return MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)

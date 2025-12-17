@@ -8,11 +8,13 @@
 import Foundation
 import MapKit
 
+/// Service responsible for requesting walking routes from Mapbox Directions.
 struct MapboxRouteService {
     private let session: URLSession
     private let decoder: JSONDecoder
     private let accessToken: String
 
+    /// Initialize the service with an access token and injectable URLSession / JSONDecoder.
     init(
         accessToken: String = ProcessInfo.processInfo.environment["MAPBOX_ACCESS_TOKEN"] ?? "",
         session: URLSession = .shared,
@@ -23,10 +25,12 @@ struct MapboxRouteService {
         self.decoder = decoder
     }
 
+    /// Indicates whether a non-empty Mapbox access token is available.
     var isConfigured: Bool {
         !accessToken.isEmpty
     }
 
+    /// Fetch a walking route polyline between two coordinates using Mapbox Directions.
     func fetchRoute(from start: CLLocationCoordinate2D, to end: CLLocationCoordinate2D) async throws -> MKPolyline? {
         guard isConfigured else { return nil }
         let coordinates = "\(start.longitude),\(start.latitude);\(end.longitude),\(end.latitude)"

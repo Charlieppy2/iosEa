@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// In-memory model representing an alert affecting one or more hiking trails.
 struct TrailAlert: Identifiable, Equatable {
     let id: UUID
     let title: String

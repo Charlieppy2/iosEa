@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Describes a service that can generate a recommended gear list for a hike.
 protocol SmartGearServiceProtocol {
     func generateGearList(
         difficulty: Trail.Difficulty,
@@ -16,6 +17,7 @@ protocol SmartGearServiceProtocol {
     ) -> [GearItem]
 }
 
+/// Simple season abstraction used to tune clothing and gear recommendations.
 enum Season: String, CaseIterable {
     case spring = "Spring"
     case summer = "Summer"
@@ -43,9 +45,12 @@ enum Season: String, CaseIterable {
     }
 }
 
+/// Generates a smart gear checklist based on trail difficulty, weather,
+/// season and expected hike duration.
 @MainActor
 final class SmartGearService: SmartGearServiceProtocol {
     
+    /// Builds a comprehensive gear list for the given hiking parameters.
     func generateGearList(
         difficulty: Trail.Difficulty,
         weather: WeatherSnapshot,

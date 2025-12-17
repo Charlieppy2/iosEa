@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import MapKit
 
+/// Shows detailed metrics and visualizations for a recorded hike.
 struct HikeRecordDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -19,19 +20,19 @@ struct HikeRecordDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // 地圖視圖
+                // Map section
                 mapSection
                 
-                // 主要統計
+                // Main summary stats
                 mainStatsSection
                 
-                // 詳細統計
+                // Detailed statistics
                 detailedStatsSection
                 
-                // 海拔圖表
+                // Elevation profile chart
                 elevationChartSection
                 
-                // 操作按鈕
+                // Action buttons (e.g. 3D playback)
                 actionButtons
             }
             .padding()
@@ -353,7 +354,7 @@ struct ElevationChart: View {
                         }
                     }
                     
-                    // 閉合路徑以形成填充
+                    // Close the path to create a filled area under the elevation line
                     path.addLine(to: CGPoint(x: width, y: height))
                     path.addLine(to: CGPoint(x: 0, y: height))
                     path.closeSubpath()

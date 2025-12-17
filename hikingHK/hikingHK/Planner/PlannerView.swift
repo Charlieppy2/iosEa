@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 
+/// Planner screen for scheduling upcoming hikes and jumping into the gear checklist.
 struct PlannerView: View {
     @EnvironmentObject private var viewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
@@ -20,6 +21,7 @@ struct PlannerView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // Trail selection section
                 Section(languageManager.localizedString(for: "planner.choose.trail")) {
                     Picker(languageManager.localizedString(for: "trails.title"), selection: $selectedTrail) {
                         ForEach(viewModel.trails) { trail in
@@ -27,10 +29,12 @@ struct PlannerView: View {
                         }
                     }
                 }
+                // Date and note section
                 Section(languageManager.localizedString(for: "planner.schedule")) {
                     DatePicker(languageManager.localizedString(for: "planner.date"), selection: $plannedDate, displayedComponents: .date)
                     TextField(languageManager.localizedString(for: "planner.note"), text: $note)
                 }
+                // Preview of the selected trail and basic stats
                 Section(languageManager.localizedString(for: "planner.preview")) {
                     if let trail = selectedTrail {
                         VStack(alignment: .leading, spacing: 8) {
@@ -49,6 +53,7 @@ struct PlannerView: View {
                     }
                 }
                 
+                // Optional gear checklist entry point once a trail is selected
                 if selectedTrail != nil {
                     Section {
                         Button {
@@ -82,7 +87,7 @@ struct PlannerView: View {
                     Button(languageManager.localizedString(for: "save")) {
                         if let trail = selectedTrail {
                             viewModel.addSavedHike(for: trail, scheduledDate: plannedDate, note: note)
-                            // Reset form after saving
+                            // Reset the form to a fresh state after saving a plan
                             note = ""
                             selectedTrail = nil
                             plannedDate = Date().addingTimeInterval(60 * 60 * 24)

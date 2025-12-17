@@ -9,17 +9,26 @@ import SwiftUI
 import Combine
 import SwiftData
 
+/// Central controller that manages the authenticated user session and login state.
 @MainActor
 final class SessionManager: ObservableObject {
+    /// Currently signed-in user, or `nil` when logged out.
     @Published private(set) var currentUser: UserAccount?
+    /// Latest authentication error message to show in the UI.
     @Published private(set) var authError: String?
+    /// Indicates that a sign-in or sign-up request is in progress.
     @Published var isAuthenticating = false
+    /// Becomes `true` once the underlying SwiftData store has been configured.
     @Published private(set) var isConfigured = false
-
+    
+    /// UserDefaults key used to persist the last signed-in email.
     private let storedEmailKey = "auth_email"
+    /// Backing store used for reading and writing credentials.
     private var accountStore: AccountStore?
+    /// SwiftData context provided by the app at startup.
     private var modelContext: ModelContext?
 
+    /// Lazily configures the backing `AccountStore` and attempts to restore a previous session.
     func configureIfNeeded(context: ModelContext) async {
         guard !isConfigured else { return }
         self.modelContext = context
@@ -35,6 +44,8 @@ final class SessionManager: ObservableObject {
         }
     }
 
+    /// Attempts to sign in with the given email and password.
+    /// Updates `currentUser`, `authError` and `isAuthenticating` accordingly.
     func signIn(email: String, password: String) async {
         guard let store = accountStore else {
             authError = "Account store not ready."
@@ -61,6 +72,7 @@ final class SessionManager: ObservableObject {
         }
     }
 
+    /// Registers a new account and signs the user in immediately on success.
     func signUp(name: String, email: String, password: String) async {
         guard let store = accountStore else {
             authError = "Account store not ready."
@@ -86,25 +98,27 @@ final class SessionManager: ObservableObject {
         }
     }
 
+    /// Clears the current session and removes the stored email, without deleting any user data.
     func signOut() {
         print("🔐 SessionManager: signOut() called, current user: \(currentUser?.email ?? "nil")")
         
-        // 只清除会话状态，保留所有数据以便下次登录时恢复
-        // 清除用户状态 - 这会触发 @Published 更新
+        // Clear in-memory session state only and keep user data for the next login
+        // Reset user state – this will trigger @Published updates
         currentUser = nil
         
-        // 完全清除 UserDefaults 中的存储值
+        // Remove the stored email from UserDefaults completely
         UserDefaults.standard.removeObject(forKey: storedEmailKey)
-        UserDefaults.standard.synchronize() // 确保立即同步
+        UserDefaults.standard.synchronize() // Ensure the change is persisted immediately
         
         authError = nil
         
-        // 显式触发视图更新（@Published 应该自动处理，但确保一下）
+        // Explicitly notify views (in addition to @Published) to guarantee UI refresh
         objectWillChange.send()
         
         print("✅ SessionManager: User signed out, session cleared. Data preserved for next login. currentUser is now: \(currentUser?.email ?? "nil")")
     }
 
+    /// Rehydrates `currentUser` from the stored email if a matching credential exists.
     private func restoreSession() {
         let email = storedEmail
         guard !email.isEmpty else {
@@ -132,12 +146,14 @@ final class SessionManager: ObservableObject {
         print("✅ SessionManager: Session restored for user: \(credential.email)")
     }
 
+    /// Convenience wrapper for reading and writing the persisted email in UserDefaults.
     private var storedEmail: String {
         get { UserDefaults.standard.string(forKey: storedEmailKey) ?? "" }
         set { UserDefaults.standard.set(newValue, forKey: storedEmailKey) }
     }
 }
 
+/// Errors that can be thrown while working with the `AccountStore`.
 enum AccountStoreError: LocalizedError {
     case invalidCredentials
     case emailExists
@@ -154,6 +170,7 @@ enum AccountStoreError: LocalizedError {
 
 #if DEBUG
 extension SessionManager {
+    /// Helper used in SwiftUI previews to simulate a signed-in state.
     static func previewSignedIn() -> SessionManager {
         let manager = SessionManager()
         manager.currentUser = UserAccount.sampleHiker

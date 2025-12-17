@@ -9,19 +9,24 @@ import Foundation
 import SwiftData
 import Combine
 
+/// View model for generating personalized trail recommendations
+/// based on user preferences, weather, time availability, and hike history.
 @MainActor
 final class TrailRecommendationViewModel: ObservableObject {
     @Published var recommendations: [TrailRecommendation] = []
     @Published var userPreference: UserPreference?
     @Published var isLoading: Bool = false
     @Published var error: String?
-    @Published var availableTime: TimeInterval? // 可用時間（秒）
+    /// Available time for hiking in seconds (used to filter and score recommendations).
+    @Published var availableTime: TimeInterval?
     
     private var store: RecommendationStore?
     private var modelContext: ModelContext?
     private let recommendationService: TrailRecommendationServiceProtocol
     private let appViewModel: AppViewModel
     
+    /// Creates a new recommendation view model with the shared `AppViewModel`
+    /// and an injectable recommendation service (useful for testing).
     init(
         appViewModel: AppViewModel,
         recommendationService: TrailRecommendationServiceProtocol = TrailRecommendationService()
@@ -30,16 +35,18 @@ final class TrailRecommendationViewModel: ObservableObject {
         self.recommendationService = recommendationService
     }
     
+    /// Lazily configures the underlying `RecommendationStore`
+    /// and loads or creates the user's preference model.
     func configureIfNeeded(context: ModelContext) {
         guard store == nil else { return }
         self.modelContext = context
         store = RecommendationStore(context: context)
         
-        // 載入用戶偏好
+        // Load existing user preferences; create a default one if missing.
         do {
             userPreference = try store?.loadUserPreference()
             if userPreference == nil {
-                // 創建默認偏好
+                // Create a default preference if none exists yet.
                 userPreference = UserPreference()
             }
         } catch {
@@ -47,6 +54,8 @@ final class TrailRecommendationViewModel: ObservableObject {
         }
     }
     
+    /// Generates trail recommendations for the current user context.
+    /// - Parameter availableTime: Optional time budget in seconds for the hike.
     func generateRecommendations(availableTime: TimeInterval? = nil) async {
         guard let store = store else { return }
         
@@ -56,7 +65,7 @@ final class TrailRecommendationViewModel: ObservableObject {
         
         defer { isLoading = false }
         
-        // 獲取用戶歷史記錄
+        // Load the user's hike history if a SwiftData context is available.
         let history: [HikeRecord]
         if let context = modelContext {
             do {
@@ -69,7 +78,7 @@ final class TrailRecommendationViewModel: ObservableObject {
             history = []
         }
         
-        // 生成推薦
+        // Ask the recommendation service to produce a ranked list of trails.
         let newRecommendations = recommendationService.recommendTrails(
             from: appViewModel.trails,
             userPreference: userPreference,
@@ -81,8 +90,8 @@ final class TrailRecommendationViewModel: ObservableObject {
         
         recommendations = newRecommendations
         
-        // 保存推薦記錄
-        for recommendation in newRecommendations.prefix(10) { // 只保存前 10 個
+        // Persist the top recommendations as history records (limit to first 10).
+        for recommendation in newRecommendations.prefix(10) {
             let record = RecommendationRecord(
                 trailId: recommendation.trail.id,
                 recommendationScore: recommendation.score,
@@ -91,11 +100,12 @@ final class TrailRecommendationViewModel: ObservableObject {
             do {
                 try store.saveRecommendation(record)
             } catch {
-                print("保存推薦記錄失敗：\(error)")
+                print("Failed to save recommendation record: \(error)")
             }
         }
     }
     
+    /// Updates and persists the user's trail preference profile.
     func updateUserPreference(_ preference: UserPreference) {
         guard let store = store else { return }
         userPreference = preference
@@ -108,6 +118,8 @@ final class TrailRecommendationViewModel: ObservableObject {
         }
     }
     
+    /// Records what the user did with a recommendation (e.g. opened, accepted),
+    /// so future suggestions can be improved.
     func recordUserAction(for recommendation: TrailRecommendation, action: RecommendationRecord.UserAction) {
         guard let store = store else { return }
         
@@ -117,7 +129,7 @@ final class TrailRecommendationViewModel: ObservableObject {
                 try store.updateRecommendationAction(record, action: action)
             }
         } catch {
-            print("記錄用戶操作失敗：\(error)")
+            print("Failed to record user action: \(error)")
         }
     }
 }

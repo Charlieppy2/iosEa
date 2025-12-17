@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+/// Single checklist row used in the Safety Checklist section on the home screen.
 @Model
 final class SafetyChecklistItem {
     var id: String

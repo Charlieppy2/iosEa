@@ -9,24 +9,25 @@ import Foundation
 import SwiftData
 import CoreLocation
 
+/// Summary of a recorded hike, including distance, elevation and derived statistics.
 @Model
 final class HikeRecord {
     var id: UUID
-    var trailId: UUID? // 關聯的路線 ID（可選）
-    var trailName: String? // 路線名稱
+    var trailId: UUID?
+    var trailName: String?
     var startTime: Date
     var endTime: Date?
     var isCompleted: Bool
-    var totalDistance: Double // 總距離（米）
-    var totalDuration: TimeInterval // 總時長（秒）
-    var averageSpeed: Double // 平均速度（米/秒）
-    var maxSpeed: Double // 最大速度（米/秒）
-    var elevationGain: Double // 海拔上升（米）
-    var elevationLoss: Double // 海拔下降（米）
-    var minAltitude: Double // 最低海拔（米）
-    var maxAltitude: Double // 最高海拔（米）
-    var notes: String? // 備註
-    var trackPoints: [HikeTrackPoint] // 軌跡點
+    var totalDistance: Double
+    var totalDuration: TimeInterval
+    var averageSpeed: Double
+    var maxSpeed: Double
+    var elevationGain: Double
+    var elevationLoss: Double
+    var minAltitude: Double
+    var maxAltitude: Double
+    var notes: String?
+    var trackPoints: [HikeTrackPoint]
     
     init(
         id: UUID = UUID(),

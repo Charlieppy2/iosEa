@@ -8,13 +8,14 @@
 import SwiftUI
 import UIKit
 
+/// Root tab-based container shown after the user has signed in.
 struct ContentView: View {
     @EnvironmentObject private var viewModel: AppViewModel
     @EnvironmentObject private var sessionManager: SessionManager
     @EnvironmentObject private var languageManager: LanguageManager
     
     init() {
-        // 自訂 TabBar 底色，配合行山主題，而不是預設純白
+        // Customize the TabBar background to match the hiking theme instead of the default white.
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor(Color.hikingBackground)

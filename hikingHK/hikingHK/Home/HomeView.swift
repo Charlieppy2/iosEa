@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import CoreLocation
 
+/// Main landing screen showing weather, featured trail, quick actions and upcoming hikes.
 struct HomeView: View {
     @EnvironmentObject private var viewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
@@ -79,13 +80,13 @@ struct HomeView: View {
                 }
             }
             .onAppear {
-                // 使用当前语言刷新天气数据
+                // Refresh weather using the currently selected language
                 Task {
                     await viewModel.refreshWeather(language: languageManager.currentLanguage.rawValue)
                 }
             }
             .onChange(of: languageManager.currentLanguage) { oldValue, newValue in
-                // 当语言改变时，使用新语言刷新天气数据
+                // When language changes, refresh weather with the new language code
                 Task {
                     await viewModel.refreshWeather(language: newValue.rawValue)
                 }
@@ -223,14 +224,14 @@ struct HomeView: View {
     }
     
     private func localizedLocation(_ location: String) -> String {
-        // 优先使用香港天文台
+        // Prefer Hong Kong Observatory label
         if location == "Hong Kong Observatory" {
             return languageManager.localizedString(for: "weather.location.hko")
         }
-        // 其他常见位置的本地化
+        // Localize other known locations
         let locationKey = "weather.location.\(location.lowercased().replacingOccurrences(of: " ", with: ".").replacingOccurrences(of: "'", with: ""))"
         let localized = languageManager.localizedString(for: locationKey)
-        // 如果找到了本地化字符串（不是返回 key 本身），则使用它
+        // If we found a real localized string (not the key itself), use it
         if localized != locationKey {
             return localized
         }
@@ -266,7 +267,7 @@ struct HomeView: View {
     }
     
     private func localizedHighlight(_ highlight: String, for trail: Trail) -> String {
-        // Create a key based on trail ID and highlight text
+        // Create a localization key based on trail ID and highlight text
         let highlightKey = highlight.lowercased()
             .replacingOccurrences(of: " ", with: ".")
             .replacingOccurrences(of: "'", with: "")
@@ -588,7 +589,7 @@ struct SafetyChecklistView: View {
     @State private var isCreatingItems = false
     @State private var isShowingAddItem = false
     
-    // 使用 ViewModel 的 items 而不是 @Query
+    // Use items from the view model instead of @Query
     private var items: [SafetyChecklistItem] {
         viewModel.items
     }
@@ -609,7 +610,7 @@ struct SafetyChecklistView: View {
         NavigationStack {
             Group {
                 if items.isEmpty && isCreatingItems {
-                    // 加载状态：正在创建项目
+                    // Loading state: creating default items
                     VStack {
                         Spacer()
                         ProgressView()
@@ -695,23 +696,23 @@ struct SafetyChecklistView: View {
                 AddSafetyChecklistItemView(viewModel: viewModel, modelContext: modelContext)
             }
             .task {
-                // 在 task 中配置和初始化数据
+                // Configure view model and seed defaults when needed
                 isCreatingItems = true
                 await viewModel.configureIfNeeded(context: modelContext)
-                // configureIfNeeded 已经会自动创建项目，如果还是空的才手动创建
+                // If still empty after configuration, create default items explicitly
                 if viewModel.items.isEmpty {
                     await viewModel.createDefaultItems(context: modelContext)
                 }
                 isCreatingItems = false
             }
             .onAppear {
-                // 每次视图出现时，强制刷新数据以确保显示最新状态
+                // Refresh items on each appearance to ensure latest state
                 viewModel.refreshItems()
             }
         }
     }
     
-    // 待办事项列表项视图
+    // Single checklist row view
     private func checklistItemRow(_ item: SafetyChecklistItem) -> some View {
         Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -719,7 +720,7 @@ struct SafetyChecklistView: View {
             }
         } label: {
             HStack(spacing: 16) {
-                // 复选框
+                // Checkbox
                 ZStack {
                     Circle()
                         .stroke(item.isCompleted ? Color.green : Color.gray.opacity(0.4), lineWidth: 2)
@@ -735,13 +736,13 @@ struct SafetyChecklistView: View {
                 }
                 .animation(.spring(response: 0.2, dampingFraction: 0.6), value: item.isCompleted)
                 
-                // 图标
+                // Icon
                 Image(systemName: item.iconName)
                     .font(.system(size: 18))
                     .foregroundStyle(item.isCompleted ? Color.green.opacity(0.7) : Color.hikingGreen)
                     .frame(width: 28)
                 
-                // 文本
+                // Text label
                 Text(itemTitle(for: item))
                     .font(.body)
                     .strikethrough(item.isCompleted)
@@ -756,18 +757,18 @@ struct SafetyChecklistView: View {
         .buttonStyle(.plain)
     }
     
-    // 获取项目标题（支持本地化和自定义项目）
+    // Resolve display title for an item (supports localization and custom items)
     private func itemTitle(for item: SafetyChecklistItem) -> String {
-        // 如果是自定义项目（ID 以 "custom_" 开头），直接使用 title
+        // If this is a custom item (ID prefixed with "custom_"), use the raw title
         if item.id.hasPrefix("custom_") {
             return item.title
         }
         
-        // 否则尝试本地化
+        // Otherwise, try to localize using the default key
         let localizedKey = "safety.item.\(item.id)"
         let localized = languageManager.localizedString(for: localizedKey)
         
-        // 如果本地化键不存在（返回的字符串等于键本身），使用 title
+        // If the localization key is missing, fall back to the stored title
         if localized == localizedKey {
             return item.title
         }
@@ -777,7 +778,7 @@ struct SafetyChecklistView: View {
     
 }
 
-// 添加安全检查清单项目视图
+/// Sheet used to add a new custom safety checklist item.
 struct AddSafetyChecklistItemView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager

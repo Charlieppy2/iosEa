@@ -7,16 +7,19 @@
 
 import Foundation
 
+/// Abstraction for fetching a multi-day weather forecast used in the planner and journal.
 protocol WeatherForecastServiceProtocol {
     func fetchForecast() async throws -> WeatherForecast
 }
 
+/// Simple mock-backed implementation of the forecast service.
+/// In production this should call the real HKO 9-day forecast API.
 struct WeatherForecastService: WeatherForecastServiceProtocol {
     private let session: URLSession
     private let decoder: JSONDecoder
     
-    // Using HKO 9-day weather forecast API
-    // Note: This is a simulated implementation. In production, you would use the actual HKO API
+    // Using HKO 9-day weather forecast API endpoint (currently unused in mock mode).
+    // Note: This is a simulated implementation. In production, this would call and decode the real HKO API.
     private let endpoint = URL(string: "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=en")!
     
     init(session: URLSession = .shared, decoder: JSONDecoder = JSONDecoder()) {
@@ -24,9 +27,9 @@ struct WeatherForecastService: WeatherForecastServiceProtocol {
         self.decoder = decoder
     }
     
+    /// Returns a weather forecast; currently generated from mock data
+    /// to keep the UI functional without depending on the live API.
     func fetchForecast() async throws -> WeatherForecast {
-        // For now, generate mock data
-        // In production, this would fetch from HKO API and parse the response
         return generateMockForecast()
     }
     

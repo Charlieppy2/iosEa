@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 
+/// Main application entry point. Configures the SwiftData model container and shows `RootView`.
 @main
 struct hikingHKApp: App {
     var body: some Scene {

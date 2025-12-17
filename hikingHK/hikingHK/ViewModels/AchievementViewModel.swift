@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 import Combine
 
+/// View model responsible for loading, tracking and updating user achievements.
 @MainActor
 final class AchievementViewModel: ObservableObject {
     @Published var achievements: [Achievement] = []
@@ -24,6 +25,7 @@ final class AchievementViewModel: ObservableObject {
         self.trackingService = trackingService
     }
     
+    /// Lazily configures the underlying `AchievementStore` and loads initial data.
     func configureIfNeeded(context: ModelContext) {
         guard store == nil else { return }
         self.modelContext = context
@@ -37,10 +39,12 @@ final class AchievementViewModel: ObservableObject {
         }
     }
     
+    /// Recomputes achievement progress from the latest hike records
+    /// and persists any changes, tracking newly unlocked achievements.
     func refreshAchievements(from hikeRecords: [HikeRecord]) {
         guard let store = store else { return }
         
-        // 計算統計數據
+        // Compute aggregate statistics from completed hikes.
         let totalDistance = hikeRecords
             .filter { $0.isCompleted }
             .map { $0.distanceKm }
@@ -50,7 +54,7 @@ final class AchievementViewModel: ObservableObject {
         let currentStreak = calculateCurrentStreak(from: hikeRecords)
         let exploredDistricts = extractDistricts(from: hikeRecords)
         
-        // 更新成就進度
+        // Update progress across all achievement dimensions.
         var updatedAchievements = achievements
         updatedAchievements = trackingService.updateDistanceAchievements(
             achievements: updatedAchievements,
@@ -69,7 +73,7 @@ final class AchievementViewModel: ObservableObject {
             exploredDistricts: exploredDistricts
         )
         
-        // 檢查新解鎖的成就
+        // Detect which achievements have just transitioned to unlocked.
         let newlyUnlocked = updatedAchievements.filter { achievement in
             achievement.isUnlocked && !(achievements.first(where: { $0.id == achievement.id })?.isUnlocked ?? false)
         }
@@ -80,7 +84,7 @@ final class AchievementViewModel: ObservableObject {
         
         achievements = updatedAchievements
         
-        // 保存更新
+        // Persist updated achievements back to the store.
         do {
             try store.saveAchievements(achievements)
         } catch {
@@ -88,12 +92,13 @@ final class AchievementViewModel: ObservableObject {
         }
     }
     
+    /// Extracts peak-like trail names from completed hike records.
     private func extractPeakNames(from records: [HikeRecord]) -> [String] {
         records
             .filter { $0.isCompleted }
             .compactMap { $0.trailName }
             .filter { name in
-                // 檢查是否包含山峰關鍵詞
+                // Check for keywords that indicate a peak or mountain.
                 let lowercased = name.lowercased()
                 return lowercased.contains("peak") ||
                        lowercased.contains("mountain") ||
@@ -102,6 +107,7 @@ final class AchievementViewModel: ObservableObject {
             }
     }
     
+    /// Calculates the current streak of consecutive days with completed hikes.
     private func calculateCurrentStreak(from records: [HikeRecord]) -> Int {
         let completedRecords = records
             .filter { $0.isCompleted }
@@ -113,7 +119,7 @@ final class AchievementViewModel: ObservableObject {
         var streak = 0
         var expectedDate = calendar.startOfDay(for: Date())
         
-        // 檢查今天是否有行山記錄
+        // Check whether there is a hike record for today.
         let today = calendar.startOfDay(for: Date())
         let hasToday = completedRecords.contains { record in
             let recordDate = calendar.startOfDay(for: record.endTime ?? record.startTime)
@@ -121,11 +127,11 @@ final class AchievementViewModel: ObservableObject {
         }
         
         if !hasToday {
-            // 如果今天沒有，從昨天開始計算
+            // If there is no record today, start streak counting from yesterday.
             expectedDate = calendar.date(byAdding: .day, value: -1, to: expectedDate) ?? expectedDate
         }
         
-        // 計算連續天數
+        // Walk backwards through records to count consecutive days.
         for record in completedRecords {
             let recordDate = calendar.startOfDay(for: record.endTime ?? record.startTime)
             
@@ -133,7 +139,7 @@ final class AchievementViewModel: ObservableObject {
                 streak += 1
                 expectedDate = calendar.date(byAdding: .day, value: -1, to: expectedDate) ?? expectedDate
             } else if recordDate < expectedDate {
-                // 如果記錄日期早於預期日期，說明有間斷
+                // If the record date is earlier than expected, the streak is broken.
                 break
             }
         }
@@ -141,14 +147,14 @@ final class AchievementViewModel: ObservableObject {
         return streak
     }
     
+    /// Extracts a simplified set of districts from completed hike trail names.
+    /// This is a heuristic; in the future this could come directly from `Trail` metadata.
     private func extractDistricts(from records: [HikeRecord]) -> Set<String> {
-        // 從路線名稱中提取地區信息
-        // 這裡簡化處理，實際可以從 Trail 數據中獲取
         var districts = Set<String>()
         
         for record in records.filter({ $0.isCompleted }) {
             if let trailName = record.trailName {
-                // 簡單的地區提取邏輯
+                // Simple keyword-based district extraction.
                 if trailName.contains("Sai Kung") || trailName.contains("西貢") {
                     districts.insert("Sai Kung")
                 } else if trailName.contains("Lantau") || trailName.contains("大嶼山") {

@@ -2,12 +2,13 @@
 //  AchievementView.swift
 //  hikingHK
 //
-//  Created by assistant on 17/11/2025.
+//  Profile achievements & badges screen with progress summary and filters.
 //
 
 import SwiftUI
 import SwiftData
 
+/// Displays the user's unlocked and locked achievements with filtering by badge type.
 struct AchievementView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
@@ -22,13 +23,13 @@ struct AchievementView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // 統計卡片
+                    // Summary statistics card (unlocked vs total achievements)
                     statsCard
                     
-                    // 類型篩選
+                    // Badge type filter chips
                     typeFilter
                     
-                    // 成就列表
+                    // Achievements list
                     achievementsList
                 }
                 .padding()
@@ -43,6 +44,7 @@ struct AchievementView: View {
                 .ignoresSafeArea()
             )
             .onAppear {
+                // Ensure default achievements exist in the database before loading
                 AchievementSeeder.ensureDefaults(in: modelContext)
                 viewModel.configureIfNeeded(context: modelContext)
             }
@@ -83,7 +85,7 @@ struct AchievementView: View {
                 }
             }
             
-            // 進度條
+            // Overall unlocked progress bar
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 8)
@@ -175,7 +177,7 @@ struct AchievementRow: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // 徽章圖標
+            // Badge icon
             ZStack {
                 Circle()
                     .fill(
@@ -198,7 +200,7 @@ struct AchievementRow: View {
                     .foregroundStyle(achievement.isUnlocked ? .white : Color.hikingStone)
             }
             
-            // 成就信息
+            // Achievement title, description and progress
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text(achievement.localizedTitle(languageManager: languageManager))
@@ -217,7 +219,7 @@ struct AchievementRow: View {
                     .font(.subheadline)
                     .foregroundStyle(Color.hikingBrown)
                 
-                // 進度條
+                // Per-achievement progress bar
                 if !achievement.isUnlocked {
                     VStack(alignment: .leading, spacing: 4) {
                         GeometryReader { geometry in

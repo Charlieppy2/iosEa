@@ -9,13 +9,14 @@ import Foundation
 import SwiftData
 import CoreLocation
 
+/// Single GPS sample point used to construct a recorded hike route.
 @Model
 final class HikeTrackPoint {
     var id: UUID
     var latitude: Double
     var longitude: Double
-    var altitude: Double // 海拔（米）
-    var speed: Double // 速度（米/秒）
+    var altitude: Double // Altitude in meters
+    var speed: Double // Speed in meters per second
     var timestamp: Date
     var horizontalAccuracy: Double
     var verticalAccuracy: Double
@@ -57,7 +58,7 @@ final class HikeTrackPoint {
     }
     
     var speedKmh: Double {
-        speed * 3.6 // 轉換為公里/小時
+        speed * 3.6 // Convert to kilometres per hour
     }
 }
 

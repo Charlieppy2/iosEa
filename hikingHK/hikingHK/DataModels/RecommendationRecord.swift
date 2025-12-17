@@ -8,14 +8,15 @@
 import Foundation
 import SwiftData
 
+/// Historical record of a trail recommendation and how the user interacted with it.
 @Model
 final class RecommendationRecord {
     var id: UUID
     var trailId: UUID
     var recommendedAt: Date
-    var userAction: UserAction? // 用戶對推薦的反應
-    var recommendationScore: Double // 推薦分數
-    var reason: String // 推薦理由
+    var userAction: UserAction? // How the user responded to this recommendation
+    var recommendationScore: Double // Final score used to rank this recommendation
+    var reason: String // Human-readable explanation of why this trail was recommended
     
     enum UserAction: String, Codable {
         case viewed = "查看"

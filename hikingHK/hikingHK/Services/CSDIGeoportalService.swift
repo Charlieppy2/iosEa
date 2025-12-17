@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Abstraction for fetching trail data from the CSDI Geoportal service.
 protocol CSDIGeoportalServiceProtocol {
     func fetchTrailData(datasetId: String, language: String) async throws -> Data
 }

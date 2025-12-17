@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+/// Store responsible for persisting emergency contacts and location-sharing sessions.
 @MainActor
 final class LocationSharingStore {
     private let context: ModelContext
@@ -17,22 +18,22 @@ final class LocationSharingStore {
     }
     
     func seedDefaultsIfNeeded() throws {
-        // 檢查是否已有緊急聯繫人
+        // Check if there are already emergency contacts.
         let contactDescriptor = FetchDescriptor<EmergencyContact>()
         let existingContacts = try context.fetch(contactDescriptor)
         guard existingContacts.isEmpty else { return }
         
-        // 可以添加默認示例聯繫人（可選）
-        // 實際應用中，應該讓用戶自己添加
+        // Optional: add default sample contacts.
+        // In a real app, users should be prompted to add their own contacts.
     }
     
     func loadAllContacts() throws -> [EmergencyContact] {
         let descriptor = FetchDescriptor<EmergencyContact>()
         let contacts = try context.fetch(descriptor)
-        // 手動排序，因為 SwiftData 的 SortDescriptor 對 @Model 類有限制
+        // Manual sorting because SwiftData's SortDescriptor has limitations with @Model types.
         return contacts.sorted { contact1, contact2 in
             if contact1.isPrimary != contact2.isPrimary {
-                return contact1.isPrimary // 主要聯繫人排在前面
+                return contact1.isPrimary // Primary contacts should appear first.
             }
             return contact1.name < contact2.name
         }

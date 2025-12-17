@@ -9,23 +9,25 @@ import Foundation
 import SwiftData
 import Combine
 
+/// View model for the safety checklist on the Home screen.
+/// Handles loading, ordering, completion state, and persistence via SwiftData + UserDefaults.
 @MainActor
 final class SafetyChecklistViewModel: ObservableObject {
     @Published var items: [SafetyChecklistItem] = []
-    @Published var itemOrder: [String] = [] // 保存 item 的顯示順序
+    @Published var itemOrder: [String] = [] // Stores the display order of items
     private var safetyChecklistStore: SafetyChecklistStore?
     private var hasSeeded = false
     
-    /// 使用 UserDefaults 額外保存完成狀態，避免 SwiftData 同步問題
+    /// Stores completion states in UserDefaults to avoid SwiftData synchronization issues.
     private let completionDefaultsKey = "safetyChecklist.completionStates"
-    /// 使用 UserDefaults 備份自定義項目內容（標題、圖示），確保重新開啓後仍然存在
+    /// Stores custom item content (title, icon) in UserDefaults so they persist between launches.
     private let customItemsDefaultsKey = "safetyChecklist.customItems"
-    /// 使用 UserDefaults 保存 item 的顯示順序
+    /// Stores the item display order in UserDefaults.
     private let itemOrderDefaultsKey = "safetyChecklist.itemOrder"
-    /// 使用 UserDefaults 記錄已刪除的預設項目 ID，避免重新創建
+    /// Stores deleted default item IDs in UserDefaults to prevent them from being recreated.
     private let deletedDefaultItemsKey = "safetyChecklist.deletedDefaultItems"
     
-    /// 自定義 checklist item 的簡單 DTO，方便寫入 UserDefaults
+    /// Simple DTO for custom checklist items, used for encoding/decoding to UserDefaults.
     private struct CustomItemDTO: Codable {
         let id: String
         let title: String
@@ -43,7 +45,7 @@ final class SafetyChecklistViewModel: ObservableObject {
         UserDefaults.standard.set(states, forKey: completionDefaultsKey)
     }
     
-    /// 將 UserDefaults 中的完成狀態套用到當前 items
+    /// Applies completion states from UserDefaults to the current in-memory items.
     private func applyCompletionStatesFromDefaults() {
         let states = loadCompletionStates()
         guard !states.isEmpty else { return }
@@ -68,7 +70,7 @@ final class SafetyChecklistViewModel: ObservableObject {
     
     // MARK: - Deleted Default Items Tracking (UserDefaults)
     
-    /// 預設項目的 ID 列表
+    /// IDs of the built-in default checklist items.
     private let defaultItemIds = ["location", "water", "heat", "offline", "share"]
     
     private func loadDeletedDefaultItems() -> Set<String> {
@@ -80,13 +82,13 @@ final class SafetyChecklistViewModel: ObservableObject {
         UserDefaults.standard.set(Array(deletedIds), forKey: deletedDefaultItemsKey)
     }
     
-    /// 過濾掉已刪除的預設項目
+    /// Filters out default items that have been deleted by the user.
     private func filterDeletedDefaultItems(_ items: [SafetyChecklistItem]) -> [SafetyChecklistItem] {
         let deletedIds = loadDeletedDefaultItems()
         guard !deletedIds.isEmpty else { return items }
         
         let filtered = items.filter { item in
-            // 如果是預設項目且已被刪除，則過濾掉
+            // If this is a default item and it was deleted, filter it out.
             if defaultItemIds.contains(item.id) && deletedIds.contains(item.id) {
                 return false
             }
@@ -100,58 +102,58 @@ final class SafetyChecklistViewModel: ObservableObject {
         return filtered
     }
     
-    /// 根據保存的順序重新排列 items，如果沒有保存的順序則使用默認順序（按 ID 排序）
+    /// Reorders items based on the saved order; falls back to default (sorted by ID) if no order is stored.
     private func applyItemOrder() {
         let savedOrder = loadItemOrder()
         
         if savedOrder.isEmpty {
-            // 如果沒有保存的順序，使用默認順序（按 ID 排序）
+            // If there is no saved order, use the default order (sorted by ID).
             itemOrder = items.map { $0.id }.sorted { $0 < $1 }
         } else {
-            // 使用保存的順序，但確保所有現有 items 都在順序中
+            // Use the saved order, but ensure all existing items are present.
             var order = savedOrder.filter { id in items.contains(where: { $0.id == id }) }
-            // 添加任何不在順序中的新 items（按 ID 排序）
+            // Add any missing items (sorted by ID) that were not in the saved order.
             let missingIds = items.map { $0.id }.filter { !order.contains($0) }.sorted { $0 < $1 }
             order.append(contentsOf: missingIds)
             itemOrder = order
         }
         
-        // 根據順序重新排列 items
+        // Reorder items according to the resolved order.
         let reorderedItems = itemOrder.compactMap { id in
             items.first(where: { $0.id == id })
         }
         
-        // 只有在順序改變時才更新
+        // Only update if the order has actually changed.
         if reorderedItems.map({ $0.id }) != items.map({ $0.id }) {
             items = reorderedItems
             objectWillChange.send()
         }
     }
     
-    /// 移動 item 到新位置
+    /// Moves an item to a new position in the list and updates the stored order.
     func moveItem(from source: IndexSet, to destination: Int, context: ModelContext) {
-        // 手動實現移動邏輯（處理單個或多個 item 的移動）
+        // Manually implement move logic to handle moving one or multiple items.
         var reorderedItems = items
         var itemsToMove: [SafetyChecklistItem] = []
         
-        // 按降序移除，避免索引變化問題
+        // Remove in descending order to avoid index shifting issues.
         for index in source.sorted(by: >) {
             itemsToMove.insert(reorderedItems.remove(at: index), at: 0)
         }
         
-        // 計算正確的插入位置
+        // Calculate the correct insertion index.
         let insertIndex = min(destination, reorderedItems.count)
         
-        // 在目標位置插入
+        // Insert moved items at the destination index.
         for (offset, item) in itemsToMove.enumerated() {
             reorderedItems.insert(item, at: insertIndex + offset)
         }
         
         items = reorderedItems
         
-        // 更新順序
+        // Update the stored order.
         itemOrder = items.map { $0.id }
-        // 保存順序
+        // Persist the new order to UserDefaults.
         saveItemOrder(itemOrder)
         objectWillChange.send()
         print("✅ SafetyChecklistViewModel: Moved item, new order: \(itemOrder)")
@@ -181,7 +183,7 @@ final class SafetyChecklistViewModel: ObservableObject {
         }
     }
     
-    /// 如果 SwiftData 讀出來的 items 缺少某些自定義項目，根據備份重新建立，同時套用完成狀態
+    /// Restores missing custom items from the UserDefaults backup and reapplies completion state.
     private func restoreCustomItemsIfNeeded() {
         guard let store = safetyChecklistStore else {
             print("⚠️ SafetyChecklistViewModel: Store is nil, cannot restore custom items")
@@ -235,15 +237,16 @@ final class SafetyChecklistViewModel: ObservableObject {
         }
     }
     
+    /// Lazily configures the underlying `SafetyChecklistStore` and seeds default items if needed.
     func configureIfNeeded(context: ModelContext) async {
-        // 如果已经配置过，只刷新项目列表
+        // If already configured, only refresh the list when items are empty.
         if let existingStore = safetyChecklistStore {
-            // 如果 items 已经有数据，不需要刷新
+            // If items are already loaded, no need to refresh.
             if !items.isEmpty {
                 print("✅ SafetyChecklistViewModel: Already configured with \(items.count) items")
                 return
             }
-            // 只有在 items 为空时才刷新
+            // Only refresh if the in-memory list is empty.
             refreshItems()
             return
         }
@@ -258,15 +261,15 @@ final class SafetyChecklistViewModel: ObservableObject {
             let seededItems = try store.seedDefaultsIfNeeded()
             hasSeeded = true
             print("✅ SafetyChecklistViewModel: Seeding completed, got \(seededItems.count) items")
-            // 過濾掉已刪除的預設項目
+            // Filter out default items that the user has deleted.
             let filteredItems = filterDeletedDefaultItems(seededItems)
-            // 直接使用返回的项目，而不是查询
+            // Use the seeded items directly instead of querying again.
             items = filteredItems
             print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count) (after filtering deleted defaults)")
-            // 套用已保存的完成狀態並還原自定義項目
+            // Apply saved completion states and restore any missing custom items.
             applyCompletionStatesFromDefaults()
             restoreCustomItemsIfNeeded()
-            // 應用保存的順序
+            // Apply the saved display order.
             applyItemOrder()
         } catch {
             print("❌ Safety checklist seeding error: \(error)")
@@ -274,6 +277,7 @@ final class SafetyChecklistViewModel: ObservableObject {
         }
     }
     
+    /// Reloads checklist items from the store and reapplies completion, custom items, and order.
     func refreshItems() {
         guard let store = safetyChecklistStore else {
             print("⚠️ SafetyChecklistViewModel: Store is nil, cannot refresh")
@@ -281,14 +285,14 @@ final class SafetyChecklistViewModel: ObservableObject {
         }
         do {
             let loadedItems = try store.loadAllItems()
-            // 過濾掉已刪除的預設項目
+            // Filter out default items that have been deleted.
             let filteredItems = filterDeletedDefaultItems(loadedItems)
             items = filteredItems
             print("✅ SafetyChecklistViewModel: Refreshed \(filteredItems.count) items (after filtering deleted defaults)")
-            // 套用已保存的完成狀態並還原自定義項目
+            // Apply saved completion states and restore custom items.
             applyCompletionStatesFromDefaults()
             restoreCustomItemsIfNeeded()
-            // 應用保存的順序
+            // Apply the saved display order.
             applyItemOrder()
         } catch {
             print("❌ Refresh safety items error: \(error)")
@@ -296,23 +300,24 @@ final class SafetyChecklistViewModel: ObservableObject {
         }
     }
     
+    /// Ensures default checklist items exist, creating them if the list is currently empty.
     func createDefaultItems(context: ModelContext) async {
         print("🔧 SafetyChecklistViewModel: Creating default items...")
         
-        // 检查是否已有项目
+        // If we already have items, do not create them again.
         if !items.isEmpty {
             print("⚠️ SafetyChecklistViewModel: Items already exist (\(items.count) items), skipping creation")
             return
         }
         
-        // 使用 Store 来创建项目
+        // Use the store to create items if it already exists.
         guard let store = safetyChecklistStore else {
             print("⚠️ SafetyChecklistViewModel: Store is nil, creating store...")
             let newStore = SafetyChecklistStore(context: context)
             safetyChecklistStore = newStore
             do {
                 let seededItems = try newStore.seedDefaultsIfNeeded()
-                // 過濾掉已刪除的預設項目
+                // Filter out default items that the user has deleted.
                 let filteredItems = filterDeletedDefaultItems(seededItems)
                 items = filteredItems
                 print("✅ SafetyChecklistViewModel: Created store and seeded \(filteredItems.count) items (after filtering deleted defaults)")
@@ -326,12 +331,12 @@ final class SafetyChecklistViewModel: ObservableObject {
         }
         
         do {
-            // 使用 Store 的 seedDefaultsIfNeeded 方法，直接获取返回的项目
+            // Use the store's `seedDefaultsIfNeeded` method to get created items directly.
             let createdItems = try store.seedDefaultsIfNeeded()
-            // 過濾掉已刪除的預設項目
+            // Filter out default items that the user has deleted.
             let filteredItems = filterDeletedDefaultItems(createdItems)
             print("✅ SafetyChecklistViewModel: Created \(filteredItems.count) items (after filtering deleted defaults)")
-            // 直接设置 items，而不是查询
+            // Set items directly instead of querying again.
             items = filteredItems
             print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
             applyCompletionStatesFromDefaults()
@@ -339,26 +344,27 @@ final class SafetyChecklistViewModel: ObservableObject {
             applyItemOrder()
         } catch {
             print("❌ SafetyChecklistViewModel: Failed to create items: \(error)")
-            // 如果失败，尝试刷新
+            // If creation fails, fall back to refreshing from the store.
             refreshItems()
         }
     }
     
+    /// Toggles the completion state of a checklist item and persists the change to SwiftData and UserDefaults.
     func toggleItem(_ item: SafetyChecklistItem, context: ModelContext) {
-        // 直接更新 item 状态
+        // Directly update the item state.
         item.isCompleted.toggle()
         item.lastUpdated = Date()
         
-        // 手动触发 @Published 更新，因为修改引用类型对象不会自动触发
+        // Manually trigger @Published update because mutating a reference type does not auto-publish.
         objectWillChange.send()
         
-        // 更新本地完成狀態緩存（UserDefaults）
+        // Update the cached completion state in UserDefaults.
         var states = loadCompletionStates()
         states[item.id] = item.isCompleted
         saveCompletionStates(states)
         
         do {
-            // 強制處理待處理的更改，然後保存到 SwiftData
+            // Process pending changes and save to SwiftData.
             context.processPendingChanges()
             try context.save()
             
@@ -366,48 +372,50 @@ final class SafetyChecklistViewModel: ObservableObject {
             print("✅ SafetyChecklistViewModel: Toggled item \(item.id), isCompleted: \(item.isCompleted), progress: \(completedCount)/\(items.count)")
         } catch {
             print("❌ Toggle safety item error: \(error)")
-            // 如果保存失败，恢复状态
+            // If saving fails, roll back the in-memory state.
             item.isCompleted.toggle()
-            // 回滾 UserDefaults 狀態
+            // Roll back the state stored in UserDefaults.
             states[item.id] = item.isCompleted
             saveCompletionStates(states)
-            objectWillChange.send() // 触发更新以恢复 UI
+            objectWillChange.send() // Trigger UI update to reflect the rollback.
         }
     }
     
+    /// Adds a new custom checklist item at the top of the list and persists its metadata.
     func addItem(title: String, iconName: String = "checkmark.circle", context: ModelContext) throws {
         guard let store = safetyChecklistStore else {
             throw NSError(domain: "SafetyChecklistViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Store not configured"])
         }
         
-        // 生成唯一的 ID
+        // Generate a unique ID for the custom item.
         let newId = "custom_\(UUID().uuidString)"
         let newItem = try store.createItem(id: newId, iconName: iconName, title: title)
         
-        // 添加到 items 数组的最頂部
+        // Insert the new item at the top of the in-memory list.
         items.insert(newItem, at: 0)
         
-        // 更新順序：新 item 添加到最頂部（索引 0）
+        // Update order: new item goes to the top (index 0).
         itemOrder.insert(newItem.id, at: 0)
         saveItemOrder(itemOrder)
         
-        // 將新 item 的狀態（默認為 false）保存到 UserDefaults
+        // Store the new item's completion state (default false) in UserDefaults.
         var states = loadCompletionStates()
         states[newItem.id] = newItem.isCompleted
         saveCompletionStates(states)
         
-        // 保存自定義項目備份（title 和 iconName）
+        // Save a backup entry for this custom item (title and iconName).
         var backups = loadCustomItemsBackup()
         let dto = CustomItemDTO(id: newItem.id, title: newItem.title, iconName: newItem.iconName)
         backups.append(dto)
         saveCustomItemsBackup(backups)
         
-        // 觸發 UI 更新
+        // Trigger UI update.
         objectWillChange.send()
         
         print("✅ SafetyChecklistViewModel: Added new item at top, total: \(items.count), saved to UserDefaults and backup")
     }
     
+    /// Deletes an item from the checklist, updates order and persistence, and records deleted defaults.
     func deleteItem(_ item: SafetyChecklistItem, context: ModelContext) throws {
         guard let store = safetyChecklistStore else {
             throw NSError(domain: "SafetyChecklistViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Store not configured"])
@@ -415,26 +423,26 @@ final class SafetyChecklistViewModel: ObservableObject {
         
         try store.deleteItem(item)
         
-        // 从 items 数组中移除
+        // Remove from the in-memory items array.
         items.removeAll { $0.id == item.id }
         
-        // 從順序中移除
+        // Remove from the stored order.
         itemOrder.removeAll { $0 == item.id }
         saveItemOrder(itemOrder)
         
-        // 從 UserDefaults 中移除對應的狀態
+        // Remove the completion state from UserDefaults.
         var states = loadCompletionStates()
         states.removeValue(forKey: item.id)
         saveCompletionStates(states)
         
-        // 從備份中移除自定義項目（如果是自定義項目的話）
+        // Remove from the custom items backup if this is a custom item.
         if item.id.hasPrefix("custom_") {
             var backups = loadCustomItemsBackup()
             backups.removeAll { $0.id == item.id }
             saveCustomItemsBackup(backups)
         }
         
-        // 如果是預設項目，記錄到已刪除列表，避免重新創建
+        // If this is a default item, record it as deleted so it is not recreated later.
         if defaultItemIds.contains(item.id) {
             var deletedIds = loadDeletedDefaultItems()
             deletedIds.insert(item.id)
@@ -442,7 +450,7 @@ final class SafetyChecklistViewModel: ObservableObject {
             print("✅ SafetyChecklistViewModel: Marked default item '\(item.id)' as deleted, will not recreate")
         }
         
-        // 觸發 UI 更新
+        // Trigger UI update.
         objectWillChange.send()
         
         print("✅ SafetyChecklistViewModel: Deleted item, total: \(items.count), removed from UserDefaults and backup")

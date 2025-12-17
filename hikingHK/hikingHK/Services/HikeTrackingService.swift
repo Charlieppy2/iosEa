@@ -8,18 +8,23 @@
 import Foundation
 import CoreLocation
 
+/// Defines the core calculation APIs used by the hike tracking feature.
 protocol HikeTrackingServiceProtocol {
     func calculateDistance(from: CLLocation, to: CLLocation) -> Double
     func calculateElevationGain(points: [HikeTrackPoint]) -> (gain: Double, loss: Double, min: Double, max: Double)
     func calculateStatistics(points: [HikeTrackPoint]) -> (distance: Double, avgSpeed: Double, maxSpeed: Double)
 }
 
+/// Concrete implementation that calculates distance, elevation gain/loss
+/// and basic speed statistics from recorded hike points.
 final class HikeTrackingService: HikeTrackingServiceProtocol {
     
+    /// Returns the straight-line distance in meters between two locations.
     func calculateDistance(from: CLLocation, to: CLLocation) -> Double {
         return from.distance(from: to)
     }
     
+    /// Calculates total elevation gain, loss, and min/max altitude from a sequence of track points.
     func calculateElevationGain(points: [HikeTrackPoint]) -> (gain: Double, loss: Double, min: Double, max: Double) {
         guard points.count > 1 else {
             let altitude = points.first?.altitude ?? 0
@@ -49,6 +54,7 @@ final class HikeTrackingService: HikeTrackingServiceProtocol {
         return (gain: gain, loss: loss, min: minAlt, max: maxAlt)
     }
     
+    /// Calculates total distance (meters), average speed (m/s) and max speed (m/s) from track points.
     func calculateStatistics(points: [HikeTrackPoint]) -> (distance: Double, avgSpeed: Double, maxSpeed: Double) {
         guard points.count > 1 else {
             return (distance: 0, avgSpeed: 0, maxSpeed: points.first?.speed ?? 0)

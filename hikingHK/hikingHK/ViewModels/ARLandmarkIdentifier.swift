@@ -9,6 +9,8 @@ import Foundation
 import CoreLocation
 import Combine
 
+/// View model for AR landmark identification, exposing nearby landmarks
+/// relative to the user's current location.
 @MainActor
 final class ARLandmarkIdentifier: ObservableObject {
     @Published var identifiedLandmarks: [IdentifiedLandmark] = []
@@ -17,6 +19,8 @@ final class ARLandmarkIdentifier: ObservableObject {
     let locationManager: LocationManager
     private var scanTask: Task<Void, Never>?
     
+    /// Lightweight model describing a landmark that has been identified
+    /// in the current AR scanning session.
     struct IdentifiedLandmark: Identifiable, Equatable {
         let id: UUID
         let landmark: Landmark
@@ -24,6 +28,7 @@ final class ARLandmarkIdentifier: ObservableObject {
         let bearing: Double
         let identifiedAt: Date
         
+        /// Pre-computes distance and bearing from the given location.
         init(landmark: Landmark, from location: CLLocation) {
             self.id = UUID()
             self.landmark = landmark
@@ -33,10 +38,12 @@ final class ARLandmarkIdentifier: ObservableObject {
         }
     }
     
+    /// Creates a new identifier bound to a shared `LocationManager`.
     init(locationManager: LocationManager) {
         self.locationManager = locationManager
     }
     
+    /// Starts periodic scanning for nearby landmarks.
     func startScanning() {
         guard !isScanning else { return }
         isScanning = true
@@ -50,15 +57,17 @@ final class ARLandmarkIdentifier: ObservableObject {
         }
     }
     
+    /// Stops scanning and cancels any in-flight tasks.
     func stopScanning() {
         isScanning = false
         scanTask?.cancel()
         scanTask = nil
     }
     
+    /// Finds all landmarks within a 50 km radius of the current location.
     private func identifyNearbyLandmarks() async {
         guard let currentLocation = locationManager.currentLocation else {
-            // Request location if not available
+            // Request location if it is not yet available.
             if locationManager.authorizationStatus == .notDetermined {
                 locationManager.requestPermission()
             } else if locationManager.authorizationStatus == .authorizedAlways || locationManager.authorizationStatus == .authorizedWhenInUse {
@@ -67,7 +76,7 @@ final class ARLandmarkIdentifier: ObservableObject {
             return
         }
         
-        // Identify landmarks within 50km
+        // Identify landmarks within 50km.
         let nearbyLandmarks = Landmark.hongKongLandmarks
             .filter { landmark in
                 let distance = landmark.distance(from: currentLocation)

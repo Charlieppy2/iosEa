@@ -10,6 +10,7 @@ import SwiftData
 import PhotosUI
 import CoreLocation
 
+/// Form for creating a new hiking journal entry with optional trail, photos and weather.
 struct CreateJournalView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -121,7 +122,7 @@ struct CreateJournalView: View {
                 TrailPickerView(selectedTrail: $selectedTrail)
             }
             .onAppear {
-                // 确保使用当前的 modelContext 配置
+                // Ensure the view model is configured with the current modelContext
                 viewModel.configureIfNeeded(context: modelContext)
                 print("📋 CreateJournalView: Configured with modelContext")
             }
@@ -152,16 +153,16 @@ struct CreateJournalView: View {
     private func saveJournal() {
         isSaving = true
         
-        // 獲取天氣信息（如果可用）
+        // Read the latest weather snapshot (if available)
         let weatherCondition = appViewModel.weatherSnapshot.suggestion
         let temperature = appViewModel.weatherSnapshot.temperature
         let humidity = Double(appViewModel.weatherSnapshot.humidity)
         
-        // 獲取位置信息（可以從 LocationManager 獲取，這裡暫時為 nil）
+        // Location can later be sourced from LocationManager; currently not set
         let location: CLLocationCoordinate2D? = nil
         
         do {
-            // 确保 viewModel 已配置，并使用当前的 modelContext
+            // Ensure the view model is configured with the current modelContext
             viewModel.configureIfNeeded(context: modelContext)
             
             print("💾 CreateJournalView: Saving journal with modelContext: \(modelContext)")
@@ -177,15 +178,15 @@ struct CreateJournalView: View {
                 location: location,
                 locationName: selectedTrail?.district,
                 photos: photoData,
-                context: modelContext  // 明确传递 context
+                context: modelContext  // Explicitly pass context for compatibility
             )
             print("✅ CreateJournalView: Journal saved successfully")
             isSaving = false
             
-            // 等待一小段时间确保数据已保存，然后关闭
+            // Wait briefly to ensure data is fully persisted before dismissing
             Task { @MainActor in
-                // 增加等待时间，确保 SwiftData 完全同步
-                try? await Task.sleep(nanoseconds: 200_000_000) // 0.2秒
+                // Slight delay to give persistence a chance to complete
+                try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
                 print("✅ CreateJournalView: Dismissing after save delay")
                 dismiss()
             }

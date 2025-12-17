@@ -2,12 +2,14 @@
 //  SavedHikeRecord.swift
 //  hikingHK
 //
-//  Created by assistant on 17/11/2025.
+//  SwiftData model storing planned or completed hikes
+//  created from the Planner screen.
 //
 
 import Foundation
 import SwiftData
 
+/// Persisted record of a single planned hike, including completion status.
 @Model
 final class SavedHikeRecord {
     @Attribute(.unique) var id: UUID

@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+/// Item in the smart gear checklist for a particular hike.
 @Model
 final class GearItem {
     var id: String

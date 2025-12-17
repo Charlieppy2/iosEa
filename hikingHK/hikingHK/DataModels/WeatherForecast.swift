@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// High-level daily and hourly weather forecast used by the Hiking HK UI.
 struct WeatherForecast {
     let location: String
     let dailyForecasts: [DailyForecast]
@@ -124,7 +125,7 @@ struct BestHikingTime: Identifiable {
         }
         
         func localizedDisplayTime(languageManager: LanguageManager) -> String {
-            // 时间格式不需要本地化，但可以添加本地化的时间段名称
+            // Time range text itself does not need localization, but labels could be localized if needed.
             return displayTime
         }
     }

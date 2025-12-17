@@ -2,12 +2,14 @@
 //  TrailRecommendationService.swift
 //  hikingHK
 //
-//  智能路線推薦服務（推薦理由已全面本地化，避免英文介面出現中文殘留）
+//  Intelligent trail recommendation service with fully localized reasons
+//  so the English UI never shows leftover Chinese text (and vice versa).
 //
 
 import Foundation
 import CoreLocation
 
+/// Contract for services that can generate trail recommendations.
 protocol TrailRecommendationServiceProtocol {
     func recommendTrails(
         from trails: [Trail],
@@ -19,6 +21,7 @@ protocol TrailRecommendationServiceProtocol {
     ) -> [TrailRecommendation]
 }
 
+/// A single recommendation result for a trail, including score and explanation reasons.
 struct TrailRecommendation: Identifiable {
     let id: UUID
     let trail: Trail
@@ -37,7 +40,8 @@ struct TrailRecommendation: Identifiable {
 
 final class TrailRecommendationService: TrailRecommendationServiceProtocol {
     
-    // 繁體中文推薦理由對應表（避免顯示英文 fallback）
+    /// Mapping of recommendation reason keys to Traditional Chinese strings
+    /// so that we never fall back to English text in the Traditional Chinese UI.
     private let tcReasonMap: [String: String] = [
         "recommendations.reason.difficulty.match": "符合你設定的難度偏好",
         "recommendations.reason.fitness.level": "適合你目前的體能水平",
@@ -56,16 +60,17 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
         "recommendations.reason.history.distance.similar": "距離和你平時行的路線相近"
     ]
     
-    // 使用 LanguageManager 取得當前語言下的推薦理由文字
+    /// Resolve a localized recommendation reason string for the current app language,
+    /// falling back to the provided `fallback` text if no localization is available.
     private func localizedReason(_ key: String, fallback: String) -> String {
-        // 如果是繁體中文，優先使用本地映射，確保不會出現英文理由
+        // For Traditional Chinese, prefer the explicit tcReasonMap to avoid English fallbacks.
         let currentLanguage = MainActor.assumeIsolated { LanguageManager.shared.currentLanguage }
         if currentLanguage == .traditionalChinese, let tc = tcReasonMap[key] {
             return tc
         }
         
         let value = LanguageManager.shared.localizedString(for: key)
-        // 如果沒有對應 key，防止顯示 key 本身，退回原本中文/英文
+        // If the key is missing, avoid showing the raw key; use the provided fallback instead.
         return value == key ? fallback : value
     }
     
@@ -80,48 +85,48 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
         var recommendations: [TrailRecommendation] = []
         
         for trail in trails {
-            var score: Double = 0.5 // 基礎分數
+            var score: Double = 0.5 // Base score
             var reasons: [String] = []
             
-            // 1. 基於用戶偏好評分
+            // 1. Score based on explicit user hiking preferences
             if let preference = userPreference {
                 score += scoreBasedOnPreference(trail: trail, preference: preference, reasons: &reasons)
             }
             
-            // 2. 基於天氣評分
+            // 2. Score based on current / recent weather snapshot
             if let weather = weatherSnapshot {
                 score += scoreBasedOnWeather(trail: trail, weather: weather, reasons: &reasons)
             }
             
-            // 3. 基於時間評分
+            // 3. Score based on current time of day (sunrise / sunset, etc.)
             score += scoreBasedOnTime(trail: trail, currentTime: currentTime, reasons: &reasons)
             
-            // 4. 基於可用時間評分
+            // 4. Score based on how much time the user has available
             if let time = availableTime {
                 score += scoreBasedOnAvailableTime(trail: trail, availableTime: time, reasons: &reasons)
             }
             
-            // 5. 基於歷史數據評分（學習用戶偏好）
+            // 5. Score based on past hiking history (learning user habits)
             score += scoreBasedOnHistory(trail: trail, history: userHistory, reasons: &reasons)
             
-            // 6. 多樣性評分（避免總是推薦相同的路線）
+            // 6. Score for diversity so we don't always recommend the same trail
             score += scoreBasedOnDiversity(trail: trail, history: userHistory, reasons: &reasons)
             
-            // 正規化分數到 0-1 範圍
+            // Clamp score into 0–1 range
             score = min(max(score, 0), 1)
             
-            if score > 0.3 { // 只推薦分數大於 0.3 的路線
+            if score > 0.3 { // Only recommend trails with a score above a minimum threshold
                 recommendations.append(
                     TrailRecommendation(trail: trail, score: score, reasons: reasons)
                 )
             }
         }
         
-        // 按分數排序
+        // Sort by final score (highest first)
         return recommendations.sorted { $0.score > $1.score }
     }
     
-    // MARK: - 評分函數
+    // MARK: - Scoring functions
     
     private func scoreBasedOnPreference(
         trail: Trail,
@@ -130,7 +135,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
     ) -> Double {
         var score: Double = 0
         
-        // 難度匹配
+        // Difficulty match
         if let preferredDifficulty = preference.preferredDifficulty {
             if trail.difficulty == preferredDifficulty {
                 score += 0.2
@@ -142,7 +147,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
                 )
             }
         } else {
-            // 根據體能水平推薦
+            // If no explicit difficulty preference, fall back to fitness level based suggestion
             if preference.fitnessLevel.recommendedDifficulty.contains(trail.difficulty) {
                 score += 0.15
                 reasons.append(
@@ -154,7 +159,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
             }
         }
         
-        // 距離匹配
+        // Distance match
         if let distanceRange = preference.preferredDistance {
             if trail.lengthKm >= distanceRange.minKm && trail.lengthKm <= distanceRange.maxKm {
                 score += 0.15
@@ -167,7 +172,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
             }
         }
         
-        // 時長匹配
+        // Duration match
         if let durationRange = preference.preferredDuration {
             let trailDuration = trail.estimatedDurationMinutes
             if trailDuration >= durationRange.minMinutes && trailDuration <= durationRange.maxMinutes {
@@ -181,7 +186,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
             }
         }
         
-        // 風景類型匹配（基於路線名稱和描述推斷）
+        // Scenery type match (heuristic based on trail name and summary)
         let trailText = (trail.name + " " + trail.summary).lowercased()
         for scenery in preference.preferredScenery {
             if matchesScenery(trailText: trailText, scenery: scenery) {
@@ -205,7 +210,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
     ) -> Double {
         var score: Double = 0
         
-        // 溫度適宜性（15-25°C 最適宜）
+        // Temperature suitability (15–25°C is considered ideal)
         let temp = weather.temperature
         if temp >= 15 && temp <= 25 {
             score += 0.1
@@ -216,7 +221,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
                 )
             )
         } else if temp > 25 {
-            // 高溫時推薦有遮陰或海邊路線
+            // On hot days, slightly favor shaded or coastal / near-water routes
             let trailText = (trail.name + " " + trail.summary).lowercased()
             if trailText.contains("海") || trailText.contains("水") || trailText.contains("樹") {
                 score += 0.05
@@ -229,7 +234,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
             }
         }
         
-        // UV 指數
+        // UV index information (adds a reason but does not change score)
         if weather.uvIndex >= 8 {
             reasons.append(
                 localizedReason(
@@ -239,7 +244,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
             )
         }
         
-        // 降雨概率（如果有數據）—— 目前保留為未實作
+        // Rain probability / precipitation hook – reserved for future enhancement.
         
         return score
     }
@@ -252,9 +257,9 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
         var score: Double = 0
         let hour = Calendar.current.component(.hour, from: currentTime)
         
-        // 根據當前時間推薦
+        // Recommend based on time of day (early morning vs evening)
         if hour >= 5 && hour < 9 {
-            // 清晨 - 推薦看日出的路線
+            // Early morning – prioritize sunrise-friendly trails
             let trailText = (trail.name + " " + trail.summary).lowercased()
             if trailText.contains("日出") || trailText.contains("東") {
                 score += 0.1
@@ -266,7 +271,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
                 )
             }
         } else if hour >= 16 && hour < 19 {
-            // 傍晚 - 推薦看日落的路線
+            // Late afternoon / early evening – prioritize sunset-friendly trails
             let trailText = (trail.name + " " + trail.summary).lowercased()
             if trailText.contains("日落") || trailText.contains("西") {
                 score += 0.1
@@ -290,7 +295,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
         var score: Double = 0
         let trailDuration = TimeInterval(trail.estimatedDurationMinutes * 60)
         
-        // 如果可用時間足夠完成路線
+        // If the available time is enough to comfortably complete the trail
         if availableTime >= trailDuration {
             score += 0.1
             reasons.append(
@@ -300,7 +305,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
                 )
             )
         } else if availableTime >= trailDuration * 0.7 {
-            // 時間稍緊但可以完成
+            // Time is a bit tight but still feasible
             score += 0.05
             reasons.append(
                 localizedReason(
@@ -309,7 +314,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
                 )
             )
         } else {
-            // 時間不足
+            // Clearly not enough time – penalize this trail
             score -= 0.1
         }
         
@@ -323,14 +328,14 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
     ) -> Double {
         var score: Double = 0
         
-        // 計算用戶完成類似路線的次數
+        // Count how often the user has completed the same or very similar trails
         let similarTrails = history.filter { record in
             record.trailId == trail.id ||
             (record.trailName?.lowercased().contains(trail.name.lowercased()) ?? false)
         }
         
         if similarTrails.isEmpty {
-            // 新路線加分（鼓勵探索）
+            // Reward new, unexplored trails to encourage variety
             score += 0.1
             reasons.append(
                 localizedReason(
@@ -339,7 +344,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
                 )
             )
         } else {
-            // 如果用戶完成過且喜歡（可以根據完成率判斷）
+            // If the user often completes similar trails successfully, reward that pattern
             let completionRate = Double(similarTrails.filter { $0.isCompleted }.count) / Double(max(similarTrails.count, 1))
             if completionRate > 0.7 {
                 score += 0.15
@@ -352,7 +357,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
             }
         }
         
-        // 分析用戶偏好的路線特徵
+        // Look at average distance of completed hikes to infer preferred distance zone
         let completedTrails = history.filter { $0.isCompleted }
         if !completedTrails.isEmpty {
             let avgDistance = completedTrails.map { $0.distanceKm }.reduce(0, +) / Double(completedTrails.count)
@@ -379,24 +384,24 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
     ) -> Double {
         var score: Double = 0
         
-        // 檢查最近是否走過相同路線
+        // Check whether user has done this exact trail recently
         let recentHistory = history.filter { record in
             record.trailId == trail.id &&
-            record.startTime > Date().addingTimeInterval(-30 * 24 * 60 * 60) // 30 天內
+            record.startTime > Date().addingTimeInterval(-30 * 24 * 60 * 60) // within last 30 days
         }
         
         if recentHistory.isEmpty {
-            // 最近沒走過，加分（鼓勵多樣性）
+            // Not recently done – small bonus to promote diversity
             score += 0.05
         } else {
-            // 最近走過，減分（避免重複）
+            // Recently done – small penalty to avoid repetition
             score -= 0.1
         }
         
         return score
     }
     
-    // MARK: - 輔助函數
+    // MARK: - Helper functions
     
     private func matchesScenery(trailText: String, scenery: UserPreference.SceneryType) -> Bool {
         let keywords: [UserPreference.SceneryType: [String]] = [

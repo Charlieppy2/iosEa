@@ -7,22 +7,23 @@
 
 import SwiftUI
 
+/// Shared color palette and gradients used throughout the Hiking HK app.
 extension Color {
-    // 远足主题颜色
-    static let hikingGreen = Color(red: 0.2, green: 0.6, blue: 0.4) // 森林绿
-    static let hikingDarkGreen = Color(red: 0.15, green: 0.45, blue: 0.3) // 深绿
-    static let hikingBrown = Color(red: 0.6, green: 0.45, blue: 0.3) // 土棕色
-    static let hikingTan = Color(red: 0.85, green: 0.75, blue: 0.6) // 浅棕色
-    static let hikingEarth = Color(red: 0.5, green: 0.4, blue: 0.3) // 大地色
-    static let hikingSky = Color(red: 0.4, green: 0.6, blue: 0.8) // 天空蓝
-    static let hikingStone = Color(red: 0.5, green: 0.5, blue: 0.5) // 石灰色
+    // Hiking theme colors
+    static let hikingGreen = Color(red: 0.2, green: 0.6, blue: 0.4) // forest green
+    static let hikingDarkGreen = Color(red: 0.15, green: 0.45, blue: 0.3) // deep green
+    static let hikingBrown = Color(red: 0.6, green: 0.45, blue: 0.3) // earthy brown
+    static let hikingTan = Color(red: 0.85, green: 0.75, blue: 0.6) // light tan
+    static let hikingEarth = Color(red: 0.5, green: 0.4, blue: 0.3) // earth tone
+    static let hikingSky = Color(red: 0.4, green: 0.6, blue: 0.8) // sky blue
+    static let hikingStone = Color(red: 0.5, green: 0.5, blue: 0.5) // stone gray
     
-    // 路線難度底色（卡片顏色）
-    static let hikingDifficultyEasyBackground = Color(red: 0.93, green: 0.98, blue: 0.93)       // 淺綠，易
-    static let hikingDifficultyModerateBackground = Color(red: 0.98, green: 0.97, blue: 0.92)   // 淺黃，適中
-    static let hikingDifficultyChallengingBackground = Color(red: 0.99, green: 0.94, blue: 0.93) // 淺橙紅，挑戰
+    // Trail difficulty background colors (card backgrounds)
+    static let hikingDifficultyEasyBackground = Color(red: 0.93, green: 0.98, blue: 0.93)       // light green – easy
+    static let hikingDifficultyModerateBackground = Color(red: 0.98, green: 0.97, blue: 0.92)   // light yellow – moderate
+    static let hikingDifficultyChallengingBackground = Color(red: 0.99, green: 0.94, blue: 0.93) // light orange-red – challenging
     
-    // 渐变
+    // Main gradients
     static let hikingGradient = LinearGradient(
         colors: [
             Color(red: 0.25, green: 0.55, blue: 0.4),
@@ -50,23 +51,24 @@ extension Color {
         endPoint: .bottomTrailing
     )
     
-    // 应用背景渐变
+    // App background gradient
     static let hikingBackgroundGradient = LinearGradient(
         colors: [
-            Color(red: 0.98, green: 0.99, blue: 0.97), // 非常浅的绿色
-            Color(red: 0.96, green: 0.98, blue: 0.95), // 浅绿色
-            Color(red: 0.94, green: 0.97, blue: 0.93)  // 稍深的浅绿色
+            Color(red: 0.98, green: 0.99, blue: 0.97), // very light green
+            Color(red: 0.96, green: 0.98, blue: 0.95), // light green
+            Color(red: 0.94, green: 0.97, blue: 0.93)  // slightly deeper light green
         ],
         startPoint: .top,
         endPoint: .bottom
     )
     
-    // 页面背景颜色
+    // Default page background color
     static let hikingBackground = Color(red: 0.97, green: 0.98, blue: 0.96)
 }
 
+/// Shared view modifiers for the Hiking HK visual style.
 extension View {
-    // 远足风格的卡片样式
+    // Hiking-style card appearance
     func hikingCard() -> some View {
         self
             .background(
@@ -76,7 +78,7 @@ extension View {
             )
     }
     
-    // 远足风格的按钮样式
+    // Hiking-style primary / secondary button appearance
     func hikingButton(style: HikingButtonStyle = .primary) -> some View {
         self
             .padding()
@@ -88,7 +90,7 @@ extension View {
             .foregroundStyle(style == .primary ? .white : .primary)
     }
     
-    // 远足风格的徽章样式
+    // Hiking-style badge appearance
     func hikingBadge(color: Color = .hikingGreen) -> some View {
         self
             .padding(.horizontal, 12)
@@ -104,15 +106,15 @@ extension View {
             .foregroundStyle(color)
     }
     
-    // 远足风格的背景
+    // Full-screen hiking background with gradient and subtle pattern
     func hikingBackground() -> some View {
         self
             .background(
                 ZStack {
-                    // 基础渐变背景
+                    // Base gradient background
                     Color.hikingBackgroundGradient
                     
-                    // 图案背景
+                    // Pattern background
                     HikingPatternBackground()
                         .opacity(0.15)
                 }
@@ -120,15 +122,15 @@ extension View {
             )
     }
     
-    // 带图片/图案的背景
+    // Background with a stronger pattern overlay
     func hikingBackgroundWithPattern() -> some View {
         self
             .background(
                 ZStack {
-                    // 基础渐变背景
+                    // Base gradient background
                     Color.hikingBackgroundGradient
                     
-                    // 图案背景（更明显）
+                    // Pattern background (more visible)
                     HikingPatternBackground()
                         .opacity(0.25)
                 }
@@ -137,12 +139,12 @@ extension View {
     }
 }
 
-// 远足主题图案背景视图
+/// Decorative hiking-themed background with mountains, trees, clouds and a path.
 struct HikingPatternBackground: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // 山脉图案
+                // Mountain icons
                 ForEach(0..<3, id: \.self) { index in
                     Image(systemName: "mountain.2.fill")
                         .font(.system(size: 80))
@@ -153,7 +155,7 @@ struct HikingPatternBackground: View {
                         )
                 }
                 
-                // 树木图案
+                // Tree icons
                 ForEach(0..<4, id: \.self) { index in
                     Image(systemName: "tree.fill")
                         .font(.system(size: 50))
@@ -164,7 +166,7 @@ struct HikingPatternBackground: View {
                         )
                 }
                 
-                // 云朵图案
+                // Cloud icons
                 ForEach(0..<2, id: \.self) { index in
                     Image(systemName: "cloud.fill")
                         .font(.system(size: 60))
@@ -175,7 +177,7 @@ struct HikingPatternBackground: View {
                         )
                 }
                 
-                // 路径线条
+                // Stylised path line near the bottom of the screen
                 Path { path in
                     let startY = geometry.size.height * 0.85
                     path.move(to: CGPoint(x: 0, y: startY))

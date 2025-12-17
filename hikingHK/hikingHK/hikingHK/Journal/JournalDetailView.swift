@@ -2,13 +2,14 @@
 //  JournalDetailView.swift
 //  hikingHK
 //
-//  行山日記詳情（支援中英文、本地化天氣提示）
+//  Hiking journal detail screen with localized weather hints and photos.
 //
 
 import SwiftUI
 import SwiftData
 import CoreLocation
 
+/// Displays the detailed view of a hiking journal entry, including trail info, weather, content, and photos.
 struct JournalDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -25,7 +26,7 @@ struct JournalDetailView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // 標題和日期
+                    // Title and date
                     VStack(alignment: .leading, spacing: 8) {
                         Text(journal.title)
                             .font(.largeTitle)
@@ -37,7 +38,7 @@ struct JournalDetailView: View {
                             .foregroundStyle(Color.hikingStone)
                     }
                     
-                    // 路線信息
+                    // Trail information
                     if let trailName = journal.trailName {
                         infoRow(
                             icon: "map.fill",
@@ -47,7 +48,7 @@ struct JournalDetailView: View {
                         )
                     }
                     
-                    // 位置信息
+                    // Location information
                     if let locationName = journal.locationName {
                         infoRow(
                             icon: "location.fill",
@@ -57,7 +58,7 @@ struct JournalDetailView: View {
                         )
                     }
                     
-                    // 天氣信息（本地化）
+                    // Weather information (localized)
                     if let weather = journal.weatherCondition {
                         HStack {
                             Image(systemName: "cloud.sun.fill")
@@ -74,13 +75,13 @@ struct JournalDetailView: View {
                     
                     Divider()
                     
-                    // 內容
+                    // Main journal content
                     Text(journal.content)
                         .font(.body)
                         .foregroundStyle(Color.hikingDarkGreen)
                         .lineSpacing(4)
                     
-                    // 照片
+                    // Attached photos section
                     if !journal.photos.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(languageManager.localizedString(for: "journal.photos"))
@@ -169,7 +170,7 @@ struct JournalDetailView: View {
                         try viewModel.deleteJournal(journal)
                         dismiss()
                     } catch {
-                        // 可以根據需要加入錯誤提示
+                        // Optionally handle delete error (e.g. show an alert) if needed
                     }
                 }
                 Button(languageManager.localizedString(for: "cancel"), role: .cancel) {}
@@ -215,7 +216,7 @@ struct JournalDetailView: View {
         return content
     }
     
-    /// 將英文 weather suggestion 轉成本地化文字（邏輯與首頁一致）
+    /// Convert the English weather suggestion into the current localized text (logic consistent with HomeView).
     private func localizedWeatherSuggestion(_ suggestion: String) -> String {
         if suggestion.contains("Weather warning in force") {
             return languageManager.localizedString(for: "weather.suggestion.warning")

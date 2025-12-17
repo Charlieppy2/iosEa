@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import PhotosUI
 
+/// Form for editing an existing hiking journal entry and its photos.
 struct EditJournalView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -30,7 +31,7 @@ struct EditJournalView: View {
         _content = State(initialValue: journal.content)
         _hikeDate = State(initialValue: journal.hikeDate)
         
-        // 加載現有照片
+        // Load existing photos as the initial state
         _photoData = State(initialValue: journal.photos.sorted(by: { $0.order < $1.order }).compactMap { $0.imageData })
     }
     

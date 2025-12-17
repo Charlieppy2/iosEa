@@ -2,7 +2,7 @@
 //  TrailListView.swift
 //  hikingHK
 //
-//  路線列表頁（已優化 UI：難度卡片底色、難度標籤、地區列等）
+//  Trail list page (enhanced UI: difficulty-colored cards, difficulty tags, region row, etc.)
 //
 
 import SwiftUI
@@ -82,7 +82,7 @@ struct TrailRow: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 標題 + 難度標籤
+            // Title + difficulty tag
             HStack {
                 Text(trail.localizedName(languageManager: languageManager))
                     .font(.headline.weight(.semibold))
@@ -102,13 +102,13 @@ struct TrailRow: View {
                 .foregroundStyle(difficultyAccentColor)
             }
             
-            // 簡介
+            // Summary
             Text(trail.localizedSummary(languageManager: languageManager))
                 .font(.subheadline)
                 .foregroundStyle(Color.hikingBrown)
                 .lineLimit(2)
             
-            // 地區列
+            // Region row
             HStack(spacing: 6) {
                 Image(systemName: "mappin.and.ellipse")
                     .font(.caption2)
@@ -119,7 +119,7 @@ struct TrailRow: View {
                 Spacer()
             }
             
-            // 指標列
+            // Metrics row
             HStack(spacing: 16) {
                 metricLabel(
                     icon: "ruler.fill",
@@ -159,7 +159,7 @@ struct TrailRow: View {
         }
     }
     
-    /// 根據路線難度，使用 3 種不同的卡片底色做區分
+    /// Use three different background colors to distinguish trail difficulty
     private var difficultyBackgroundColor: Color {
         switch trail.difficulty {
         case .easy:
@@ -171,7 +171,7 @@ struct TrailRow: View {
         }
     }
     
-    /// 難度標籤用的主色
+    /// Accent color for the difficulty tag
     private var difficultyAccentColor: Color {
         switch trail.difficulty {
         case .easy:

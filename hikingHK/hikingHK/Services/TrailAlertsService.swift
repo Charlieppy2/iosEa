@@ -7,10 +7,13 @@
 
 import Foundation
 
+/// Abstraction for fetching and building trail alerts from weather and route data sources.
 protocol TrailAlertsServiceProtocol {
     func fetchAlerts(language: String) async throws -> [TrailAlert]
 }
 
+/// Default implementation that combines HKO warnings, UV information,
+/// and static route maintenance notices into a single alert list.
 struct TrailAlertsService: TrailAlertsServiceProtocol {
     private let session: URLSession
     private let decoder: JSONDecoder
@@ -27,11 +30,14 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
         self.warningService = warningService
     }
     
+    /// Builds the HKO real-time weather endpoint URL for the given app language.
     private func weatherEndpointURL(language: String) -> URL {
         let langCode = language == "zh-Hant" ? "tc" : "en"
         return URL(string: "\(baseWeatherEndpoint)\(langCode)")!
     }
     
+    /// Fetches all currently relevant trail alerts for the given language,
+    /// merging weather warnings, UV alerts and static maintenance messages.
     func fetchAlerts(language: String = "en") async throws -> [TrailAlert] {
         var alerts: [TrailAlert] = []
         
@@ -101,12 +107,13 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
             print("Failed to fetch weather alerts from rhrread: \(error)")
         }
         
-        // Add static route maintenance alerts (could be replaced with actual data source)
+        // Add static route maintenance alerts (could be replaced with an external data source)
         alerts.append(contentsOf: getStaticAlerts())
         
         return alerts
     }
     
+    /// Attempts to parse an ISO-8601 date string with or without fractional seconds.
     private func parseDate(_ dateString: String) -> Date? {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -116,6 +123,7 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
         }()
     }
     
+    /// Derives a human-readable warning title from a raw warning message string.
     private func parseWarningTitle(_ warning: String) -> String {
         // Parse common warning types
         let lowercased = warning.lowercased()
@@ -137,6 +145,7 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
         return "Weather Warning"
     }
     
+    /// Infers a severity level from the contents of a warning message.
     private func determineSeverity(_ warning: String) -> TrailAlert.Severity {
         let lowercased = warning.lowercased()
         if lowercased.contains("signal no. 8") || lowercased.contains("signal no. 9") || lowercased.contains("signal no. 10") {
@@ -149,9 +158,9 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
         return .medium
     }
     
+    /// Static route maintenance alerts.
+    /// In the future, this could come from a government API or user reports.
     private func getStaticAlerts() -> [TrailAlert] {
-        // Static route maintenance alerts
-        // In the future, this could come from a government API or user reports
         return [
             TrailAlert(
                 id: UUID(),

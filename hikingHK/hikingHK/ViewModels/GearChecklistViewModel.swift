@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 import Combine
 
+/// View model for generating, loading and updating the smart gear checklist.
 @MainActor
 final class GearChecklistViewModel: ObservableObject {
     @Published var gearItems: [GearItem] = []
@@ -18,10 +19,12 @@ final class GearChecklistViewModel: ObservableObject {
     private var store: GearChecklistStore?
     private var gearService: SmartGearServiceProtocol?
     
+    /// Allows injecting a custom gear service for testing; defaults to `SmartGearService`.
     nonisolated init(gearService: SmartGearServiceProtocol? = nil) {
         self.gearService = gearService
     }
     
+    /// Returns the active gear service, lazily creating a default implementation if needed.
     private func getGearService() -> SmartGearServiceProtocol {
         if let service = gearService {
             return service
@@ -29,11 +32,13 @@ final class GearChecklistViewModel: ObservableObject {
         return SmartGearService()
     }
     
+    /// Lazily configures the underlying `GearChecklistStore` with the given context.
     func configureIfNeeded(context: ModelContext) {
         guard store == nil else { return }
         store = GearChecklistStore(context: context)
     }
     
+    /// Generates a recommended gear list for the given trail, weather and scheduled date.
     func generateGearList(
         for trail: Trail,
         weather: WeatherSnapshot,
@@ -52,7 +57,7 @@ final class GearChecklistViewModel: ObservableObject {
             duration: duration
         )
         
-        // Set hikeId for all items
+        // Set `hikeId` for all items so they can be queried per hike.
         for item in items {
             item.hikeId = trail.id
         }
@@ -61,6 +66,7 @@ final class GearChecklistViewModel: ObservableObject {
         isLoading = false
     }
     
+    /// Loads stored gear items for a specific hike from the store.
     func loadGearItems(for hikeId: UUID) {
         guard let store = store else { return }
         do {
@@ -70,6 +76,7 @@ final class GearChecklistViewModel: ObservableObject {
         }
     }
     
+    /// Persists the current in-memory gear items to the store.
     func saveGearItems() {
         guard let store = store else { return }
         do {
@@ -79,6 +86,7 @@ final class GearChecklistViewModel: ObservableObject {
         }
     }
     
+    /// Toggles completion state for a single gear item and saves the change.
     func toggleItem(_ item: GearItem) {
         guard let store = store else { return }
         do {
@@ -88,26 +96,32 @@ final class GearChecklistViewModel: ObservableObject {
         }
     }
     
+    /// Number of gear items that are marked as completed.
     var completedCount: Int {
         gearItems.filter { $0.isCompleted }.count
     }
     
+    /// Total number of gear items.
     var totalCount: Int {
         gearItems.count
     }
     
+    /// Number of required gear items that are completed.
     var requiredCompletedCount: Int {
         gearItems.filter { $0.isRequired && $0.isCompleted }.count
     }
     
+    /// Total number of required gear items.
     var requiredTotalCount: Int {
         gearItems.filter { $0.isRequired }.count
     }
     
+    /// Indicates whether all required gear items have been completed.
     var isAllRequiredCompleted: Bool {
         requiredCompletedCount == requiredTotalCount && requiredTotalCount > 0
     }
     
+    /// Groups gear items by their category for easier sectioned display.
     var itemsByCategory: [GearItem.GearCategory: [GearItem]] {
         Dictionary(grouping: gearItems) { $0.category }
     }

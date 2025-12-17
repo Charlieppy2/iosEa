@@ -11,7 +11,7 @@ import SwiftData
 import Network
 import Combine
 
-// 网络状态监控器
+/// Simple network status monitor used to detect online/offline status.
 class NetworkStatusMonitor: ObservableObject {
     @Published var status: NWPath.Status = .satisfied
     private var monitor: NWPathMonitor?
@@ -40,6 +40,8 @@ class NetworkStatusMonitor: ObservableObject {
     }
 }
 
+/// Interactive map view for a single trail, showing route, user location,
+/// and whether an offline map is available or currently in use.
 struct TrailMapView: View {
     let trail: Trail
     @StateObject private var locationManager = LocationManager()
@@ -66,7 +68,7 @@ struct TrailMapView: View {
                 Text(languageManager.localizedString(for: "map.interactive"))
                     .font(.headline)
                 Spacer()
-                // 离线地图状态指示器
+                // Offline map status indicator
                 if hasOfflineMap {
                     HStack(spacing: 4) {
                         Image(systemName: isOfflineMode ? "wifi.slash" : "map.fill")
@@ -109,7 +111,7 @@ struct TrailMapView: View {
                 .frame(height: 220)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 
-                // 离线模式提示
+                // Offline mode banner when using downloaded maps without connectivity.
                 if isOfflineMode && hasOfflineMap {
                     VStack(alignment: .trailing, spacing: 4) {
                         HStack(spacing: 6) {
@@ -212,7 +214,7 @@ struct TrailMapView: View {
     }
 
     private func loadDynamicRoute() async {
-        // 离线模式下不加载动态路线
+        // Skip dynamic Mapbox routing when running in offline mode.
         guard !isOfflineMode,
               dynamicPolyline == nil,
               routeService.isConfigured,
@@ -226,32 +228,32 @@ struct TrailMapView: View {
         }
     }
     
-    // 检查离线地图可用性
+    // Check whether any downloaded offline map region covers this trail.
     private func checkOfflineMapAvailability() async {
-        // 在预览模式下跳过检查
+        // Skip checks while running inside Xcode previews.
         #if DEBUG
         if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
             return
         }
         #endif
         
-        // 创建 store（需要 ModelContext）
+        // Create the store (requires a ModelContext).
         let store = OfflineMapsStore(context: modelContext)
         
-        // 加载所有离线地图区域
+        // Load all offline map regions.
         guard let allRegions = try? store.loadAllRegions() else { return }
         
-        // 检查路线坐标是否在任何已下载的区域内
+        // Check whether the trail's coordinates fall inside any downloaded region.
         for region in allRegions where region.downloadStatus == .downloaded {
             let regionBounds = region.coordinateRegion
             
-            // 检查路线的起点和终点是否在区域内
+            // Check whether the start or end of the trail lies inside this region.
             var isTrailInRegion = false
             if let start = trail.routeLocations.first,
                let end = trail.routeLocations.last {
                 isTrailInRegion = regionBounds.contains(start) || regionBounds.contains(end)
                 
-                // 也检查路线中心点
+                // Also check the trail's map center point.
                 if !isTrailInRegion {
                     let trailCenter = trail.mapCenter
                     isTrailInRegion = regionBounds.contains(trailCenter)
@@ -265,23 +267,23 @@ struct TrailMapView: View {
             }
         }
         
-        // 更新离线模式状态
+        // Update offline mode status after checking regions.
         updateOfflineModeStatus()
     }
     
-    // 设置网络监控
+    // Start listening for network status changes.
     private func setupNetworkMonitoring() {
         networkMonitor.startMonitoring()
     }
     
-    // 停止网络监控
+    // Stop listening for network status changes.
     private func stopNetworkMonitoring() {
         networkMonitor.stopMonitoring()
     }
     
-    // 更新离线模式状态
+    // Update offline mode state based on connectivity and offline map presence.
     private func updateOfflineModeStatus() {
-        // 如果网络不可用且有离线地图，启用离线模式
+        // Enable offline mode only when network is unavailable and offline maps exist.
         isOfflineMode = (networkMonitor.status != .satisfied) && hasOfflineMap
     }
 }

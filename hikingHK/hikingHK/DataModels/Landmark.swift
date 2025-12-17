@@ -8,6 +8,7 @@
 import Foundation
 import CoreLocation
 
+/// Static geographic landmark used for AR overlays and map annotations.
 struct Landmark: Identifiable, Equatable {
     let id: UUID
     let name: String

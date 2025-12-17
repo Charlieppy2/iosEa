@@ -10,6 +10,7 @@ import SwiftData
 import CoreLocation
 import Combine
 
+/// View model for live location sharing, anomaly detection, and SOS alerts.
 @MainActor
 final class LocationSharingViewModel: ObservableObject {
     @Published var isSharing: Bool = false
@@ -29,6 +30,7 @@ final class LocationSharingViewModel: ObservableObject {
     private var lastCheckedLocation: CLLocation?
     private var lastAnomalyCheckTime: Date?
     
+    /// Creates a new location sharing view model with injectable services for testing.
     init(
         locationManager: LocationManager,
         sharingService: LocationSharingServiceProtocol = LocationSharingService(),
@@ -39,6 +41,7 @@ final class LocationSharingViewModel: ObservableObject {
         self.anomalyService = anomalyService
     }
     
+    /// Lazily configures the underlying `LocationSharingStore` and loads contacts/session.
     func configureIfNeeded(context: ModelContext) {
         guard store == nil else { return }
         let newStore = LocationSharingStore(context: context)
@@ -59,15 +62,16 @@ final class LocationSharingViewModel: ObservableObject {
         }
     }
     
+    /// Starts a location sharing session and begins background updates + anomaly checks.
     func startLocationSharing() {
         guard !isSharing else { return }
         
-        // 請求位置權限
+        // Request location permission if needed.
         if locationManager.authorizationStatus == .notDetermined {
             locationManager.requestPermission()
         }
         
-        // 請求後台位置權限（用於持續追蹤）
+        // Request background location permission for continuous tracking (if applicable).
         if locationManager.authorizationStatus != .authorizedAlways {
             // 在實際應用中，需要請求 .authorizedAlways 權限
             print("需要後台位置權限以持續分享位置")
@@ -76,11 +80,11 @@ final class LocationSharingViewModel: ObservableObject {
         locationManager.startUpdates()
         isSharing = true
         
-        // 創建或更新分享會話
+        // Create or update the active sharing session metadata.
         let session = shareSession ?? LocationShareSession()
         session.isActive = true
         session.startedAt = Date()
-        session.expiresAt = Date().addingTimeInterval(24 * 60 * 60) // 24 小時後過期
+        session.expiresAt = Date().addingTimeInterval(24 * 60 * 60) // Expires after 24 hours
         shareSession = session
         
         do {
@@ -89,13 +93,14 @@ final class LocationSharingViewModel: ObservableObject {
             self.error = "Failed to save sharing session: \(saveError.localizedDescription)"
         }
         
-        // 開始位置更新循環
+        // Start the periodic location update loop.
         startLocationUpdateLoop()
         
-        // 開始異常檢測循環
+        // Start the anomaly detection loop.
         startAnomalyDetectionLoop()
     }
     
+    /// Stops location sharing and persists the final session state.
     func stopLocationSharing() {
         guard isSharing else { return }
         
@@ -114,6 +119,8 @@ final class LocationSharingViewModel: ObservableObject {
         }
     }
     
+    /// Starts a background task that periodically reads the latest location
+    /// and updates the active share session.
     private func startLocationUpdateLoop() {
         locationUpdateTask?.cancel()
         locationUpdateTask = Task {
@@ -124,7 +131,7 @@ final class LocationSharingViewModel: ObservableObject {
                     lastCheckedLocation = location
                     lastAnomalyCheckTime = Date()
                     
-                    // 保存位置更新
+                    // Persist the updated session with the new location.
                     do {
                         if let session = shareSession {
                             try store?.saveSession(session)
@@ -134,11 +141,12 @@ final class LocationSharingViewModel: ObservableObject {
                     }
                 }
                 
-                try? await Task.sleep(nanoseconds: 30_000_000_000) // 每 30 秒更新一次
+                try? await Task.sleep(nanoseconds: 30_000_000_000) // Update every 30 seconds
             }
         }
     }
     
+    /// Starts a background task that periodically checks for movement / GPS anomalies.
     private func startAnomalyDetectionLoop() {
         anomalyCheckTask?.cancel()
         anomalyCheckTask = Task {
@@ -153,17 +161,19 @@ final class LocationSharingViewModel: ObservableObject {
                 if let detectedAnomaly = anomaly {
                     lastAnomaly = detectedAnomaly
                     
-                    // 如果是嚴重異常，自動發送警報
+                    // Automatically send an alert if a critical anomaly is detected.
                     if detectedAnomaly.severity == .critical {
                         await sendAutomaticAlert(for: detectedAnomaly)
                     }
                 }
                 
-                try? await Task.sleep(nanoseconds: 60_000_000_000) // 每 60 秒檢查一次
+                try? await Task.sleep(nanoseconds: 60_000_000_000) // Check every 60 seconds
             }
         }
     }
     
+    /// Sends an emergency SOS message with the user's current location
+    /// to all configured emergency contacts.
     func sendEmergencySOS(message: String = "I need emergency assistance!") async {
         guard let location = currentLocation ?? locationManager.currentLocation else {
             error = "Unable to get current location"
@@ -191,11 +201,12 @@ final class LocationSharingViewModel: ObservableObject {
         isSendingSOS = false
     }
     
+    /// Sends an automatic SMS alert when a critical anomaly is detected.
     private func sendAutomaticAlert(for anomaly: Anomaly) async {
         guard let location = currentLocation ?? locationManager.currentLocation else { return }
         guard !emergencyContacts.isEmpty else { return }
         
-        let message = "自動檢測到異常情況：\(anomaly.message)"
+        let message = "Automatically detected anomaly: \(anomaly.message)"
         
         do {
             try await sharingService.sendLocationViaMessage(
@@ -204,10 +215,11 @@ final class LocationSharingViewModel: ObservableObject {
                 message: message
             )
         } catch let alertError {
-            print("自動發送警報失敗：\(alertError)")
+            print("Automatic alert failed: \(alertError)")
         }
     }
     
+    /// Adds a new emergency contact and persists it.
     func addEmergencyContact(_ contact: EmergencyContact) {
         emergencyContacts.append(contact)
         do {
@@ -217,6 +229,7 @@ final class LocationSharingViewModel: ObservableObject {
         }
     }
     
+    /// Removes an emergency contact and deletes it from the store.
     func removeEmergencyContact(_ contact: EmergencyContact) {
         emergencyContacts.removeAll { $0.id == contact.id }
         do {
@@ -226,6 +239,7 @@ final class LocationSharingViewModel: ObservableObject {
         }
     }
     
+    /// Generates a shareable map link for the user's current location.
     func generateShareLink() -> String? {
         guard let location = currentLocation ?? locationManager.currentLocation else { return nil }
         return sharingService.generateShareLink(location: location.coordinate)

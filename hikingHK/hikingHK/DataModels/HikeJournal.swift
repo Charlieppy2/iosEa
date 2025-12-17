@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 import CoreLocation
 
+/// SwiftData model for a hiking journal entry, including trail, weather and sharing metadata.
 @Model
 final class HikeJournal {
     var id: UUID
@@ -18,28 +19,28 @@ final class HikeJournal {
     var createdAt: Date
     var updatedAt: Date
     
-    // 關聯的路線信息
+    // Linked trail information
     var trailId: UUID?
     var trailName: String?
     
-    // 天氣信息
+    // Weather information
     var weatherCondition: String?
     var temperature: Double?
     var humidity: Double?
     
-    // 位置信息
+    // Location information
     var locationLatitude: Double?
     var locationLongitude: Double?
     var locationName: String?
     
-    // 關聯的行山記錄
+    // Linked hike tracking record
     var hikeRecordId: UUID?
     
-    // 照片
+    // Photos associated with this journal entry
     @Relationship(deleteRule: .cascade)
     var photos: [JournalPhoto] = []
     
-    // 分享設置
+    // Sharing settings
     var isShared: Bool
     var shareToken: String?
     
@@ -101,6 +102,7 @@ final class HikeJournal {
     }
 }
 
+/// Photo associated with a `HikeJournal`, stored as SwiftData for ordering and captions.
 @Model
 final class JournalPhoto {
     var id: UUID

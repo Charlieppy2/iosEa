@@ -10,15 +10,16 @@ import SwiftData
 import CoreLocation
 import Combine
 
+/// View model that manages live hike tracking, statistics and persistence.
 @MainActor
 final class HikeTrackingViewModel: ObservableObject {
     @Published var isTracking: Bool = false
     @Published var currentRecord: HikeRecord?
     @Published var trackPoints: [HikeTrackPoint] = []
     @Published var currentLocation: CLLocation?
-    @Published var currentSpeed: Double = 0 // 米/秒
+    @Published var currentSpeed: Double = 0 // meters per second
     @Published var currentAltitude: Double = 0
-    @Published var totalDistance: Double = 0 // 米
+    @Published var totalDistance: Double = 0 // meters
     @Published var elapsedTime: TimeInterval = 0
     @Published var error: String?
     
@@ -30,6 +31,8 @@ final class HikeTrackingViewModel: ObservableObject {
     private var startTime: Date?
     private var lastLocation: CLLocation?
     
+    /// Creates a new tracking view model using the given `LocationManager`
+    /// and an optional injectable tracking service (defaults to `HikeTrackingService`).
     init(
         locationManager: LocationManager,
         trackingService: HikeTrackingServiceProtocol = HikeTrackingService()
@@ -38,20 +41,22 @@ final class HikeTrackingViewModel: ObservableObject {
         self.trackingService = trackingService
     }
     
+    /// Lazily configures the underlying `HikeRecordStore`.
     func configureIfNeeded(context: ModelContext) {
         guard store == nil else { return }
         store = HikeRecordStore(context: context)
     }
     
+    /// Starts a new hike tracking session, optionally associated with a trail.
     func startTracking(trailId: UUID? = nil, trailName: String? = nil) {
         guard !isTracking else { return }
         
-        // 請求位置權限
+        // Request location permission if not determined.
         if locationManager.authorizationStatus == .notDetermined {
             locationManager.requestPermission()
         }
         
-        // 請求高精度位置
+        // Start high-accuracy location updates.
         locationManager.startUpdates()
         
         isTracking = true
@@ -61,7 +66,7 @@ final class HikeTrackingViewModel: ObservableObject {
         elapsedTime = 0
         lastLocation = nil
         
-        // 創建新記錄
+        // Create a new hike record.
         currentRecord = HikeRecord(
             trailId: trailId,
             trailName: trailName,
@@ -69,13 +74,14 @@ final class HikeTrackingViewModel: ObservableObject {
             isCompleted: false
         )
         
-        // 開始位置更新循環
+        // Start the periodic location update loop.
         startLocationUpdateLoop()
         
-        // 開始統計更新循環
+        // Start the statistics update loop.
         startStatisticsUpdateLoop()
     }
     
+    /// Stops tracking, finalizes the current record and persists it.
     func stopTracking() {
         guard isTracking else { return }
         
@@ -88,6 +94,7 @@ final class HikeTrackingViewModel: ObservableObject {
         finishRecord()
     }
     
+    /// Pauses tracking without finalizing the record (can be resumed).
     func pauseTracking() {
         guard isTracking else { return }
         isTracking = false
@@ -95,6 +102,7 @@ final class HikeTrackingViewModel: ObservableObject {
         statisticsUpdateTask?.cancel()
     }
     
+    /// Resumes tracking if a record is already in progress.
     func resumeTracking() {
         guard !isTracking, currentRecord != nil else { return }
         isTracking = true
@@ -103,6 +111,7 @@ final class HikeTrackingViewModel: ObservableObject {
         startStatisticsUpdateLoop()
     }
     
+    /// Starts a background task that periodically reads location updates.
     private func startLocationUpdateLoop() {
         locationUpdateTask?.cancel()
         locationUpdateTask = Task {
@@ -110,17 +119,18 @@ final class HikeTrackingViewModel: ObservableObject {
                 if let location = locationManager.currentLocation {
                     await processLocationUpdate(location)
                 }
-                try? await Task.sleep(nanoseconds: 5_000_000_000) // 每 5 秒更新一次
+                try? await Task.sleep(nanoseconds: 5_000_000_000) // Update every 5 seconds
             }
         }
     }
     
+    /// Processes a new location update and appends a `HikeTrackPoint`.
     private func processLocationUpdate(_ location: CLLocation) async {
         currentLocation = location
         currentSpeed = location.speed >= 0 ? location.speed : 0
         currentAltitude = location.altitude
         
-        // 創建軌跡點
+        // Create and append a new track point.
         let trackPoint = HikeTrackPoint(
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude,
@@ -134,7 +144,7 @@ final class HikeTrackingViewModel: ObservableObject {
         trackPoints.append(trackPoint)
         currentRecord?.trackPoints.append(trackPoint)
         
-        // 計算距離
+        // Accumulate distance since the last location.
         if let last = lastLocation {
             let distance = trackingService.calculateDistance(from: last, to: location)
             totalDistance += distance
@@ -143,6 +153,7 @@ final class HikeTrackingViewModel: ObservableObject {
         lastLocation = location
     }
     
+    /// Starts a background task that periodically refreshes time and statistics.
     private func startStatisticsUpdateLoop() {
         statisticsUpdateTask?.cancel()
         statisticsUpdateTask = Task {
@@ -151,15 +162,16 @@ final class HikeTrackingViewModel: ObservableObject {
                     elapsedTime = Date().timeIntervalSince(start)
                 }
                 updateRecordStatistics()
-                try? await Task.sleep(nanoseconds: 1_000_000_000) // 每秒更新一次
+                try? await Task.sleep(nanoseconds: 1_000_000_000) // Update every second
             }
         }
     }
     
+    /// Recomputes aggregate statistics on the current record from collected track points.
     private func updateRecordStatistics() {
         guard let record = currentRecord, !trackPoints.isEmpty else { return }
         
-        // 計算統計數據
+        // Compute distance/speed statistics and elevation gains/losses.
         let stats = trackingService.calculateStatistics(points: trackPoints)
         let elevation = trackingService.calculateElevationGain(points: trackPoints)
         
@@ -173,6 +185,7 @@ final class HikeTrackingViewModel: ObservableObject {
         record.maxAltitude = elevation.max
     }
     
+    /// Marks the current record as completed and persists it via the store.
     private func finishRecord() {
         guard let record = currentRecord else { return }
         
@@ -180,7 +193,7 @@ final class HikeTrackingViewModel: ObservableObject {
         record.isCompleted = true
         updateRecordStatistics()
         
-        // 保存記錄
+        // Save the finished record.
         do {
             try store?.saveRecord(record)
         } catch let saveError {
@@ -189,6 +202,7 @@ final class HikeTrackingViewModel: ObservableObject {
         }
     }
     
+    /// Saves the current record without ending the tracking session.
     func saveCurrentRecord() {
         guard let record = currentRecord else { return }
         do {
@@ -198,6 +212,7 @@ final class HikeTrackingViewModel: ObservableObject {
         }
     }
     
+    /// Deletes a persisted hike record.
     func deleteRecord(_ record: HikeRecord) {
         do {
             try store?.deleteRecord(record)
@@ -206,10 +221,12 @@ final class HikeTrackingViewModel: ObservableObject {
         }
     }
     
+    /// Current speed converted from m/s to km/h.
     var currentSpeedKmh: Double {
         currentSpeed * 3.6
     }
     
+    /// Human-readable formatted elapsed time as `HH:mm:ss` or `mm:ss`.
     var formattedElapsedTime: String {
         let hours = Int(elapsedTime) / 3600
         let minutes = (Int(elapsedTime) % 3600) / 60
@@ -222,6 +239,7 @@ final class HikeTrackingViewModel: ObservableObject {
         }
     }
     
+    /// Human-readable formatted distance in meters or kilometers.
     var formattedDistance: String {
         if totalDistance >= 1000 {
             return String(format: "%.2f km", totalDistance / 1000.0)

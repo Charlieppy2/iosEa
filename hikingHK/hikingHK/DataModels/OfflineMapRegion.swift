@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 import MapKit
 
+/// Metadata about an offline map region and its download status/progress.
 @Model
 final class OfflineMapRegion {
     var id: UUID
@@ -71,7 +72,7 @@ extension OfflineMapRegion {
         "Lantau North"
     ]
     
-    // 获取本地化的区域名称
+    // Get the localized display name for this region
     func localizedName(languageManager: LanguageManager) -> String {
         switch name {
         case "Hong Kong Island":
@@ -87,7 +88,7 @@ extension OfflineMapRegion {
         }
     }
     
-    // 定义每个区域的坐标边界
+    // Coordinate bounds for each predefined region name
     var coordinateRegion: MKCoordinateRegion {
         switch name {
         case "Hong Kong Island":

@@ -8,6 +8,8 @@
 import SwiftUI
 import SwiftData
 
+/// Entry view that decides whether to show authentication or the main content,
+/// and wires up shared environment objects.
 struct RootView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var sessionManager = SessionManager()
@@ -22,22 +24,22 @@ struct RootView: View {
                     .environmentObject(appViewModel)
                     .environmentObject(sessionManager)
                     .environmentObject(languageManager)
-                    .id("logged_in_\(sessionManager.currentUser?.id.uuidString ?? "")") // 强制在用户变化时刷新
+                    .id("logged_in_\(sessionManager.currentUser?.id.uuidString ?? "")") // Force refresh when the logged-in user changes
             } else {
                 AuthView()
                     .environmentObject(sessionManager)
                     .environmentObject(languageManager)
-                    .id("logged_out") // 确保登出视图有唯一 ID
+                    .id("logged_out") // Ensure the logged-out view has a stable unique ID
             }
         }
         .onChange(of: sessionManager.currentUser) { oldValue, newValue in
             print("🔄 RootView: currentUser changed from \(oldValue?.email ?? "nil") to \(newValue?.email ?? "nil")")
             
-            // 当用户登录时，重新加载数据
+            // When the user logs in, reload user-scoped data
             if oldValue == nil && newValue != nil {
                 print("🔄 RootView: User logged in, reloading data...")
                 appViewModel.configurePersistenceIfNeeded(context: modelContext)
-                // 确保数据已加载
+                // Ensure data is loaded after configuration
                 appViewModel.reloadUserData()
             }
         }

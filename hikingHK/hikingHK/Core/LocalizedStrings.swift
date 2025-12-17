@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Central table of localized string resources used by LanguageManager.
 struct LocalizedStrings {
     static let shared = LocalizedStrings()
     

@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Lightweight snapshot of weather conditions used across the app.
 struct WeatherSnapshot {
     let location: String
     let temperature: Double
@@ -27,6 +28,7 @@ struct WeatherSnapshot {
     )
 }
 
+/// Planned or completed hike associated with a specific trail and date.
 struct SavedHike: Identifiable, Equatable {
     let id: UUID
     let trail: Trail
@@ -50,7 +52,8 @@ struct SavedHike: Identifiable, Equatable {
         self.isCompleted = isCompleted
         self.completedAt = completedAt
     }
-
+    
+    /// Example data used for previews and initial UI testing.
     static let sampleData: [SavedHike] = [
         SavedHike(
             trail: Trail.sampleData[1],

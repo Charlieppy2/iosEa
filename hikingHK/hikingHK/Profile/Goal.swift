@@ -2,11 +2,13 @@
 //  Goal.swift
 //  hikingHK
 //
-//  Created by assistant on 17/11/2025.
+//  Lightweight progress goal model used for profile insights
+//  (e.g. monthly distance and special ridge-line challenges).
 //
 
 import Foundation
 
+/// Represents a single progress goal with target value, unit and completion state.
 struct Goal: Identifiable {
     let id: String
     let title: String

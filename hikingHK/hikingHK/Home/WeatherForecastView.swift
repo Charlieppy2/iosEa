@@ -265,7 +265,7 @@ struct WeatherForecastView: View {
         .padding()
     }
     
-    // 本地化日期格式
+    // Localized date formatting for forecast labels
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US")

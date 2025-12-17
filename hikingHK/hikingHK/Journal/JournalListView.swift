@@ -48,31 +48,31 @@ struct JournalListView: View {
                 }
             }
             .task {
-                // 配置 ViewModel
+                // Configure the view model when the view first appears
                 viewModel.configureIfNeeded(context: modelContext)
             }
             .onAppear {
-                // 每次视图出现时，确保已配置并刷新数据
+                // On every appearance, ensure configuration and then refresh data
                 print("🔄 JournalListView: View appeared")
                 viewModel.configureIfNeeded(context: modelContext, skipRefresh: true)
-                // 延迟刷新，给 SwiftData 时间同步，并确保数据已保存
+                // Delay refresh slightly to give the JSON store time to sync
                 Task { @MainActor in
-                    try? await Task.sleep(nanoseconds: 300_000_000) // 0.3秒
+                    try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
                     print("🔄 JournalListView: Refreshing journals on appear...")
                     viewModel.refreshJournals()
                 }
             }
             .onChange(of: isShowingCreateJournal) { oldValue, newValue in
-                // 当创建日记的 sheet 关闭时，延迟刷新以确保数据已保存
+                // When the create journal sheet is dismissed, delay-refresh to ensure data is saved
                 if oldValue == true && newValue == false {
                     print("🔄 JournalListView: Create journal sheet closed")
-                    // 不立即刷新，因为 createJournal 已经手动添加到数组了
-                    // 延迟刷新只是为了确保数据库同步，但不覆盖手动添加的数据
+                    // Do not refresh immediately because createJournal already inserted into the array.
+                    // The delayed refresh is only to catch up persistence sync, without overwriting manual changes.
                     Task { @MainActor in
-                        // 等待更长时间确保 SwiftData 已同步
-                        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1秒
+                        // Wait longer so any underlying store has time to sync
+                        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
                         print("🔄 JournalListView: Refreshing journals after delay...")
-                        // 只在数组为空时才刷新，避免覆盖手动添加的数据
+                        // Only refresh if the array is empty to avoid overwriting manual additions
                         if viewModel.journals.isEmpty {
                             print("🔄 JournalListView: Array is empty, refreshing from database...")
                             viewModel.refreshJournals()
@@ -82,8 +82,6 @@ struct JournalListView: View {
                     }
                 }
             }
-            // 移除 onChange 中的自动刷新，因为 createJournal 已经手动更新了数组
-            // 这样可以避免 SwiftData 同步延迟导致刚保存的日记被覆盖
             .sheet(isPresented: $isShowingCreateJournal) {
                 CreateJournalView(viewModel: viewModel)
             }
@@ -134,7 +132,7 @@ struct JournalListView: View {
     
     private func monthSection(month: String, journals: [HikeJournal]) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            // 月份標題
+            // Month header
             HStack {
                 Text(month)
                     .font(.title2)
@@ -144,7 +142,7 @@ struct JournalListView: View {
             }
             .padding(.horizontal, 4)
             
-            // 日記條目
+            // Journal entries for this month
             ForEach(journals) { journal in
                 JournalRow(journal: journal) {
                     selectedJournal = journal
@@ -162,7 +160,7 @@ struct JournalRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(alignment: .top, spacing: 12) {
-                // 時間軸線
+                // Vertical timeline line and dot
                 VStack {
                     Circle()
                         .fill(Color.hikingGreen)
@@ -174,9 +172,9 @@ struct JournalRow: View {
                 }
                 .frame(width: 20)
                 
-                // 內容
+                // Main card content
                 VStack(alignment: .leading, spacing: 8) {
-                    // 標題和日期
+                    // Title and date
                     HStack {
                         Text(journal.title)
                             .font(.headline)
@@ -187,7 +185,7 @@ struct JournalRow: View {
                             .foregroundStyle(Color.hikingStone)
                     }
                     
-                    // 路線名稱
+                    // Trail name (if any)
                     if let trailName = journal.trailName {
                         HStack(spacing: 4) {
                             Image(systemName: "map.fill")
@@ -199,13 +197,13 @@ struct JournalRow: View {
                         }
                     }
                     
-                    // 內容預覽
+                    // Content preview
                     Text(journal.content)
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
                         .lineLimit(3)
                     
-                    // 照片預覽
+                    // Photos preview (count)
                     if !journal.photos.isEmpty {
                         HStack(spacing: 4) {
                             Image(systemName: "photo.fill")
@@ -217,7 +215,7 @@ struct JournalRow: View {
                         }
                     }
                     
-                    // 天氣信息（本地化）
+                    // Weather information (localized)
                     if let weather = journal.weatherCondition {
                         HStack(spacing: 4) {
                             Image(systemName: "cloud.sun.fill")
@@ -239,7 +237,7 @@ struct JournalRow: View {
         .buttonStyle(.plain)
     }
     
-    /// 將保存下來的英文 weather suggestion 轉成當前語言
+    /// Convert the saved English weather suggestion into the current app language.
     private func localizedWeatherSuggestion(_ suggestion: String) -> String {
         if suggestion.contains("Weather warning in force") {
             return languageManager.localizedString(for: "weather.suggestion.warning")

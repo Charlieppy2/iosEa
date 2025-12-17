@@ -8,6 +8,9 @@
 import Foundation
 import SwiftData
 
+/// Manages persistence operations for `HikeJournal` entries using SwiftData.
+/// Note: This store is largely superseded by `JournalFileStore` for actual persistence
+/// due to observed SwiftData synchronization issues.
 @MainActor
 final class JournalStore {
     private let context: ModelContext
@@ -16,6 +19,8 @@ final class JournalStore {
         self.context = context
     }
     
+    /// Loads all journal entries from the SwiftData context.
+    /// - Returns: An array of `HikeJournal` models, sorted by hike date (most recent first).
     func loadAllJournals() throws -> [HikeJournal] {
         print("📖 JournalStore: Loading all journals from context...")
         var descriptor = FetchDescriptor<HikeJournal>()
@@ -23,7 +28,7 @@ final class JournalStore {
         let journals = try context.fetch(descriptor)
         print("📖 JournalStore: Loaded \(journals.count) journals from database")
         if journals.isEmpty {
-            // 尝试检查 context 中是否有未保存的更改
+            // Attempt to check for unsaved changes in the context
             print("📖 JournalStore: No journals found. Checking for pending changes...")
         } else {
             for journal in journals {
@@ -33,6 +38,9 @@ final class JournalStore {
         return journals
     }
     
+    /// Loads a specific journal entry by its ID.
+    /// - Parameter id: The UUID of the journal to load.
+    /// - Returns: The `HikeJournal` if found, otherwise `nil`.
     func loadJournal(by id: UUID) throws -> HikeJournal? {
         var descriptor = FetchDescriptor<HikeJournal>()
         descriptor.predicate = #Predicate { $0.id == id }
@@ -40,6 +48,8 @@ final class JournalStore {
         return try context.fetch(descriptor).first
     }
     
+    /// Saves a new journal entry or updates an existing one in the SwiftData context.
+    /// - Parameter journal: The `HikeJournal` model to save or update.
     func saveJournal(_ journal: HikeJournal) throws {
         print("💾 JournalStore: Starting to save journal '\(journal.title)' (ID: \(journal.id))")
         print("   Photos count: \(journal.photos.count)")
@@ -50,7 +60,7 @@ final class JournalStore {
         print("💾 JournalStore: Inserting journal and photos into context...")
         context.insert(journal)
         
-        // 确保所有照片也被插入到 context
+        // Ensure all photos are also inserted into the context
         for photo in journal.photos {
             context.insert(photo)
         }
@@ -61,7 +71,7 @@ final class JournalStore {
             try context.save()
             print("✅ JournalStore: context.save() completed successfully")
             
-            // 强制处理待处理的更改
+            // Force processing of pending changes
             if context.hasChanges {
                 print("⚠️ JournalStore: Context still has changes after save, processing...")
                 try context.processPendingChanges()
@@ -79,11 +89,11 @@ final class JournalStore {
             throw error
         }
         
-        // 验证保存是否成功
+        // Verify if the save was successful
         let journalId = journal.id
         print("💾 JournalStore: Verifying save for journal ID: \(journalId)")
         
-        // 立即验证一次
+        // Immediate verification
         do {
             var descriptor = FetchDescriptor<HikeJournal>(
                 predicate: #Predicate<HikeJournal> { entry in
@@ -103,17 +113,24 @@ final class JournalStore {
         }
     }
     
+    /// Updates an existing journal entry in the SwiftData context.
+    /// - Parameter journal: The `HikeJournal` model to update.
     func updateJournal(_ journal: HikeJournal) throws {
         journal.updatedAt = Date()
         journal.updateShareToken()
         try context.save()
     }
     
+    /// Deletes a journal entry from the SwiftData context.
+    /// - Parameter journal: The `HikeJournal` model to delete.
     func deleteJournal(_ journal: HikeJournal) throws {
         context.delete(journal)
         try context.save()
     }
     
+    /// Loads journal entries associated with a specific trail.
+    /// - Parameter trailId: The UUID of the trail.
+    /// - Returns: An array of `HikeJournal` models.
     func loadJournalsByTrail(trailId: UUID) throws -> [HikeJournal] {
         var descriptor = FetchDescriptor<HikeJournal>()
         descriptor.predicate = #Predicate { $0.trailId == trailId }
@@ -121,6 +138,8 @@ final class JournalStore {
         return try context.fetch(descriptor)
     }
     
+    /// Loads all shared journal entries.
+    /// - Returns: An array of `HikeJournal` models.
     func loadSharedJournals() throws -> [HikeJournal] {
         var descriptor = FetchDescriptor<HikeJournal>()
         descriptor.predicate = #Predicate { $0.isShared == true }

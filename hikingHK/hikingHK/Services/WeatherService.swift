@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Abstraction for fetching a lightweight real-time weather snapshot for the app.
 protocol WeatherServiceProtocol {
     func fetchSnapshot(language: String) async throws -> WeatherSnapshot
 }
@@ -20,17 +21,17 @@ struct WeatherService: WeatherServiceProtocol {
     private let baseEndpoint = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang="
 
     init(session: URLSession? = nil, decoder: JSONDecoder? = nil, warningService: WeatherWarningServiceProtocol? = nil) {
-        // 配置 URLSession 使用超时设置
+        // Configure URLSession with reasonable timeouts for mobile networks
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 10.0 // 10秒超时
-        configuration.timeoutIntervalForResource = 15.0 // 15秒资源超时
+        configuration.timeoutIntervalForRequest = 10.0 // 10 seconds request timeout
+        configuration.timeoutIntervalForResource = 15.0 // 15 seconds resource timeout
         configuration.waitsForConnectivity = true
         
         self.session = session ?? URLSession(configuration: configuration)
         
-        // 配置 JSONDecoder 忽略未知键
+        // Configure JSONDecoder – by default Decodable ignores unknown keys,
+        // but we keep a dedicated instance for clarity and future customization.
         let jsonDecoder = decoder ?? JSONDecoder()
-        // Swift 的 Decodable 默认会忽略未知键，但我们需要确保正确配置
         self.decoder = jsonDecoder
         self.warningService = warningService ?? WeatherWarningService()
     }
@@ -41,6 +42,8 @@ struct WeatherService: WeatherServiceProtocol {
         return URL(string: "\(baseEndpoint)\(langCode)")!
     }
 
+    /// Fetches and builds a `WeatherSnapshot` from HKO real-time weather
+    /// plus warning summaries, with defensive decoding and logging.
     func fetchSnapshot(language: String = "en") async throws -> WeatherSnapshot {
         let endpoint = endpointURL(language: language)
         print("🌤️ WeatherService: Fetching weather from \(endpoint.absoluteString)")
@@ -60,7 +63,7 @@ struct WeatherService: WeatherServiceProtocol {
             
             print("✅ WeatherService: Received response (HTTP \(httpResponse.statusCode))")
             
-            // 打印 JSON 用于调试
+            // Print JSON shape for debugging when needed
             if let jsonString = String(data: data, encoding: .utf8) {
                 print("📄 WeatherService: JSON length: \(jsonString.count) characters")
                 // 打印关键部分
@@ -80,7 +83,7 @@ struct WeatherService: WeatherServiceProtocol {
             
             let payload = try decoder.decode(HKORealTimeWeather.self, from: data)
             
-            // 优先使用 "Hong Kong Observatory" 的数据，如果找不到则使用第一个
+            // Prefer values from "Hong Kong Observatory" when available, otherwise fall back to the first entry.
             let temperatureEntry = payload.temperature.data.first { $0.place == "Hong Kong Observatory" } ?? payload.temperature.data.first
             let humidityEntry = payload.humidity.data.first { $0.place == "Hong Kong Observatory" } ?? payload.humidity.data.first
             
@@ -95,17 +98,17 @@ struct WeatherService: WeatherServiceProtocol {
 
             let uvIndex = payload.uvindex?.data?.compactMap { $0.value }.first ?? 0
             
-            // 处理警告消息：先从实时天气 API 获取，然后从警告 API 获取并合并
+            // Build warning messages from both real‑time API and warning summary API
             var warningMessages: [String] = []
             
-            // 从实时天气 API 获取警告消息
+            // Step 1: warnings from real‑time rhrread API
             if let messages = payload.warningMessage, !messages.isEmpty {
                 print("📋 WeatherService: Found \(messages.count) warning message(s) from rhrread: \(messages)")
-                // 为每条消息添加⚠️符号
+                // Prefix each message with a warning symbol
                 warningMessages.append(contentsOf: messages.filter { !$0.isEmpty }.map { "⚠️ \($0)" })
             }
             
-            // 从警告 API 获取警告消息
+            // Step 2: warnings from warnsum API
             do {
                 let warnings = try await warningService.fetchWarnings(language: language)
                 let activeWarnings = warnings.filter { $0.isActive }
@@ -113,7 +116,7 @@ struct WeatherService: WeatherServiceProtocol {
                     print("📋 WeatherService: Found \(activeWarnings.count) active warning(s) from warnsum")
                     for warning in activeWarnings {
                         let warningText = "⚠️ \(warning.name) (\(warning.code))"
-                        // 检查是否已存在（去掉⚠️符号比较）
+                        // Avoid duplicates (compare without relying on the leading symbol)
                         let exists = warningMessages.contains { $0.contains(warning.name) && $0.contains(warning.code) }
                         if !exists {
                             warningMessages.append(warningText)
@@ -124,13 +127,13 @@ struct WeatherService: WeatherServiceProtocol {
                 print("⚠️ WeatherService: Failed to fetch warnings from warnsum API: \(error)")
             }
             
-            // 合并所有警告消息，确保每条消息都有⚠️符号
+            // Merge all warning messages into a single string, ensuring each line has the symbol.
             let warningMessage: String? = {
                 guard !warningMessages.isEmpty else {
                     print("📋 WeatherService: No warning messages found")
                     return nil
                 }
-                // 确保每条消息都有⚠️符号（如果还没有的话）
+                // Ensure each message is prefixed with ⚠️ exactly once.
                 let messagesWithSymbol = warningMessages.map { message in
                     message.contains("⚠️") ? message : "⚠️ \(message)"
                 }
@@ -231,14 +234,14 @@ struct HKORealTimeWeather: Decodable {
     let uvindex: UVIndexDataset?
     let warningMessage: [String]?
     
-    // API 返回的其他字段，我们不需要但需要声明以避免解码错误
-    // 使用 CodingKeys 来只解码我们需要的字段
+    // The API returns many other fields we do not need, but we declare
+    // only the keys we care about via CodingKeys to avoid decoding issues.
     enum CodingKeys: String, CodingKey {
         case temperature
         case humidity
         case uvindex
         case warningMessage
-        // 忽略其他字段：rainfall, icon, iconUpdateTime, updateTime, tcmessage 等
+        // Other fields from the API (rainfall, icon, iconUpdateTime, updateTime, tcmessage, etc.) are intentionally ignored.
     }
     
     init(from decoder: Decoder) throws {
@@ -247,14 +250,14 @@ struct HKORealTimeWeather: Decodable {
         temperature = try container.decode(WeatherDataset.self, forKey: .temperature)
         humidity = try container.decode(WeatherDataset.self, forKey: .humidity)
         
-        // 处理 warningMessage 字段：可能是字符串、字符串数组或 null
+        // Handle `warningMessage` which may be a string, an array of strings, or null.
         if container.contains(.warningMessage) {
-            // 尝试解码为字符串数组
+            // First, try to decode as an array of strings.
             if let warningArray = try? container.decode([String].self, forKey: .warningMessage) {
                 print("📋 WeatherService: warningMessage decoded as array: \(warningArray)")
                 warningMessage = warningArray
             } else if let warningString = try? container.decode(String.self, forKey: .warningMessage) {
-                // 如果是字符串，转换为数组（如果为空字符串则为空数组）
+                // If it is a single string, convert to an array (empty string becomes empty array).
                 print("📋 WeatherService: warningMessage decoded as string: '\(warningString)'")
                 if warningString.isEmpty {
                     warningMessage = []
@@ -262,7 +265,7 @@ struct HKORealTimeWeather: Decodable {
                     warningMessage = [warningString]
                 }
             } else {
-                // 如果既不是数组也不是字符串，设置为空数组
+                // If it is neither array nor string, treat as empty.
                 print("📋 WeatherService: warningMessage could not be decoded as array or string")
                 warningMessage = []
             }
@@ -271,24 +274,24 @@ struct HKORealTimeWeather: Decodable {
             warningMessage = []
         }
         
-        // 处理 uvindex 字段：可能是字典、空字符串或 null
+        // Handle `uvindex` which may be a dictionary, empty string, or null.
         if container.contains(.uvindex) {
-            // 尝试解码为字典
+            // Try to decode as the expected dictionary model first.
             if let uvindexDict = try? container.decode(UVIndexDataset.self, forKey: .uvindex) {
                 uvindex = uvindexDict
             } else {
-                // 如果不是字典，尝试解码为字符串（可能是空字符串）
+                // If it is not a dictionary, try decoding as a string (often an empty string).
                 if let uvindexString = try? container.decode(String.self, forKey: .uvindex) {
-                    // 如果是空字符串或无效值，设置为 nil
+                    // Empty or invalid strings are treated as `nil`.
                     if uvindexString.isEmpty {
                         uvindex = nil
                     } else {
-                        // 如果不是空字符串，尝试解析（虽然通常应该是空字符串）
+                        // If non-empty, log and ignore – API should usually send an empty string here.
                         print("⚠️ WeatherService: uvindex is a non-empty string: \(uvindexString)")
                         uvindex = nil
                     }
                 } else {
-                    // 如果既不是字典也不是字符串，设置为 nil
+                    // If it is neither dictionary nor string, treat as nil.
                     uvindex = nil
                 }
             }
@@ -300,24 +303,24 @@ struct HKORealTimeWeather: Decodable {
 
 struct WeatherDataset: Decodable {
     let data: [WeatherEntry]
-    let recordTime: String? // temperature 和 humidity 对象都有这个字段
+    let recordTime: String? // Both temperature and humidity objects include this field.
 }
 
 struct WeatherEntry: Decodable {
     let place: String
     let value: Double?
     let unit: String?
-    // temperature.data 中的元素没有 recordTime，所以不在这里定义
+    // Elements inside temperature.data do not expose recordTime, so it is not defined here.
 }
 
 struct UVIndexDataset: Decodable {
     let data: [UVIndexEntry]?
-    let recordDesc: String? // uvindex 对象有这个字段
+    let recordDesc: String? // uvindex object provides this description field.
 }
 
 struct UVIndexEntry: Decodable {
     let place: String?
-    let value: Int? // API 返回的是数字，不是字符串
-    let desc: String? // API 返回的字段名是 desc，不是 recordTime
+    let value: Int? // API returns this as a number, not a string.
+    let desc: String? // API uses `desc` here instead of something like `recordTime`.
 }
 

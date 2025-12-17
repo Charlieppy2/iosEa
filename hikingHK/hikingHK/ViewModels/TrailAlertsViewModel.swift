@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 
+/// View model for fetching, filtering, and auto-refreshing trail alerts.
 @MainActor
 final class TrailAlertsViewModel: ObservableObject {
     @Published var alerts: [TrailAlert] = []
@@ -17,17 +18,21 @@ final class TrailAlertsViewModel: ObservableObject {
     private let alertsService: TrailAlertsServiceProtocol
     private var languageManager: LanguageManager?
     private var autoRefreshTask: Task<Void, Never>?
-    private let autoRefreshInterval: TimeInterval = 300 // 5分钟自动刷新
+    /// Interval in seconds for automatically refreshing trail alerts (default: 5 minutes).
+    private let autoRefreshInterval: TimeInterval = 300
     
+    /// Creates a new trail alerts view model with injectable service and language manager.
     init(alertsService: TrailAlertsServiceProtocol = TrailAlertsService(), languageManager: LanguageManager? = nil) {
         self.alertsService = alertsService
         self.languageManager = languageManager
     }
     
+    /// Updates the language manager, used when the app language changes at runtime.
     func updateLanguageManager(_ languageManager: LanguageManager) {
         self.languageManager = languageManager
     }
     
+    /// Loads trail alerts from the backend, keeping only active alerts and sorting by severity and time.
     func fetchAlerts() async {
         isLoading = true
         error = nil
@@ -37,9 +42,9 @@ final class TrailAlertsViewModel: ObservableObject {
         
         do {
             let fetchedAlerts = try await alertsService.fetchAlerts(language: language)
-            // Filter to only show active alerts
+            // Filter to only show active alerts.
             alerts = fetchedAlerts.filter { $0.isActive }
-            // Sort by severity (critical first) and then by issued date (newest first)
+            // Sort by severity (critical first) and then by issued date (newest first).
             alerts.sort { lhs, rhs in
                 if lhs.severity != rhs.severity {
                     return lhs.severity.rawValue > rhs.severity.rawValue
@@ -53,6 +58,7 @@ final class TrailAlertsViewModel: ObservableObject {
         }
     }
     
+    /// Starts the auto-refresh task that periodically fetches the latest alerts.
     func startAutoRefresh() {
         stopAutoRefresh()
         autoRefreshTask = Task {
@@ -66,15 +72,18 @@ final class TrailAlertsViewModel: ObservableObject {
         print("🔄 TrailAlertsViewModel: Started auto-refresh (every \(Int(autoRefreshInterval)) seconds)")
     }
     
+    /// Stops the auto-refresh task, if any.
     func stopAutoRefresh() {
         autoRefreshTask?.cancel()
         autoRefreshTask = nil
     }
     
+    /// Number of currently active alerts.
     var activeAlertsCount: Int {
         alerts.filter { $0.isActive }.count
     }
     
+    /// All active alerts with critical severity.
     var criticalAlerts: [TrailAlert] {
         alerts.filter { $0.severity == .critical && $0.isActive }
     }

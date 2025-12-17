@@ -10,6 +10,10 @@ import CoreLocation
 import Combine
 import SwiftData
 
+/// View model that reports the status of key services on the Home screen:
+/// - Weather API connectivity
+/// - GPS / location permission
+/// - Offline maps availability
 @MainActor
 final class ServicesStatusViewModel: NSObject, ObservableObject {
     @Published var weatherServiceStatus: ServiceStatus = .unknown
@@ -27,12 +31,14 @@ final class ServicesStatusViewModel: NSObject, ObservableObject {
         checkOfflineMapsStatus()
     }
     
+    /// High-level connectivity / availability state for a service.
     enum ServiceStatus {
         case connected
         case disconnected
         case unavailable
         case unknown
         
+        /// SF Symbol name that represents this status.
         var icon: String {
             switch self {
             case .connected: return "checkmark.circle.fill"
@@ -42,6 +48,7 @@ final class ServicesStatusViewModel: NSObject, ObservableObject {
             }
         }
         
+        /// A semantic color name that can be mapped to UI theme colors.
         var color: String {
             switch self {
             case .connected: return "green"
@@ -52,6 +59,7 @@ final class ServicesStatusViewModel: NSObject, ObservableObject {
         }
     }
     
+    /// Updates `weatherServiceStatus` based on whether we have valid data and/or an error.
     func checkWeatherServiceStatus(weatherError: String?, hasWeatherData: Bool) {
         if hasWeatherData && weatherError == nil {
             weatherServiceStatus = .connected
@@ -62,6 +70,7 @@ final class ServicesStatusViewModel: NSObject, ObservableObject {
         }
     }
     
+    /// Updates `gpsStatus` based on the current CoreLocation authorization state.
     func checkGPSStatus() {
         let status = locationManager.authorizationStatus
         switch status {
@@ -76,8 +85,10 @@ final class ServicesStatusViewModel: NSObject, ObservableObject {
         }
     }
     
+    /// Updates `offlineMapsStatus` by checking both SwiftData metadata and actual files on disk.
+    /// - Parameter context: Optional SwiftData `ModelContext` used to read `OfflineMapRegion` records.
     func checkOfflineMapsStatus(context: ModelContext? = nil) {
-        // 先嘗試從 SwiftData 判斷是否有「已下載」的區域
+        // First, try to decide based on SwiftData records for downloaded regions.
         var hasDownloaded = false
         
         if let context = context {
@@ -85,34 +96,34 @@ final class ServicesStatusViewModel: NSObject, ObservableObject {
                 let store = OfflineMapsStore(context: context)
                 let regions = try store.loadAllRegions()
                 
-                // 1️⃣ 先看資料庫裡是否有標記為已下載的區域
+                // 1️⃣ Check if any region in the database is marked as downloaded.
                 hasDownloaded = regions.contains { $0.downloadStatus == .downloaded }
                 
-                // 2️⃣ 如果資料庫裡沒有任何已下載，但實際檔案已存在，改用檔案系統判斷
+                // 2️⃣ If none are marked as downloaded but files exist, fall back to file system check.
                 if !hasDownloaded {
                     hasDownloaded = hasAnyOfflineMapFilesOnDisk()
                 }
             } catch {
-                // SwiftData 出錯時，退回檔案系統判斷
+                // If SwiftData fails, fall back to a pure file system check.
                 hasDownloaded = hasAnyOfflineMapFilesOnDisk()
             }
         } else {
-            // 沒有傳入 context，也用檔案系統來嘗試判斷
+            // When no context is provided, rely only on the file system check.
             hasDownloaded = hasAnyOfflineMapFilesOnDisk()
         }
         
         offlineMapsStatus = hasDownloaded ? .connected : .unavailable
     }
     
-    /// 直接從檔案系統檢查是否存在任何離線地圖資料夾（含 metadata.json）
+    /// Checks the file system to see if any offline map directory (with `metadata.json`) exists.
     private func hasAnyOfflineMapFilesOnDisk() -> Bool {
-        // 與 OfflineMapsDownloadService 使用相同的路徑：Documents/OfflineMaps
+        // Use the same base path as `OfflineMapsDownloadService`: Documents/OfflineMaps
         guard let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
             return false
         }
         let offlineDir = documentsDir.appendingPathComponent("OfflineMaps", isDirectory: true)
         
-        // 沒有 OfflineMaps 目錄就直接視為沒有離線地圖
+        // If there is no OfflineMaps directory, treat as "no offline maps".
         guard fileManager.fileExists(atPath: offlineDir.path) else {
             return false
         }
@@ -131,13 +142,14 @@ final class ServicesStatusViewModel: NSObject, ObservableObject {
                 }
             }
         } catch {
-            // 發生錯誤時當作沒有離線地圖，並在除錯輸出訊息
+            // On error, assume no offline maps and log for debugging.
             print("⚠️ ServicesStatusViewModel: Failed to scan offline maps directory: \(error.localizedDescription)")
         }
         
         return false
     }
     
+    /// Convenience helper to refresh all service statuses in one call.
     func refreshAllStatuses(weatherError: String?, hasWeatherData: Bool, context: ModelContext? = nil) {
         checkWeatherServiceStatus(weatherError: weatherError, hasWeatherData: hasWeatherData)
         checkGPSStatus()

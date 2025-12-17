@@ -8,6 +8,7 @@
 import Foundation
 import MapKit
 
+/// Domain model representing a hiking trail with metadata, route and map information.
 struct Trail: Identifiable, Hashable {
     let id: UUID
     var name: String
@@ -274,7 +275,7 @@ extension Trail {
                 .init(latitude: 22.4228, longitude: 114.1274)
             ]
         ),
-        // 麦理浩径各段
+        // MacLehose Trail sections
         Trail(
             id: UUID(uuidString: "A1B2C3D4-E5F6-7890-ABCD-EF1234567890")!,
             name: "MacLehose Section 1",
@@ -379,7 +380,7 @@ extension Trail {
             mapCenter: CLLocationCoordinate2D(latitude: 22.408, longitude: 114.121),
             mapSpan: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
         ),
-        // 卫奕信径
+        // Wilson Trail sections
         Trail(
             id: UUID(uuidString: "F6A7B8C9-D0E1-2345-F012-678901234567")!,
             name: "Wilson Trail Section 1",
@@ -422,7 +423,7 @@ extension Trail {
             mapCenter: CLLocationCoordinate2D(latitude: 22.280, longitude: 114.220),
             mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
         ),
-        // 凤凰径
+        // Lantau Trail sections
         Trail(
             id: UUID(uuidString: "B8C9D0E1-F2A3-4567-1234-890123456789")!,
             name: "Lantau Trail Section 2",
@@ -465,7 +466,7 @@ extension Trail {
             mapCenter: CLLocationCoordinate2D(latitude: 22.270, longitude: 113.900),
             mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
         ),
-        // 港岛径
+        // Hong Kong Trail sections
         Trail(
             id: UUID(uuidString: "D0E1F2A3-B4C5-6789-3456-012345678901")!,
             name: "Hong Kong Trail Section 1",
@@ -507,7 +508,7 @@ extension Trail {
             mapCenter: CLLocationCoordinate2D(latitude: 22.260, longitude: 114.200),
             mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
         ),
-        // 其他著名路线
+        // Other iconic routes around Hong Kong
         Trail(
             id: UUID(uuidString: "F2A3B4C5-D6E7-8901-5678-234567890123")!,
             name: "Lion Rock",

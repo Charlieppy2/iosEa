@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 import CoreLocation
 
+/// SwiftData model describing a live location-sharing session and its latest position.
 @Model
 final class LocationShareSession {
     var id: UUID
@@ -17,7 +18,7 @@ final class LocationShareSession {
     var lastLocationUpdate: Date?
     var lastLocationLatitude: Double?
     var lastLocationLongitude: Double?
-    var shareLink: String? // 分享鏈接（可選）
+    var shareLink: String? // Optional shareable URL for this live session
     var expiresAt: Date?
     var emergencyContacts: [EmergencyContact]?
     

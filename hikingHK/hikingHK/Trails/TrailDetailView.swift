@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// Detailed trail page showing map, checkpoints, facilities, highlights and transportation info.
 struct TrailDetailView: View {
     let trail: Trail
     @EnvironmentObject private var languageManager: LanguageManager
@@ -35,6 +36,7 @@ struct TrailDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    /// Top summary header with district, distance, elevation and duration.
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center, spacing: 16) {
@@ -58,6 +60,7 @@ struct TrailDetailView: View {
         }
     }
 
+    /// Timeline-style list of checkpoints along the trail.
     private var timelineSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(languageManager.localizedString(for: "trail.checkpoints"))
@@ -101,6 +104,7 @@ struct TrailDetailView: View {
         }
     }
 
+    /// Horizontal list of trail facilities (toilets, shelters, kiosks, etc.).
     private var facilitiesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(languageManager.localizedString(for: "trail.facilities"))
@@ -124,6 +128,7 @@ struct TrailDetailView: View {
         }
     }
 
+    /// Section listing key highlights of the trail.
     private var highlightsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(languageManager.localizedString(for: "trail.highlights"))
@@ -137,8 +142,9 @@ struct TrailDetailView: View {
         }
     }
     
+    /// Returns a localized version of a highlight, falling back to the original text.
     private func localizedHighlight(_ highlight: String) -> String {
-        // Create a key based on trail ID and highlight text
+        // Create a key based on trail ID and normalized highlight text.
         let highlightKey = highlight.lowercased()
             .replacingOccurrences(of: " ", with: ".")
             .replacingOccurrences(of: "'", with: "")
@@ -150,6 +156,7 @@ struct TrailDetailView: View {
         return localized != key ? localized : highlight
     }
 
+    /// Section describing how to reach the trailhead and return from the finish.
     private var transportationSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(languageManager.localizedString(for: "trail.transportation"))

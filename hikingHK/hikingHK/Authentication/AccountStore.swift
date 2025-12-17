@@ -8,14 +8,18 @@
 import Foundation
 import SwiftData
 
+/// Store responsible for reading and writing authentication data in SwiftData.
 @MainActor
 final class AccountStore {
+    /// Backing SwiftData context used for all account queries.
     private let context: ModelContext
 
+    /// Creates a new store bound to the given SwiftData context.
     init(context: ModelContext) {
         self.context = context
     }
 
+    /// Seeds a couple of demo user accounts the first time the store is empty.
     func seedDefaultsIfNeeded() throws {
         let descriptor = FetchDescriptor<UserCredential>()
         let existing = try context.fetch(descriptor)
@@ -40,6 +44,7 @@ final class AccountStore {
         try context.save()
     }
 
+    /// Returns the credential for the given email if it exists; otherwise `nil`.
     func credential(for email: String) throws -> UserCredential? {
         var descriptor = FetchDescriptor<UserCredential>(
             predicate: #Predicate { $0.email == email }
@@ -48,6 +53,7 @@ final class AccountStore {
         return try context.fetch(descriptor).first
     }
 
+    /// Creates and persists a new credential for a registered user.
     func createCredential(name: String, email: String, password: String) throws -> UserCredential {
         let credential = UserCredential(
             email: email,

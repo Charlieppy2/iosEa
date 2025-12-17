@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+/// Store responsible for seeding, loading and updating `OfflineMapRegion` records via SwiftData.
 @MainActor
 final class OfflineMapsStore {
     private let context: ModelContext
@@ -16,12 +17,13 @@ final class OfflineMapsStore {
         self.context = context
     }
     
+    /// Inserts the default offline regions if none exist, and returns all regions.
     func seedDefaultsIfNeeded() throws -> [OfflineMapRegion] {
         let descriptor = FetchDescriptor<OfflineMapRegion>()
         let existing = try context.fetch(descriptor)
         guard existing.isEmpty else {
             print("OfflineMapsStore: Found \(existing.count) existing regions, skipping seed")
-            // 返回所有现有区域
+            // Return all existing regions if seeding is not needed.
             return try loadAllRegions()
         }
         
@@ -37,21 +39,23 @@ final class OfflineMapsStore {
         try context.save()
         print("OfflineMapsStore: Successfully seeded \(defaultRegions.count) regions")
         
-        // 立即返回已插入的区域，而不是查询
+        // Return the inserted regions directly instead of querying again.
         print("OfflineMapsStore: Returning \(defaultRegions.count) inserted regions directly")
         return defaultRegions.sorted { $0.name < $1.name }
     }
     
+    /// Loads all offline map regions, sorted by name.
     func loadAllRegions() throws -> [OfflineMapRegion] {
-        // 先尝试不使用排序的简单查询
+        // First perform an unsorted fetch from SwiftData.
         let simpleDescriptor = FetchDescriptor<OfflineMapRegion>()
         let allRegions = try context.fetch(simpleDescriptor)
         print("OfflineMapsStore: loadAllRegions() fetched \(allRegions.count) regions (no sort)")
         
-        // 手动排序
+        // Manually sort by name to avoid SortDescriptor limitations with @Model.
         return allRegions.sorted { $0.name < $1.name }
     }
     
+    /// Fetches a single region by its display name.
     func getRegion(named name: String) throws -> OfflineMapRegion? {
         var descriptor = FetchDescriptor<OfflineMapRegion>(
             predicate: #Predicate { $0.name == name }
@@ -60,18 +64,21 @@ final class OfflineMapsStore {
         return try context.fetch(descriptor).first
     }
     
+    /// Updates the `lastUpdated` timestamp and saves a region.
     func updateRegion(_ region: OfflineMapRegion) throws {
         region.lastUpdated = Date()
         try context.save()
     }
     
+    /// Deletes a region from the SwiftData context.
     func deleteRegion(_ region: OfflineMapRegion) throws {
         context.delete(region)
         try context.save()
     }
     
+    /// Force-creates all default regions even if they already exist.
+    /// Primarily useful for debugging or testing seeding behaviour.
     func forceSeedRegions() throws -> [OfflineMapRegion] {
-        // 强制创建所有默认区域，即使已存在
         print("OfflineMapsStore: Force seeding regions...")
         let defaultRegions = OfflineMapRegion.availableRegions.map { name in
             OfflineMapRegion(name: name)
@@ -84,7 +91,7 @@ final class OfflineMapsStore {
         try context.save()
         print("OfflineMapsStore: Force seeded \(defaultRegions.count) regions")
         
-        // 立即返回已插入的区域，而不是查询
+        // Return the inserted regions directly instead of querying again.
         print("OfflineMapsStore: Returning \(defaultRegions.count) inserted regions directly")
         return defaultRegions.sorted { $0.name < $1.name }
     }

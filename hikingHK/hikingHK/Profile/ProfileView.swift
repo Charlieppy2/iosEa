@@ -1,5 +1,14 @@
+//
+//  ProfileView.swift
+//  hikingHK
+//
+//  Profile screen showing account info, hiking stats, goals,
+//  achievements and the health/status of core services & APIs.
+//
+
 import SwiftUI
 
+/// Main profile / settings screen for the user.
 struct ProfileView: View {
     @EnvironmentObject private var viewModel: AppViewModel
     @EnvironmentObject private var sessionManager: SessionManager
@@ -11,14 +20,17 @@ struct ProfileView: View {
     @StateObject private var achievementViewModel = AchievementViewModel()
     @EnvironmentObject private var languageManager: LanguageManager
 
+    /// Number of planned hikes that are not yet completed.
     private var plannedCount: Int {
         viewModel.savedHikes.filter { !$0.isCompleted }.count
     }
 
+    /// Number of trails marked as favorites.
     private var favoritesCount: Int {
         viewModel.trails.filter { $0.isFavorite }.count
     }
 
+    /// Total distance of all completed saved hikes.
     private var loggedDistance: Double {
         viewModel.savedHikes
             .filter { $0.isCompleted }
@@ -26,7 +38,7 @@ struct ProfileView: View {
             .reduce(0, +)
     }
     
-    // Goals tracking
+    // MARK: - Goal tracking helpers
     private var completedRidgeLines: Int {
         viewModel.savedHikes
             .filter { $0.isCompleted && $0.trail.difficulty == .challenging }
@@ -157,6 +169,7 @@ struct ProfileView: View {
             )
             .navigationTitle(languageManager.localizedString(for: "profile.title"))
             .onAppear {
+                // Refresh service statuses based on current weather data and context
                 servicesStatus.refreshAllStatuses(
                     weatherError: viewModel.weatherError,
                     hasWeatherData: viewModel.weatherSnapshot.updatedAt > Date().addingTimeInterval(-3600),
@@ -164,7 +177,7 @@ struct ProfileView: View {
                 )
                 achievementViewModel.configureIfNeeded(context: modelContext)
                 
-                // Update achievements from hike records
+                // Update achievements based on the latest hike records
                 Task {
                     await apiChecker.checkAllAPIs()
                     updateAchievements()
@@ -190,6 +203,7 @@ struct ProfileView: View {
         }
     }
     
+    /// Refreshes achievements using persisted hike records.
     private func updateAchievements() {
         // Update achievements from hike records
         Task {
@@ -198,12 +212,13 @@ struct ProfileView: View {
                 let hikeRecords = try recordStore.loadAllRecords()
                 achievementViewModel.refreshAchievements(from: hikeRecords)
             } catch {
-                // 如果沒有 HikeRecord，可以從 savedHikes 轉換
-                // 這裡暫時忽略錯誤
+                // If there are no HikeRecord entries, we could derive progress from savedHikes.
+                // For now we silently ignore errors to avoid blocking the profile screen.
             }
         }
     }
 
+    /// Account information and sign-out controls.
     private var accountSection: some View {
         Section(languageManager.localizedString(for: "profile.account")) {
             if let user = sessionManager.currentUser {
@@ -227,6 +242,7 @@ struct ProfileView: View {
         }
     }
 
+    /// High-level stats for planned hikes, favorites, and logged distance.
     private var statsSection: some View {
         Section(languageManager.localizedString(for: "profile.stats")) {
             HStack {
@@ -237,6 +253,7 @@ struct ProfileView: View {
         }
     }
 
+    /// Single stat pill used inside the stats section.
     private func stat(value: String, label: String) -> some View {
         VStack(spacing: 6) {
             Text(value)
@@ -254,6 +271,7 @@ struct ProfileView: View {
         )
     }
     
+    /// Renders a single goal row with a progress bar and value text.
     private func goalRow(goal: Goal) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -267,7 +285,7 @@ struct ProfileView: View {
                 }
             }
             
-            // Progress bar
+            // Progress bar for the specific goal
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 6)
@@ -297,6 +315,7 @@ struct ProfileView: View {
         .padding(.vertical, 6)
     }
     
+    /// Row displaying the status of an internal service (GPS, offline maps, etc.).
     private func serviceStatusRow(title: String, icon: String, status: ServicesStatusViewModel.ServiceStatus) -> some View {
         HStack {
             Label(title, systemImage: icon)
@@ -320,6 +339,7 @@ struct ProfileView: View {
         }
     }
     
+    /// Row displaying the status of an external API connection.
     private func apiStatusRow(title: String, icon: String, status: APIConnectionChecker.ConnectionStatus) -> some View {
         HStack {
             Label(title, systemImage: icon)
@@ -343,6 +363,7 @@ struct ProfileView: View {
         }
     }
     
+    /// Color helper for API connection status tags.
     private func getColorForAPIConnectionStatus(_ status: APIConnectionChecker.ConnectionStatus) -> Color {
         switch status {
         case .checking: return .orange
@@ -353,6 +374,7 @@ struct ProfileView: View {
         }
     }
     
+    /// Color helper for internal service status tags.
     private func statusColor(for status: ServicesStatusViewModel.ServiceStatus) -> Color {
         switch status {
         case .connected: return Color.hikingGreen
@@ -362,6 +384,7 @@ struct ProfileView: View {
         }
     }
     
+    /// Localized text helper for internal service status.
     private func statusText(for status: ServicesStatusViewModel.ServiceStatus) -> String {
         switch status {
         case .connected: return languageManager.localizedString(for: "service.status.connected")
@@ -371,6 +394,7 @@ struct ProfileView: View {
         }
     }
     
+    /// Language selection row allowing the user to switch app language.
     private var languageSelectionRow: some View {
         HStack {
             Image(systemName: "globe")
@@ -404,11 +428,3 @@ struct ProfileView: View {
         .environmentObject(SessionManager.previewSignedIn())
         .environmentObject(LanguageManager.shared)
 }
-//
-//  ProfileView.swift
-//  hikingHK
-//
-//  Created by assistant on 17/11/2025.
-//
-
-

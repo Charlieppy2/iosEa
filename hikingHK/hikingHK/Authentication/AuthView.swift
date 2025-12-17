@@ -7,21 +7,26 @@
 
 import SwiftUI
 
+/// Authentication screen that lets the user sign in or create a new account.
 struct AuthView: View {
     @EnvironmentObject private var sessionManager: SessionManager
     @EnvironmentObject private var languageManager: LanguageManager
+    
+    /// Local form state for the user's name, email and password.
     @State private var name = ""
     @State private var email = "jamie@trailcollective.hk"
     @State private var password = "GoHike123"
     @State private var isRegistering = false
     @FocusState private var focusedField: Field?
 
+    /// Fields that can receive keyboard focus inside the form.
     enum Field {
         case name
         case email
         case password
     }
 
+    /// Main view hierarchy: branding, form fields, error display and action buttons.
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
@@ -75,6 +80,7 @@ struct AuthView: View {
                 }
                 .ignoresSafeArea()
             )
+            // Status pill shown while the underlying account store is being prepared.
             .overlay(alignment: .top) {
                 if !sessionManager.isConfigured {
                     Label(languageManager.localizedString(for: "auth.preparing.storage"), systemImage: "lock.rectangle.stack")
@@ -83,6 +89,7 @@ struct AuthView: View {
                         .padding(.top, 16)
                 }
             }
+            // Add a "Done" button above the keyboard to dismiss the keyboard.
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -94,6 +101,7 @@ struct AuthView: View {
 }
 
 extension AuthView {
+    /// Primary button that triggers sign in or sign up depending on the current mode.
     private var authActionButton: some View {
         Button {
             if isRegistering {
@@ -117,6 +125,7 @@ extension AuthView {
         .disabled(isRegistering ? (name.isEmpty || email.isEmpty || password.isEmpty || sessionManager.isAuthenticating) : (email.isEmpty || password.isEmpty || sessionManager.isAuthenticating))
     }
 
+    /// Switch between "already have an account" and "new hiker" modes.
     private var modeToggle: some View {
         VStack(spacing: 12) {
             Button {

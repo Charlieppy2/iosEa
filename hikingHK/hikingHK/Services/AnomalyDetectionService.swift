@@ -8,6 +8,7 @@
 import Foundation
 import CoreLocation
 
+/// Describes the anomaly detection operations for hiking sessions.
 protocol AnomalyDetectionServiceProtocol {
     func checkForAnomalies(
         currentLocation: CLLocation?,
@@ -17,6 +18,7 @@ protocol AnomalyDetectionServiceProtocol {
     ) -> Anomaly?
 }
 
+/// An anomaly detected during a hiking session (type, severity, and message).
 struct Anomaly {
     let type: AnomalyType
     let severity: Severity
@@ -24,10 +26,10 @@ struct Anomaly {
     let detectedAt: Date
     
     enum AnomalyType {
-        case noMovement // 長時間不動
-        case locationStuck // 位置卡住
-        case noLocationUpdate // 長時間沒有位置更新
-        case batteryLow // 電量低（可選）
+        case noMovement // Long period without movement
+        case locationStuck // Location appears stuck
+        case noLocationUpdate // Long period without any location updates
+        case batteryLow // Battery level is low (optional trigger)
     }
     
     enum Severity {
@@ -54,11 +56,11 @@ struct Anomaly {
 
 final class AnomalyDetectionService: AnomalyDetectionServiceProtocol {
     
-    // 配置參數
-    private let noMovementThreshold: TimeInterval = 15 * 60 // 15 分鐘不動
-    private let locationStuckDistance: CLLocationDistance = 50 // 50 米內視為卡住
-    private let noUpdateThreshold: TimeInterval = 10 * 60 // 10 分鐘沒有更新
-    private let criticalNoMovementThreshold: TimeInterval = 30 * 60 // 30 分鐘不動（嚴重）
+    // Configuration thresholds for anomaly detection
+    private let noMovementThreshold: TimeInterval = 15 * 60 // No movement for 15 minutes
+    private let locationStuckDistance: CLLocationDistance = 50 // Within 50 meters considered "stuck"
+    private let noUpdateThreshold: TimeInterval = 10 * 60 // No location update for 10 minutes
+    private let criticalNoMovementThreshold: TimeInterval = 30 * 60 // No movement for 30 minutes (critical)
     
     func checkForAnomalies(
         currentLocation: CLLocation?,
@@ -68,7 +70,7 @@ final class AnomalyDetectionService: AnomalyDetectionServiceProtocol {
     ) -> Anomaly? {
         let now = Date()
         
-        // 檢查 1: 長時間沒有位置更新
+        // Check 1: long period without any location updates
         if let lastUpdate = lastUpdateTime {
             let timeSinceUpdate = now.timeIntervalSince(lastUpdate)
             if timeSinceUpdate > noUpdateThreshold {
@@ -82,7 +84,7 @@ final class AnomalyDetectionService: AnomalyDetectionServiceProtocol {
             }
         }
         
-        // 檢查 2: 長時間不動
+        // Check 2: long period without movement
         guard let current = currentLocation, let last = lastLocation else {
             return nil
         }
@@ -90,7 +92,7 @@ final class AnomalyDetectionService: AnomalyDetectionServiceProtocol {
         let distance = current.distance(from: last)
         let timeSinceLastUpdate = lastUpdateTime.map { now.timeIntervalSince($0) } ?? 0
         
-        // 如果位置幾乎沒有變化，且時間超過閾值
+        // If the user has barely moved and the elapsed time exceeds the threshold
         if distance < locationStuckDistance && timeSinceLastUpdate > noMovementThreshold {
             let severity: Anomaly.Severity = timeSinceLastUpdate > criticalNoMovementThreshold ? .critical : .high
             return Anomaly(
@@ -101,8 +103,8 @@ final class AnomalyDetectionService: AnomalyDetectionServiceProtocol {
             )
         }
         
-        // 檢查 3: 位置卡住（位置幾乎相同）
-        if distance < locationStuckDistance && timeSinceLastUpdate > 5 * 60 { // 5 分鐘
+        // Check 3: location appears stuck (position almost unchanged)
+        if distance < locationStuckDistance && timeSinceLastUpdate > 5 * 60 { // 5 minutes
             return Anomaly(
                 type: .locationStuck,
                 severity: .medium,

@@ -27,28 +27,28 @@ struct LocationSharingView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // 狀態卡片
+                    // Status card
                     statusCard
                     
-                    // 緊急求救按鈕
+                    // Emergency SOS button
                     emergencySOSButton
                     
-                    // 異常檢測狀態
+                    // Anomaly detection status
                     if let anomaly = viewModel.lastAnomaly {
                         anomalyAlertCard(anomaly)
                     }
                     
-                    // 當前位置信息
+                    // Current location information
                     if viewModel.isSharing, let location = viewModel.currentLocation {
                         locationInfoCard(location)
                     }
                     
-                    // 分享鏈接
+                    // Shareable link
                     if viewModel.isSharing, let shareLink = viewModel.generateShareLink() {
                         shareLinkCard(shareLink)
                     }
                     
-                    // 緊急聯繫人列表
+                    // Emergency contacts list
                     emergencyContactsSection
                 }
                 .padding(20)

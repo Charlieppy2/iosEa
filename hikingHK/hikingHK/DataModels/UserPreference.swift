@@ -8,11 +8,12 @@
 import Foundation
 import SwiftData
 
+/// Persistent user preference model used to power personalized trail recommendations.
 @Model
 final class UserPreference {
     var id: UUID
-    var preferredScenery: [SceneryType] // 偏好的風景類型
-    var preferredDifficultyRawValue: String? // 偏好的難度（存儲為 String）
+    var preferredScenery: [SceneryType] // Preferred scenery types
+    var preferredDifficultyRawValue: String? // Preferred difficulty stored as a String raw value
     
     var preferredDifficulty: Trail.Difficulty? {
         get {
@@ -23,10 +24,10 @@ final class UserPreference {
             preferredDifficultyRawValue = newValue?.rawValue
         }
     }
-    var preferredDuration: TimeRange? // 偏好的時長範圍
-    var preferredDistance: DistanceRange? // 偏好的距離範圍
-    var preferredTimeOfDay: [TimeOfDay] // 偏好的時間段
-    var fitnessLevel: FitnessLevel // 體能水平
+    var preferredDuration: TimeRange? // Preferred hike duration range
+    var preferredDistance: DistanceRange? // Preferred distance range in kilometres
+    var preferredTimeOfDay: [TimeOfDay] // Preferred time(s) of day to hike
+    var fitnessLevel: FitnessLevel // Self-reported fitness level
     var lastUpdated: Date
     
     enum SceneryType: String, Codable, CaseIterable {

@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Contract for services that can update achievement progress from user activity data.
 protocol AchievementTrackingServiceProtocol {
     func updateDistanceAchievements(achievements: [Achievement], totalDistance: Double) -> [Achievement]
     func updatePeakAchievements(achievements: [Achievement], completedPeaks: [String]) -> [Achievement]

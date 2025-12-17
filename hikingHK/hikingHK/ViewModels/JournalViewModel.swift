@@ -2,15 +2,17 @@
 //  JournalViewModel.swift
 //  hikingHK
 //
-//  用 FileManager + JSON 持久化行山日記，完全不用 SwiftData 讀寫
+//  Uses FileManager + JSON to persist hiking journals instead of SwiftData.
 //
 
 import Foundation
 import Combine
 import CoreLocation
-import SwiftData // 只為了兼容 configureIfNeeded(context:)，不再用來持久化
+import SwiftData // Only for configureIfNeeded(context:), no longer used for persistence.
 
 @MainActor
+/// ViewModel for managing hiking journal entries.
+/// Uses FileManager + JSON for persistence, avoiding SwiftData synchronization issues.
 final class JournalViewModel: ObservableObject {
     @Published var journals: [HikeJournal] = []
     @Published var isLoading: Bool = false
@@ -19,7 +21,8 @@ final class JournalViewModel: ObservableObject {
     private let fileStore = JournalFileStore()
     private var isConfigured = false
 
-    /// 為兼容舊代碼：context 現在只用來觸發第一次 refresh，實際持久化用 JSON
+    /// For backward compatibility: context is now only used to trigger the first refresh.
+    /// Actual persistence is handled by JSON.
     func configureIfNeeded(context: ModelContext, skipRefresh: Bool = false) {
         guard !isConfigured else { return }
         isConfigured = true
@@ -29,7 +32,7 @@ final class JournalViewModel: ObservableObject {
         }
     }
 
-    /// 從 JSON 讀取所有日記
+    /// Loads all journal entries from the JSON file store.
     func refreshJournals() {
         do {
             let loaded = try fileStore.loadAllJournals()
@@ -41,7 +44,7 @@ final class JournalViewModel: ObservableObject {
         }
     }
 
-    /// 新增日記
+    /// Creates a new journal entry and saves it to the JSON file store.
     func createJournal(
         title: String,
         content: String,
@@ -73,7 +76,7 @@ final class JournalViewModel: ObservableObject {
             hikeRecordId: hikeRecordId
         )
 
-        // 照片
+        // Add photos to the journal
         for (index, data) in photos.enumerated() {
             let photo = JournalPhoto(imageData: data, caption: nil, takenAt: Date(), order: index)
             photo.journal = journal
@@ -88,7 +91,7 @@ final class JournalViewModel: ObservableObject {
         objectWillChange.send()
     }
 
-    /// 兼容舊簽名：帶 context 版本會直接調用不帶 context 的實作
+    /// Compatibility overload: the version with ModelContext directly calls the context-less implementation.
     func createJournal(
         title: String,
         content: String,
@@ -120,7 +123,7 @@ final class JournalViewModel: ObservableObject {
         )
     }
 
-    /// 更新日記
+    /// Updates an existing journal entry and saves it to the JSON file store.
     func updateJournal(
         _ journal: HikeJournal,
         title: String,
@@ -146,21 +149,23 @@ final class JournalViewModel: ObservableObject {
         objectWillChange.send()
     }
 
-    /// 刪除日記
+    /// Deletes a journal entry from the JSON file store.
     func deleteJournal(_ journal: HikeJournal) throws {
         try fileStore.deleteJournal(journal)
         journals.removeAll { $0.id == journal.id }
         objectWillChange.send()
     }
 
-    /// 切換分享狀態
+    /// Toggles the share status of a journal entry.
     func toggleShare(_ journal: HikeJournal) throws {
         journal.isShared.toggle()
         try fileStore.saveOrUpdateJournal(journal)
         objectWillChange.send()
     }
 
-    // MARK: - 月份分組 / 排序
+    // MARK: - Monthly Grouping / Sorting
+
+    /// Groups journal entries by month and year.
 
     var journalsByMonth: [String: [HikeJournal]] {
         let formatter = DateFormatter()
@@ -170,7 +175,7 @@ final class JournalViewModel: ObservableObject {
             formatter.string(from: journal.hikeDate)
         }
     }
-
+    /// Returns a sorted list of month strings (most recent first).
     var sortedMonths: [String] {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"

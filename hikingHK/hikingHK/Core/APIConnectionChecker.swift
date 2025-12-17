@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 
+/// Centralized helper that checks connectivity for all external APIs used by the app.
 @MainActor
 class APIConnectionChecker: ObservableObject {
     @Published var weatherAPIStatus: ConnectionStatus = .checking
@@ -16,6 +17,7 @@ class APIConnectionChecker: ObservableObject {
     @Published var mapboxAPIStatus: ConnectionStatus = .notConfigured
     @Published var lastCheckTime: Date?
     
+    /// Possible connection states for an external service.
     enum ConnectionStatus {
         case checking
         case connected
@@ -23,6 +25,7 @@ class APIConnectionChecker: ObservableObject {
         case notConfigured
         case error(String)
         
+        /// Simple English description for debugging and logs.
         var description: String {
             switch self {
             case .checking: return "Checking..."
@@ -33,6 +36,7 @@ class APIConnectionChecker: ObservableObject {
             }
         }
         
+        /// Localized human-readable description for displaying in the UI.
         func localizedDescription(languageManager: LanguageManager) -> String {
             switch self {
             case .checking: return languageManager.localizedString(for: "api.status.checking")
@@ -43,6 +47,7 @@ class APIConnectionChecker: ObservableObject {
             }
         }
         
+        /// SF Symbol name representing the connection state.
         var icon: String {
             switch self {
             case .checking: return "hourglass"
@@ -53,6 +58,7 @@ class APIConnectionChecker: ObservableObject {
             }
         }
         
+        /// Basic color keyword that can be mapped to UI colors.
         var color: String {
             switch self {
             case .checking: return "orange"
@@ -64,6 +70,7 @@ class APIConnectionChecker: ObservableObject {
         }
     }
     
+    /// Checks all configured APIs and records the time of the last check.
     func checkAllAPIs() async {
         await checkWeatherAPI()
         await checkWeatherWarningAPI()
@@ -72,6 +79,7 @@ class APIConnectionChecker: ObservableObject {
         lastCheckTime = Date()
     }
     
+    /// Checks the HK Observatory real-time weather API.
     func checkWeatherAPI() async {
         weatherAPIStatus = .checking
         
@@ -94,6 +102,7 @@ class APIConnectionChecker: ObservableObject {
         }
     }
     
+    /// Checks the HK Observatory weather warning summary API.
     func checkWeatherWarningAPI() async {
         weatherWarningAPIStatus = .checking
         
@@ -116,6 +125,7 @@ class APIConnectionChecker: ObservableObject {
         }
     }
     
+    /// Checks connectivity to a representative CSDI Geoportal endpoint.
     func checkCSDIAPI() async {
         csdiAPIStatus = .checking
         
@@ -139,6 +149,7 @@ class APIConnectionChecker: ObservableObject {
         }
     }
     
+    /// Validates whether the Mapbox access token is present (but does not perform a live request).
     func checkMapboxAPI() {
         let accessToken = ProcessInfo.processInfo.environment["MAPBOX_ACCESS_TOKEN"] ?? ""
         if accessToken.isEmpty {

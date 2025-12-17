@@ -9,6 +9,7 @@ import Foundation
 import CoreLocation
 import MessageUI
 
+/// Abstraction for sharing the user's location via links, messages and email.
 protocol LocationSharingServiceProtocol {
     func generateShareLink(location: CLLocationCoordinate2D) -> String
     func sendLocationViaMessage(contacts: [EmergencyContact], location: CLLocationCoordinate2D, message: String) async throws
@@ -19,59 +20,59 @@ protocol LocationSharingServiceProtocol {
 final class LocationSharingService: LocationSharingServiceProtocol {
     
     func generateShareLink(location: CLLocationCoordinate2D) -> String {
-        // 生成 Google Maps 分享鏈接
+        // Generate a Google Maps share link for the given coordinate.
         let url = "https://www.google.com/maps?q=\(location.latitude),\(location.longitude)"
         return url
     }
     
     func sendLocationViaMessage(contacts: [EmergencyContact], location: CLLocationCoordinate2D, message: String) async throws {
-        // 在實際應用中，這裡會使用 MessageUI 或第三方服務發送短信
-        // 目前為模擬實現
-        let locationText = "位置：\(location.latitude), \(location.longitude)\n地圖：\(generateShareLink(location: location))"
+        // In a real app, this would use MessageUI or a third‑party service to send SMS.
+        // This is currently a simulated implementation.
+        let locationText = "Location: \(location.latitude), \(location.longitude)\nMap: \(generateShareLink(location: location))"
         let fullMessage = "\(message)\n\n\(locationText)"
         
-        print("發送短信給：\(contacts.map { $0.name }.joined(separator: ", "))")
-        print("內容：\(fullMessage)")
+        print("Sending SMS to: \(contacts.map { $0.name }.joined(separator: \", \"))")
+        print("Content: \(fullMessage)")
         
-        // 實際實現時，可以使用：
-        // - MessageUI 框架（需要用戶確認）
-        // - 第三方短信服務 API
-        // - 推送通知服務
+        // In a production implementation, you might use:
+        // - MessageUI framework (requires user confirmation)
+        // - Third‑party SMS service APIs
+        // - Push notification services
     }
     
     func sendLocationViaEmail(contacts: [EmergencyContact], location: CLLocationCoordinate2D, subject: String, message: String) async throws {
-        // 在實際應用中，這裡會使用 MessageUI 或郵件服務發送郵件
-        let locationText = "位置：\(location.latitude), \(location.longitude)\n地圖：\(generateShareLink(location: location))"
+        // In a real app, this would use MessageUI or an email service to send emails.
+        let locationText = "Location: \(location.latitude), \(location.longitude)\nMap: \(generateShareLink(location: location))"
         let fullMessage = "\(message)\n\n\(locationText)"
         
-        print("發送郵件給：\(contacts.map { $0.email ?? $0.phoneNumber }.joined(separator: ", "))")
-        print("主題：\(subject)")
-        print("內容：\(fullMessage)")
+        print("Sending email to: \(contacts.map { $0.email ?? $0.phoneNumber }.joined(separator: \", \"))")
+        print("Subject: \(subject)")
+        print("Content: \(fullMessage)")
         
-        // 實際實現時，可以使用：
-        // - MessageUI 框架（需要用戶確認）
-        // - 郵件服務 API（如 SendGrid、Mailgun）
+        // In a production implementation, you might use:
+        // - MessageUI framework (requires user confirmation)
+        // - Email service APIs (e.g. SendGrid, Mailgun)
     }
     
     func sendEmergencySOS(contacts: [EmergencyContact], location: CLLocationCoordinate2D, message: String) async throws {
         let sosMessage = "🆘 Emergency SOS!\n\n\(message)\n\nMy Location:\nLatitude: \(location.latitude)\nLongitude: \(location.longitude)\nMap: \(generateShareLink(location: location))\n\nPlease assist immediately!"
         
-        // 發送給所有緊急聯繫人
+        // Send to all emergency contacts
         for contact in contacts {
-            // 優先使用短信（更快速）
+            // Prefer SMS first (typically faster and more reliable)
             if !contact.phoneNumber.isEmpty {
                 try await sendLocationViaMessage(contacts: [contact], location: location, message: sosMessage)
             }
-            // 如果有郵箱，也發送郵件
+            // If an email is available, also send an email copy
             if let email = contact.email, !email.isEmpty {
                 try await sendLocationViaEmail(contacts: [contact], location: location, subject: "Emergency SOS - Immediate Assistance Needed", message: sosMessage)
             }
         }
         
-        // 在實際應用中，還可以：
-        // - 撥打緊急電話（999）
-        // - 發送推送通知
-        // - 記錄到日誌服務
+        // In a production app, you might also:
+        // - Trigger an emergency call (e.g. 999)
+        // - Send push notifications
+        // - Log the event to a monitoring / logging service
     }
 }
 

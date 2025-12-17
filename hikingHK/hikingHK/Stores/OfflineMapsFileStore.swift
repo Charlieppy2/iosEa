@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// 用於 JSON 持久化的離線地圖區域 DTO
+/// DTO used for JSON persistence of an offline map region.
 private struct PersistedOfflineRegion: Codable {
     var id: UUID
     var name: String
@@ -19,7 +19,7 @@ private struct PersistedOfflineRegion: Codable {
     var lastUpdated: Date
 }
 
-/// 使用檔案系統儲存與載入離線地圖區域
+/// Persists and loads offline map region metadata using the file system.
 final class OfflineMapsFileStore {
     private let fileURL: URL
     
@@ -75,7 +75,7 @@ final class OfflineMapsFileStore {
     }
 }
 
-// MARK: - DTO <-> Model 轉換
+// MARK: - DTO <-> Model Conversion
 
 private extension PersistedOfflineRegion {
     init(from model: OfflineMapRegion) {

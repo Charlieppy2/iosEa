@@ -8,7 +8,7 @@
 import Foundation
 import CoreLocation
 
-/// 用於 JSON 持久化的日記 DTO
+/// DTO for JSON persistence of a journal entry.
 private struct PersistedJournal: Codable {
     struct PersistedPhoto: Codable {
         var id: UUID
@@ -44,7 +44,7 @@ private struct PersistedJournal: Codable {
     var photos: [PersistedPhoto]
 }
 
-/// 使用檔案系統儲存與載入日記
+/// Manages saving and loading journal entries using the file system.
 @MainActor
 final class JournalFileStore {
     private let fileURL: URL
@@ -111,7 +111,7 @@ final class JournalFileStore {
     }
 }
 
-// MARK: - DTO <-> Model 轉換
+// MARK: - DTO <-> Model Conversion
 
 private extension PersistedJournal {
     init(from model: HikeJournal) {
@@ -169,8 +169,8 @@ private extension PersistedJournal {
             isShared: isShared,
             shareToken: shareToken
         )
-
-        // 還原照片
+        
+        // Restore photos and link them back to the journal.
         let restoredPhotos: [JournalPhoto] = photos.map {
             let photo = JournalPhoto(
                 id: $0.id,

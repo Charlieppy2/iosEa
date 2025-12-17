@@ -9,6 +9,8 @@ import Foundation
 import MapKit
 import UIKit
 
+/// Helper responsible for reading offline map metadata, snapshots
+/// and region information from the on-disk offline maps directory.
 struct OfflineMapLoader {
     private let fileManager = FileManager.default
     
@@ -17,7 +19,7 @@ struct OfflineMapLoader {
         return documentsPath.appendingPathComponent("OfflineMaps", isDirectory: true)
     }
     
-    /// 检查指定坐标是否在已下载的离线地图区域内
+    /// Checks whether the given coordinate lies inside a downloaded offline map region.
     func isCoordinateInOfflineRegion(_ coordinate: CLLocationCoordinate2D, regionId: UUID) -> Bool {
         guard let metadata = loadRegionMetadata(regionId: regionId) else {
             return false
@@ -37,7 +39,7 @@ struct OfflineMapLoader {
         return region.contains(coordinate)
     }
     
-    /// 加载区域元数据
+    /// Loads metadata JSON for a given offline map region.
     func loadRegionMetadata(regionId: UUID) -> [String: String]? {
         let regionDir = offlineMapsDirectory.appendingPathComponent(regionId.uuidString, isDirectory: true)
         let metadataPath = regionDir.appendingPathComponent("metadata.json")
@@ -50,7 +52,7 @@ struct OfflineMapLoader {
         return json
     }
     
-    /// 获取区域的地图快照图像
+    /// Returns a map snapshot image for the given offline region if available.
     func getMapSnapshot(for regionId: UUID, at coordinate: CLLocationCoordinate2D, zoomLevel: Int = 2) -> UIImage? {
         let regionDir = offlineMapsDirectory.appendingPathComponent(regionId.uuidString, isDirectory: true)
         
@@ -76,7 +78,7 @@ struct OfflineMapLoader {
         return nil
     }
     
-    /// 获取所有已下载的区域 ID
+    /// Returns all downloaded offline region IDs under the offline maps directory.
     func getAllDownloadedRegionIds() -> [UUID] {
         guard fileManager.fileExists(atPath: offlineMapsDirectory.path) else {
             return []
@@ -92,7 +94,7 @@ struct OfflineMapLoader {
         }
     }
     
-    /// 检查区域是否已下载
+    /// Checks whether the specified offline region has been downloaded (directory + metadata.json exist).
     func isRegionDownloaded(regionId: UUID) -> Bool {
         let regionDir = offlineMapsDirectory.appendingPathComponent(regionId.uuidString, isDirectory: true)
         return fileManager.fileExists(atPath: regionDir.path) &&

@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+/// SwiftData model representing an emergency contact for location sharing and SOS.
 @Model
 final class EmergencyContact {
     var id: UUID

@@ -11,12 +11,16 @@ import SwiftData
 
 @MainActor
 final class AppViewModel: ObservableObject {
+    /// All available trails currently loaded into the app.
     @Published private(set) var trails: [Trail]
+    /// Trail highlighted on the home screen.
     @Published var featuredTrail: Trail?
     @Published var highlightedDistrict: String = "Sai Kung"
+    /// Latest snapshot of real-time weather used across the app.
     @Published var weatherSnapshot: WeatherSnapshot
     @Published var weatherError: String?
     @Published var isLoadingWeather = false
+    /// Planned or completed hikes saved by the user.
     @Published var savedHikes: [SavedHike]
 
     private let weatherService: WeatherServiceProtocol
@@ -39,6 +43,7 @@ final class AppViewModel: ObservableObject {
         Task { await refreshWeather(language: savedLanguage) }
     }
 
+    /// Lazily sets up the backing `TrailDataStore` and loads any user-specific data.
     func configurePersistenceIfNeeded(context: ModelContext) {
         guard trailDataStore == nil else { return }
         let store = TrailDataStore(context: context)
@@ -46,6 +51,7 @@ final class AppViewModel: ObservableObject {
         reloadUserData()
     }
     
+    /// Reloads favorites and saved hikes from persistent storage.
     func reloadUserData() {
         guard let store = trailDataStore else {
             print("⚠️ AppViewModel: TrailDataStore not configured, cannot reload data")
@@ -64,18 +70,19 @@ final class AppViewModel: ObservableObject {
         }
     }
 
+    /// Toggles the favorite state for a given trail and persists the change.
     func markFavorite(_ trail: Trail) {
         guard let index = trails.firstIndex(of: trail) else {
             print("⚠️ AppViewModel: Trail not found in array")
             return
         }
         
-        // 因为 Trail 是 struct（值类型），需要创建新的实例
+        // Trail is a struct (value type), so we need to create a new instance
         var updatedTrail = trails[index]
         updatedTrail.isFavorite.toggle()
         trails[index] = updatedTrail
         
-        // 如果这是 featured trail，也需要更新
+        // If this is also the featured trail, keep the featured copy in sync
         if featuredTrail?.id == trail.id {
             featuredTrail = updatedTrail
         }
@@ -90,6 +97,7 @@ final class AppViewModel: ObservableObject {
         }
     }
 
+    /// Adds a new planned hike for the given trail and date.
     func addSavedHike(for trail: Trail, scheduledDate: Date, note: String = "") {
         let newHike = SavedHike(trail: trail, scheduledDate: scheduledDate, note: note)
         savedHikes.insert(newHike, at: 0)
@@ -101,6 +109,7 @@ final class AppViewModel: ObservableObject {
         }
     }
 
+    /// Updates an existing saved hike and re-sorts the list.
     func updateSavedHike(
         _ hike: SavedHike,
         scheduledDate: Date,
@@ -121,6 +130,7 @@ final class AppViewModel: ObservableObject {
         }
     }
 
+    /// Removes a saved hike from both memory and persistent storage.
     func removeSavedHike(_ hike: SavedHike) {
         savedHikes.removeAll { $0.id == hike.id }
         do {
@@ -130,11 +140,14 @@ final class AppViewModel: ObservableObject {
         }
     }
 
+    /// Returns trails filtered by difficulty, or all trails when `difficulty` is nil.
     func trails(for difficulty: Trail.Difficulty?) -> [Trail] {
         guard let difficulty else { return trails }
         return trails.filter { $0.difficulty == difficulty }
     }
 
+    /// Refreshes the real-time weather snapshot for the given language code.
+    /// Keeps the last successful snapshot as a cache if loading fails.
     func refreshWeather(language: String = "en") async {
         isLoadingWeather = true
         defer { isLoadingWeather = false }
@@ -147,7 +160,7 @@ final class AppViewModel: ObservableObject {
             weatherError = nil
             print("✅ AppViewModel: Weather refreshed successfully")
         } catch let error as WeatherServiceError {
-            // 根据错误类型提供更详细的信息
+            // Provide more detailed information based on the specific error type
             let errorMessage: String
             switch error {
             case .networkError(let urlError):
@@ -164,11 +177,11 @@ final class AppViewModel: ObservableObject {
                 print("❌ AppViewModel: Missing key fields")
             }
             
-            // 保留缓存数据，但显示错误信息
+            // Keep the cached snapshot but surface an error message to the user
             weatherError = "Unable to load latest weather. Showing cached data."
             print("⚠️ AppViewModel: Using cached weather data due to error: \(errorMessage)")
         } catch {
-            // 其他未知错误
+            // Any other unknown error
             weatherError = "Unable to load latest weather. Showing cached data."
             print("❌ AppViewModel: Unknown error - \(error.localizedDescription)")
         }
