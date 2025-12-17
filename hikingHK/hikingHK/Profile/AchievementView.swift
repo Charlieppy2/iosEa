@@ -43,6 +43,7 @@ struct AchievementView: View {
                 .ignoresSafeArea()
             )
             .onAppear {
+                AchievementSeeder.ensureDefaults(in: modelContext)
                 viewModel.configureIfNeeded(context: modelContext)
             }
             .alert(languageManager.localizedString(for: "achievement.new.unlocked"), isPresented: .constant(!viewModel.newlyUnlockedAchievements.isEmpty)) {

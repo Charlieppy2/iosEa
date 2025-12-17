@@ -20,17 +20,25 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
     private let session: URLSession
     private let fileManager = FileManager.default
     
-    // 离线地图存储目录
+    // 離線地圖存儲根目錄（Documents/OfflineMaps）
     private var offlineMapsDirectory: URL {
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let mapsDir = documentsPath.appendingPathComponent("OfflineMaps", isDirectory: true)
         
-        // 确保目录存在
+        // 確保目錄存在
         if !fileManager.fileExists(atPath: mapsDir.path) {
             try? fileManager.createDirectory(at: mapsDir, withIntermediateDirectories: true)
         }
         
         return mapsDir
+    }
+    
+    /// 生成穩定且檔案系統安全的子目錄名稱
+    /// 使用區域名稱而不是 UUID，確保即使 SwiftData 重新建立 OfflineMapRegion 物件，
+    /// 也可以透過相同名稱找到之前下載好的離線地圖。
+    private func directoryName(for region: OfflineMapRegion) -> String {
+        // 目前區域名稱僅包含英文與空格，簡單將空格替換為底線即可
+        return region.name.replacingOccurrences(of: " ", with: "_")
     }
     
     init(session: URLSession = .shared) {
@@ -59,13 +67,13 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
         var downloaded: Int64 = 0
         let coordinateRegion = region.coordinateRegion
         
-        // 创建区域目录
-        let regionDir = offlineMapsDirectory.appendingPathComponent(region.id.uuidString, isDirectory: true)
+        // 創建對應區域的資料夾（使用穩定的名稱，而不是 UUID）
+        let regionDir = offlineMapsDirectory.appendingPathComponent(directoryName(for: region), isDirectory: true)
         if !fileManager.fileExists(atPath: regionDir.path) {
             try fileManager.createDirectory(at: regionDir, withIntermediateDirectories: true)
         }
         
-        // 保存区域元数据
+        // 保存區域元數據
         let metadata = [
             "name": region.name,
             "centerLat": String(coordinateRegion.center.latitude),
@@ -142,13 +150,13 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
     }
     
     func isRegionDownloaded(_ region: OfflineMapRegion) -> Bool {
-        let regionDir = offlineMapsDirectory.appendingPathComponent(region.id.uuidString, isDirectory: true)
-        return fileManager.fileExists(atPath: regionDir.path) && 
+        let regionDir = offlineMapsDirectory.appendingPathComponent(directoryName(for: region), isDirectory: true)
+        return fileManager.fileExists(atPath: regionDir.path) &&
                fileManager.fileExists(atPath: regionDir.appendingPathComponent("metadata.json").path)
     }
     
     func deleteRegionData(_ region: OfflineMapRegion) throws {
-        let regionDir = offlineMapsDirectory.appendingPathComponent(region.id.uuidString, isDirectory: true)
+        let regionDir = offlineMapsDirectory.appendingPathComponent(directoryName(for: region), isDirectory: true)
         if fileManager.fileExists(atPath: regionDir.path) {
             try fileManager.removeItem(at: regionDir)
         }

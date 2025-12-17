@@ -17,6 +17,7 @@ final class OfflineMapsViewModel: ObservableObject {
     
     private var offlineMapsStore: OfflineMapsStore?
     private let downloadService: OfflineMapsDownloadServiceProtocol
+    private let fileStore = OfflineMapsFileStore()
     private var downloadTask: Task<Void, Never>?
     
     init(
@@ -46,6 +47,15 @@ final class OfflineMapsViewModel: ObservableObject {
         offlineMapsStore = store
         
         do {
+            // 1️⃣ 優先嘗試從 JSON 載入（如果之前已經成功保存過）
+            let persisted = try fileStore.loadAllRegions()
+            if !persisted.isEmpty {
+                regions = persisted
+                print("✅ OfflineMapsViewModel: Loaded \(regions.count) regions from JSON store")
+                return
+            }
+            
+            // 2️⃣ JSON 為空時，使用 SwiftData 建立 / 載入預設區域，然後寫入 JSON
             let seededRegions = try store.seedDefaultsIfNeeded()
             // 直接使用返回的区域，而不是查询
             regions = seededRegions
@@ -59,6 +69,9 @@ final class OfflineMapsViewModel: ObservableObject {
             } else {
                 print("✅ OfflineMapsViewModel: Loaded \(regions.count) regions")
             }
+            
+            // 將初始化後的區域狀態寫入 JSON，作為之後的主要來源
+            try? fileStore.saveRegions(regions)
         } catch {
             print("❌ Offline maps load error: \(error)")
             self.error = "Failed to load offline map regions: \(error.localizedDescription)"
@@ -67,7 +80,6 @@ final class OfflineMapsViewModel: ObservableObject {
     
     func downloadRegion(_ region: OfflineMapRegion) {
         guard region.downloadStatus != .downloading else { return }
-        guard let store = offlineMapsStore else { return }
         
         // Cancel any existing download
         downloadTask?.cancel()
@@ -77,11 +89,8 @@ final class OfflineMapsViewModel: ObservableObject {
         region.totalSize = downloadService.getEstimatedSize(for: region.name)
         downloadingRegion = region
         
-        do {
-            try store.updateRegion(region)
-        } catch {
-            print("Update region error: \(error)")
-        }
+        // 開始下載前先保存一次狀態
+        try? fileStore.saveRegions(regions)
         
         downloadTask = Task {
             do {
@@ -90,7 +99,7 @@ final class OfflineMapsViewModel: ObservableObject {
                         region.downloadProgress = progress
                         region.downloadedSize = downloaded
                         region.totalSize = total
-                        try? store.updateRegion(region)
+                        try? self.fileStore.saveRegions(self.regions)
                     }
                 }
                 
@@ -101,7 +110,7 @@ final class OfflineMapsViewModel: ObservableObject {
                     region.downloadedAt = Date()
                     region.downloadedSize = region.totalSize
                     downloadingRegion = nil
-                    try? store.updateRegion(region)
+                    try? self.fileStore.saveRegions(self.regions)
                 }
             } catch {
                 if !Task.isCancelled {
@@ -109,7 +118,7 @@ final class OfflineMapsViewModel: ObservableObject {
                     region.downloadProgress = 0
                     downloadingRegion = nil
                     self.error = "Download failed: \(error.localizedDescription)"
-                    try? store.updateRegion(region)
+                    try? self.fileStore.saveRegions(self.regions)
                 }
             }
         }
@@ -120,14 +129,10 @@ final class OfflineMapsViewModel: ObservableObject {
         region.downloadStatus = .notDownloaded
         region.downloadProgress = 0
         downloadingRegion = nil
-        
-        if let store = offlineMapsStore {
-            try? store.updateRegion(region)
-        }
+        try? fileStore.saveRegions(regions)
     }
     
     func deleteRegion(_ region: OfflineMapRegion) {
-        guard let store = offlineMapsStore else { return }
         do {
             // 删除文件数据
             try downloadService.deleteRegionData(region)
@@ -139,10 +144,10 @@ final class OfflineMapsViewModel: ObservableObject {
             region.downloadedAt = nil
             region.totalSize = 0
             
-            // 更新数据库
-            try store.updateRegion(region)
+            // 將變更寫回 JSON
+            try? fileStore.saveRegions(regions)
             
-            // 刷新列表
+            // 刷新列表（會重新從 JSON 載入並同步檔案狀態）
             refreshRegions()
         } catch {
             print("Delete region error: \(error)")
