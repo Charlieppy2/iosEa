@@ -17,6 +17,11 @@ extension Color {
     static let hikingSky = Color(red: 0.4, green: 0.6, blue: 0.8) // 天空蓝
     static let hikingStone = Color(red: 0.5, green: 0.5, blue: 0.5) // 石灰色
     
+    // 路線難度底色（卡片顏色）
+    static let hikingDifficultyEasyBackground = Color(red: 0.93, green: 0.98, blue: 0.93)       // 淺綠，易
+    static let hikingDifficultyModerateBackground = Color(red: 0.98, green: 0.97, blue: 0.92)   // 淺黃，適中
+    static let hikingDifficultyChallengingBackground = Color(red: 0.99, green: 0.94, blue: 0.93) // 淺橙紅，挑戰
+    
     // 渐变
     static let hikingGradient = LinearGradient(
         colors: [

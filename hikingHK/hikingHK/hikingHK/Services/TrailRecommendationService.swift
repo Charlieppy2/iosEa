@@ -37,8 +37,33 @@ struct TrailRecommendation: Identifiable {
 
 final class TrailRecommendationService: TrailRecommendationServiceProtocol {
     
+    // 繁體中文推薦理由對應表（避免顯示英文 fallback）
+    private let tcReasonMap: [String: String] = [
+        "recommendations.reason.difficulty.match": "符合你設定的難度偏好",
+        "recommendations.reason.fitness.level": "適合你目前的體能水平",
+        "recommendations.reason.distance.match": "路線距離符合你的偏好",
+        "recommendations.reason.duration.match": "行程時間符合你的偏好",
+        "recommendations.reason.scenery.match": "包含你喜歡的風景類型",
+        "recommendations.reason.weather.temperature.good": "目前氣溫適合行山",
+        "recommendations.reason.weather.hot.shade": "天氣較熱，這條路線有樹蔭或近水較清涼",
+        "recommendations.reason.weather.uv.high": "紫外線偏高，記得做好防曬",
+        "recommendations.reason.time.sunrise": "適合清晨出發觀賞日出",
+        "recommendations.reason.time.sunset": "適合黃昏時分觀賞日落",
+        "recommendations.reason.time.enough": "你有足夠時間完成這條路線",
+        "recommendations.reason.time.tight": "時間有點緊湊，需要較快步伐",
+        "recommendations.reason.history.new.trail": "你未試過這條路線，適合探索新路",
+        "recommendations.reason.history.often.completed": "與你經常完成的路線相似",
+        "recommendations.reason.history.distance.similar": "距離和你平時行的路線相近"
+    ]
+    
     // 使用 LanguageManager 取得當前語言下的推薦理由文字
     private func localizedReason(_ key: String, fallback: String) -> String {
+        // 如果是繁體中文，優先使用本地映射，確保不會出現英文理由
+        let currentLanguage = MainActor.assumeIsolated { LanguageManager.shared.currentLanguage }
+        if currentLanguage == .traditionalChinese, let tc = tcReasonMap[key] {
+            return tc
+        }
+        
         let value = LanguageManager.shared.localizedString(for: key)
         // 如果沒有對應 key，防止顯示 key 本身，退回原本中文/英文
         return value == key ? fallback : value

@@ -5,14 +5,23 @@
 //  Created by user on 17/11/2025.
 //
 
-
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
     @EnvironmentObject private var viewModel: AppViewModel
     @EnvironmentObject private var sessionManager: SessionManager
     @EnvironmentObject private var languageManager: LanguageManager
-
+    
+    init() {
+        // 自訂 TabBar 底色，配合行山主題，而不是預設純白
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(Color.hikingBackground)
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+    
     var body: some View {
         TabView {
             HomeView()
@@ -43,3 +52,5 @@ struct ContentView: View {
         .environmentObject(SessionManager.previewSignedIn())
         .environmentObject(LanguageManager.shared)
 }
+
+
