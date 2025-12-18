@@ -232,6 +232,12 @@ struct LocalizedStrings {
         "checkpoint.finish": "Finish",
         "checkpoint.peak": "Peak",
         "checkpoint.start": "Start",
+        "checkpoint.photo.spot": "Photo spot",
+        
+        // Dragon's Back Checkpoints
+        "checkpoint.to.tei.wan": "To Tei Wan",
+        "checkpoint.dragons.back.ridge": "Dragon's Back Ridge",
+        "checkpoint.big.wave.bay": "Big Wave Bay",
         
         // Facilities
         "facility.country.park.toilet": "Country park toilet",
@@ -239,6 +245,8 @@ struct LocalizedStrings {
         "facility.visitor.center": "Visitor center",
         "facility.toilet": "Toilet",
         "facility.camping": "Camping",
+        "facility.big.wave.bay.showers": "Big Wave Bay showers",
+        "facility.water.kiosks": "Water kiosks",
         
         // Checkpoint Names (MacLehose Section 4)
         "checkpoint.kei.ling.ha": "Kei Ling Ha",
@@ -295,6 +303,7 @@ struct LocalizedStrings {
         // Dragon's Back
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.name": "Dragon's Back",
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.summary": "Most beloved half-day hike featuring coastal scenery overlooking Shek O, Big Wave Bay, and Tai Tam Bay.",
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.transportation": "MTR Shau Kei Wan → Bus 9 to To Tei Wan; depart via bus/minibus from Big Wave Bay.",
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.shek.o.peninsula.lookout": "Shek O Peninsula lookout",
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.paragliding.take-off.site": "Paragliding take-off site",
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.surfing.beach.finale": "Surfing beach finale",
@@ -893,6 +902,12 @@ struct LocalizedStrings {
         "checkpoint.finish": "終點",
         "checkpoint.peak": "山峰",
         "checkpoint.start": "起點",
+        "checkpoint.photo.spot": "拍照點",
+        
+        // Dragon's Back Checkpoints
+        "checkpoint.to.tei.wan": "土地灣",
+        "checkpoint.dragons.back.ridge": "龍脊",
+        "checkpoint.big.wave.bay": "大浪灣",
         
         // Facilities
         "facility.country.park.toilet": "郊野公園洗手間",
@@ -900,6 +915,8 @@ struct LocalizedStrings {
         "facility.visitor.center": "訪客中心",
         "facility.toilet": "洗手間",
         "facility.camping": "露營",
+        "facility.big.wave.bay.showers": "大浪灣淋浴設施",
+        "facility.water.kiosks": "水站",
         
         // Checkpoint Names (MacLehose Section 4)
         "checkpoint.kei.ling.ha": "企嶺下",
@@ -956,6 +973,7 @@ struct LocalizedStrings {
         // Dragon's Back
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.name": "龍脊",
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.summary": "最受歡迎的半日行山路線，可欣賞石澳、大浪灣和赤柱的沿海風景。",
+        "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.transportation": "港鐵筲箕灣站 → 9號巴士至土地灣；回程從大浪灣乘巴士/小巴離開。",
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.shek.o.peninsula.lookout": "石澳半島觀景台",
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.paragliding.take-off.site": "滑翔傘起飛點",
         "trail.7d62f08b-24af-4da4-95bb-818e0c1cd2b5.highlight.surfing.beach.finale": "衝浪海灘終點",
