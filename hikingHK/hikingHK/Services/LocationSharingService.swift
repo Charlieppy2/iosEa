@@ -31,7 +31,7 @@ final class LocationSharingService: LocationSharingServiceProtocol {
         let locationText = "Location: \(location.latitude), \(location.longitude)\nMap: \(generateShareLink(location: location))"
         let fullMessage = "\(message)\n\n\(locationText)"
         
-        print("Sending SMS to: \(contacts.map { $0.name }.joined(separator: \", \"))")
+        print("Sending SMS to: \(contacts.map { $0.name }.joined(separator: ", "))")
         print("Content: \(fullMessage)")
         
         // In a production implementation, you might use:
@@ -45,7 +45,7 @@ final class LocationSharingService: LocationSharingServiceProtocol {
         let locationText = "Location: \(location.latitude), \(location.longitude)\nMap: \(generateShareLink(location: location))"
         let fullMessage = "\(message)\n\n\(locationText)"
         
-        print("Sending email to: \(contacts.map { $0.email ?? $0.phoneNumber }.joined(separator: \", \"))")
+        print("Sending email to: \(contacts.map { $0.email ?? $0.phoneNumber }.joined(separator: ", "))")
         print("Subject: \(subject)")
         print("Content: \(fullMessage)")
         
