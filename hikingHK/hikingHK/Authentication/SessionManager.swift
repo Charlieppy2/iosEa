@@ -20,6 +20,8 @@ final class SessionManager: ObservableObject {
     @Published var isAuthenticating = false
     /// Becomes `true` once the underlying SwiftData store has been configured.
     @Published private(set) var isConfigured = false
+    /// Flag to prevent automatic session restoration after explicit sign out.
+    private var hasExplicitlySignedOut = false
     
     /// UserDefaults key used to persist the last signed-in email.
     private let storedEmailKey = "auth_email"
@@ -37,7 +39,12 @@ final class SessionManager: ObservableObject {
             try store.seedDefaultsIfNeeded()
             accountStore = store
             isConfigured = true
-            restoreSession()
+            // Only restore session if user hasn't explicitly signed out
+            if !hasExplicitlySignedOut {
+                restoreSession()
+            } else {
+                print("🔍 SessionManager: Skipping session restore because user explicitly signed out")
+            }
         } catch {
             authError = "Unable to prepare account database."
             print("Account store error: \(error)")
@@ -66,6 +73,8 @@ final class SessionManager: ObservableObject {
             )
             storedEmail = credential.email
             authError = nil
+            // Reset the sign out flag when user successfully signs in
+            hasExplicitlySignedOut = false
         } catch {
             authError = error.localizedDescription
             currentUser = nil
@@ -93,6 +102,8 @@ final class SessionManager: ObservableObject {
             )
             storedEmail = credential.email
             authError = nil
+            // Reset the sign out flag when user successfully signs up
+            hasExplicitlySignedOut = false
         } catch {
             authError = error.localizedDescription
         }
@@ -100,16 +111,24 @@ final class SessionManager: ObservableObject {
 
     /// Clears the current session and removes the stored email, without deleting any user data.
     func signOut() {
+        // If already signed out and flag is set, just return
+        if currentUser == nil && hasExplicitlySignedOut {
+            print("⚠️ SessionManager: signOut() called but user is already signed out, ignoring")
+            return
+        }
+        
         print("🔐 SessionManager: signOut() called, current user: \(currentUser?.email ?? "nil")")
         
-        // Clear in-memory session state only and keep user data for the next login
-        // Reset user state – this will trigger @Published updates
-        currentUser = nil
+        // Set flag to prevent automatic session restoration
+        hasExplicitlySignedOut = true
         
-        // Remove the stored email from UserDefaults completely
+        // Remove the stored email from UserDefaults first
         UserDefaults.standard.removeObject(forKey: storedEmailKey)
         UserDefaults.standard.synchronize() // Ensure the change is persisted immediately
         
+        // Clear in-memory session state – this will trigger @Published updates
+        // Since SessionManager is @MainActor, this is already on the main thread
+        currentUser = nil
         authError = nil
         
         // Explicitly notify views (in addition to @Published) to guarantee UI refresh

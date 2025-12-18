@@ -17,7 +17,10 @@ final class GearChecklistViewModel: ObservableObject {
     @Published var error: String?
     
     private var store: GearChecklistStore?
+    private let gearItemFileStore = GearItemFileStore()
     private var gearService: SmartGearServiceProtocol?
+    private var languageManager: LanguageManager?
+    private var currentHikeId: UUID?
     
     /// Allows injecting a custom gear service for testing; defaults to `SmartGearService`.
     nonisolated init(gearService: SmartGearServiceProtocol? = nil) {
@@ -33,9 +36,10 @@ final class GearChecklistViewModel: ObservableObject {
     }
     
     /// Lazily configures the underlying `GearChecklistStore` with the given context.
-    func configureIfNeeded(context: ModelContext) {
+    func configureIfNeeded(context: ModelContext, languageManager: LanguageManager? = nil) {
         guard store == nil else { return }
         store = GearChecklistStore(context: context)
+        self.languageManager = languageManager
     }
     
     /// Generates a recommended gear list for the given trail, weather and scheduled date.
@@ -50,11 +54,17 @@ final class GearChecklistViewModel: ObservableObject {
         let season = Season.from(date: scheduledDate)
         let duration = trail.estimatedDurationMinutes / 60
         
+        // Create localization function if languageManager is available
+        let localize: ((String) -> String)? = languageManager.map { lm in
+            { key in lm.localizedString(for: key) }
+        }
+        
         let items = getGearService().generateGearList(
             difficulty: trail.difficulty,
             weather: weather,
             season: season,
-            duration: duration
+            duration: duration,
+            localize: localize
         )
         
         // Set `hikeId` for all items so they can be queried per hike.
@@ -62,38 +72,76 @@ final class GearChecklistViewModel: ObservableObject {
             item.hikeId = trail.id
         }
         
+        currentHikeId = trail.id
         gearItems = items
         isLoading = false
+        
+        // Auto-save generated items to JSON file store
+        saveGearItems()
     }
     
-    /// Loads stored gear items for a specific hike from the store.
+    /// Loads stored gear items for a specific hike from the JSON file store (like journals).
     func loadGearItems(for hikeId: UUID) {
-        guard let store = store else { return }
+        currentHikeId = hikeId
         do {
-            gearItems = try store.loadGearItems(for: hikeId)
+            // Load all items from FileStore and filter by hikeId
+            let allItems = try gearItemFileStore.loadAll()
+            gearItems = allItems.filter { $0.hikeId == hikeId }
+            print("✅ GearChecklistViewModel: Loaded \(gearItems.count) gear items for hike \(hikeId.uuidString) from JSON store")
         } catch {
             self.error = "Failed to load gear items: \(error.localizedDescription)"
+            print("❌ GearChecklistViewModel: Failed to load gear items: \(error)")
         }
     }
     
-    /// Persists the current in-memory gear items to the store.
+    /// Persists the current in-memory gear items to the JSON file store (like journals).
     func saveGearItems() {
-        guard let store = store else { return }
+        guard let hikeId = currentHikeId else {
+            print("⚠️ GearChecklistViewModel: No hikeId set, cannot save gear items")
+            return
+        }
         do {
-            try store.saveGearItems(gearItems)
+            // Load all existing items
+            var allItems = try gearItemFileStore.loadAll()
+            
+            // Remove old items for this hike
+            allItems.removeAll { $0.hikeId == hikeId }
+            
+            // Add current items
+            allItems.append(contentsOf: gearItems)
+            
+            // Save all items
+            try gearItemFileStore.saveAll(allItems)
+            print("✅ GearChecklistViewModel: Saved \(gearItems.count) gear items for hike \(hikeId.uuidString) to JSON store")
         } catch {
             self.error = "Failed to save gear items: \(error.localizedDescription)"
+            print("❌ GearChecklistViewModel: Failed to save gear items: \(error)")
         }
     }
     
-    /// Toggles completion state for a single gear item and saves the change.
+    /// Toggles completion state for a single gear item and saves the change to JSON file store.
     func toggleItem(_ item: GearItem) {
-        guard let store = store else { return }
+        // Update the item directly (GearItem is a class, so this modifies the reference)
+        item.isCompleted.toggle()
+        item.lastUpdated = Date()
+        
+        // Save to FileStore
         do {
-            try store.toggleItem(item)
+            try gearItemFileStore.saveOrUpdate(item)
+            objectWillChange.send()
+            print("✅ GearChecklistViewModel: Toggled item '\(item.name)' completion to \(item.isCompleted)")
         } catch {
+            // Revert the change if save failed
+            item.isCompleted.toggle()
             self.error = "Failed to update gear item: \(error.localizedDescription)"
+            print("❌ GearChecklistViewModel: Failed to toggle item: \(error)")
         }
+    }
+    
+    /// Refreshes gear items from the JSON file store.
+    func refreshGearItems() {
+        guard let hikeId = currentHikeId else { return }
+        loadGearItems(for: hikeId)
     }
     
     /// Number of gear items that are marked as completed.

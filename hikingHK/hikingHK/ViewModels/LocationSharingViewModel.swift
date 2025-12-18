@@ -22,6 +22,7 @@ final class LocationSharingViewModel: ObservableObject {
     @Published var isSendingSOS: Bool = false
     
     private var store: LocationSharingStore?
+    private let emergencyContactFileStore = EmergencyContactFileStore()
     private let locationManager: LocationManager
     private let sharingService: LocationSharingServiceProtocol
     private let anomalyService: AnomalyDetectionServiceProtocol
@@ -41,15 +42,19 @@ final class LocationSharingViewModel: ObservableObject {
         self.anomalyService = anomalyService
     }
     
-    /// Lazily configures the underlying `LocationSharingStore` and loads contacts/session.
+    /// Lazily configures the underlying stores and loads contacts/session.
+    /// Emergency contacts are now loaded from FileManager + JSON (like journals).
     func configureIfNeeded(context: ModelContext) {
         guard store == nil else { return }
         let newStore = LocationSharingStore(context: context)
         store = newStore
         
         do {
-            try newStore.seedDefaultsIfNeeded()
-            emergencyContacts = try newStore.loadAllContacts()
+            // Load emergency contacts from FileStore (like journals)
+            emergencyContacts = try emergencyContactFileStore.loadAll()
+            print("✅ LocationSharingViewModel: Loaded \(emergencyContacts.count) emergency contacts from JSON store")
+            
+            // Load session from SwiftData (can be migrated later)
             shareSession = try newStore.loadActiveSession()
             isSharing = shareSession?.isActive ?? false
             
@@ -58,7 +63,18 @@ final class LocationSharingViewModel: ObservableObject {
             }
         } catch let loadError {
             self.error = "Failed to load location sharing settings: \(loadError.localizedDescription)"
-            print("Location sharing load error: \(loadError)")
+            print("❌ Location sharing load error: \(loadError)")
+        }
+    }
+    
+    /// Refreshes emergency contacts from the JSON file store.
+    func refreshEmergencyContacts() {
+        do {
+            emergencyContacts = try emergencyContactFileStore.loadAll()
+            print("✅ LocationSharingViewModel: Refreshed \(emergencyContacts.count) emergency contacts")
+        } catch let err {
+            self.error = "Failed to load emergency contacts: \(err.localizedDescription)"
+            print("❌ LocationSharingViewModel: Failed to refresh contacts: \(err)")
         }
     }
     
@@ -219,23 +235,51 @@ final class LocationSharingViewModel: ObservableObject {
         }
     }
     
-    /// Adds a new emergency contact and persists it.
+    /// Adds a new emergency contact and persists it to JSON file store (like journals).
     func addEmergencyContact(_ contact: EmergencyContact) {
-        emergencyContacts.append(contact)
         do {
-            try store?.saveContact(contact)
+            try emergencyContactFileStore.saveOrUpdate(contact)
+            emergencyContacts = try emergencyContactFileStore.loadAll()
+            print("✅ LocationSharingViewModel: Added emergency contact '\(contact.name)' to JSON store")
         } catch let addError {
             self.error = "Failed to add emergency contact: \(addError.localizedDescription)"
+            print("❌ LocationSharingViewModel: Failed to add contact: \(addError)")
         }
     }
     
-    /// Removes an emergency contact and deletes it from the store.
+    /// Removes an emergency contact and deletes it from the JSON file store.
     func removeEmergencyContact(_ contact: EmergencyContact) {
-        emergencyContacts.removeAll { $0.id == contact.id }
         do {
-            try store?.deleteContact(contact)
+            try emergencyContactFileStore.delete(contact)
+            emergencyContacts = try emergencyContactFileStore.loadAll()
+            print("✅ LocationSharingViewModel: Deleted emergency contact '\(contact.name)' from JSON store")
         } catch let deleteError {
             self.error = "Failed to delete emergency contact: \(deleteError.localizedDescription)"
+            print("❌ LocationSharingViewModel: Failed to delete contact: \(deleteError)")
+        }
+    }
+    
+    /// Updates an existing emergency contact in the JSON file store.
+    func updateEmergencyContact(_ contact: EmergencyContact) {
+        do {
+            try emergencyContactFileStore.saveOrUpdate(contact)
+            emergencyContacts = try emergencyContactFileStore.loadAll()
+            print("✅ LocationSharingViewModel: Updated emergency contact '\(contact.name)' in JSON store")
+        } catch let updateError {
+            self.error = "Failed to update emergency contact: \(updateError.localizedDescription)"
+            print("❌ LocationSharingViewModel: Failed to update contact: \(updateError)")
+        }
+    }
+    
+    /// Sets a contact as primary and unmarks others.
+    func setPrimaryContact(_ contact: EmergencyContact) {
+        do {
+            try emergencyContactFileStore.setPrimaryContact(contact)
+            emergencyContacts = try emergencyContactFileStore.loadAll()
+            print("✅ LocationSharingViewModel: Set '\(contact.name)' as primary contact")
+        } catch let error {
+            self.error = "Failed to set primary contact: \(error.localizedDescription)"
+            print("❌ LocationSharingViewModel: Failed to set primary contact: \(error)")
         }
     }
     

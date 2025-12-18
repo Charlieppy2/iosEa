@@ -200,18 +200,18 @@ struct JournalDetailView: View {
     
     private func generateShareContent() -> String {
         var content = "\(journal.title)\n\n"
-        content += "Date: \(journal.hikeDate.formatted(date: .abbreviated, time: .omitted))\n\n"
+        content += "\(languageManager.localizedString(for: "journal.share.date")): \(journal.hikeDate.formatted(date: .abbreviated, time: .omitted))\n\n"
         
         if let trailName = journal.trailName {
-            content += "Trail: \(trailName)\n"
+            content += "\(languageManager.localizedString(for: "journal.share.trail")): \(trailName)\n"
         }
         
         if let weather = journal.weatherCondition {
-            content += "Weather: \(localizedWeatherSuggestion(weather))\n"
+            content += "\(languageManager.localizedString(for: "journal.share.weather")): \(localizedWeatherSuggestion(weather))\n"
         }
         
         content += "\n\(journal.content)\n\n"
-        content += "Shared from Hiking HK"
+        content += languageManager.localizedString(for: "journal.share.shared.from")
         
         return content
     }

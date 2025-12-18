@@ -11,6 +11,7 @@ import CoreLocation
 
 /// Main landing screen showing weather, featured trail, quick actions and upcoming hikes.
 struct HomeView: View {
+    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var viewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
     @State private var isShowingSafetySheet = false
@@ -80,6 +81,8 @@ struct HomeView: View {
                 }
             }
             .onAppear {
+                // Configure persistence if needed
+                viewModel.configurePersistenceIfNeeded(context: modelContext)
                 // Refresh weather using the currently selected language
                 Task {
                     await viewModel.refreshWeather(language: languageManager.currentLanguage.rawValue)
@@ -969,6 +972,14 @@ struct SavedHikeDetailSheet: View {
                 if newValue && hike.completedAt == nil {
                     completedDate = Date()
                 }
+                // Auto-save when toggle is switched (like gear checklist)
+                onUpdate(plannedDate, note, isCompleted, isCompleted ? completedDate : nil)
+            }
+            .onChange(of: completedDate) { newValue in
+                // Auto-save when completed date changes
+                if isCompleted {
+                    onUpdate(plannedDate, note, isCompleted, newValue)
+                }
             }
         }
     }
@@ -1367,6 +1378,7 @@ struct QuickAddTrailPickerView: View {
                 ForEach(filteredTrails) { trail in
                     Button {
                         onTrailSelected(trail)
+                        dismiss()
                     } label: {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {

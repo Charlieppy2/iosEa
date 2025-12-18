@@ -104,8 +104,12 @@ final class AppViewModel: ObservableObject {
         sortSavedHikes()
         do {
             try trailDataStore?.save(newHike)
+            objectWillChange.send()
+            print("✅ AppViewModel: Saved hike '\(trail.name)' scheduled for \(scheduledDate.formatted(date: .abbreviated, time: .omitted))")
         } catch {
-            print("Save hike persistence error: \(error)")
+            print("❌ AppViewModel: Save hike persistence error: \(error)")
+            // Remove from array if save failed
+            savedHikes.removeAll { $0.id == newHike.id }
         }
     }
 
@@ -123,10 +127,12 @@ final class AppViewModel: ObservableObject {
         savedHikes[index].isCompleted = isCompleted
         savedHikes[index].completedAt = isCompleted ? (completedAt ?? savedHikes[index].completedAt ?? Date()) : nil
         sortSavedHikes()
+        objectWillChange.send() // Ensure UI updates
         do {
             try trailDataStore?.save(savedHikes[index])
+            print("✅ AppViewModel: Updated saved hike '\(savedHikes[index].trail.name)' (ID: \(savedHikes[index].id)), isCompleted: \(isCompleted)")
         } catch {
-            print("Update hike persistence error: \(error)")
+            print("❌ AppViewModel: Update hike persistence error: \(error)")
         }
     }
 

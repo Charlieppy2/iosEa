@@ -13,7 +13,8 @@ protocol SmartGearServiceProtocol {
         difficulty: Trail.Difficulty,
         weather: WeatherSnapshot,
         season: Season,
-        duration: Int // in hours
+        duration: Int, // in hours
+        localize: ((String) -> String)? // Optional localization function
     ) -> [GearItem]
 }
 
@@ -55,40 +56,46 @@ final class SmartGearService: SmartGearServiceProtocol {
         difficulty: Trail.Difficulty,
         weather: WeatherSnapshot,
         season: Season,
-        duration: Int
+        duration: Int,
+        localize: ((String) -> String)? = nil
     ) -> [GearItem] {
         var gearItems: [GearItem] = []
         
         // Essential items (always required)
-        gearItems.append(contentsOf: getEssentialItems(duration: duration))
+        gearItems.append(contentsOf: getEssentialItems(duration: duration, localize: localize))
         
         // Clothing based on weather and season
-        gearItems.append(contentsOf: getClothingItems(weather: weather, season: season))
+        gearItems.append(contentsOf: getClothingItems(weather: weather, season: season, localize: localize))
         
         // Navigation items
-        gearItems.append(contentsOf: getNavigationItems(difficulty: difficulty))
+        gearItems.append(contentsOf: getNavigationItems(difficulty: difficulty, localize: localize))
         
         // Safety items based on difficulty
-        gearItems.append(contentsOf: getSafetyItems(difficulty: difficulty, weather: weather))
+        gearItems.append(contentsOf: getSafetyItems(difficulty: difficulty, weather: weather, localize: localize))
         
         // Food and hydration
-        gearItems.append(contentsOf: getFoodItems(duration: duration, weather: weather))
+        gearItems.append(contentsOf: getFoodItems(duration: duration, weather: weather, localize: localize))
         
         // Tools and equipment based on difficulty
-        gearItems.append(contentsOf: getToolsItems(difficulty: difficulty, duration: duration))
+        gearItems.append(contentsOf: getToolsItems(difficulty: difficulty, duration: duration, localize: localize))
         
         // Optional items
-        gearItems.append(contentsOf: getOptionalItems(weather: weather, season: season))
+        gearItems.append(contentsOf: getOptionalItems(weather: weather, season: season, localize: localize))
         
         return gearItems
     }
     
-    private func getEssentialItems(duration: Int) -> [GearItem] {
+    /// Helper function to localize gear item names
+    private func localizedName(_ key: String, localize: ((String) -> String)?) -> String {
+        return localize?(key) ?? key
+    }
+    
+    private func getEssentialItems(duration: Int, localize: ((String) -> String)?) -> [GearItem] {
         var items: [GearItem] = []
         
         items.append(GearItem(
             category: .essential,
-            name: "Water Bottle (2L minimum)",
+            name: localizedName("gear.item.water.bottle", localize: localize),
             iconName: "drop.fill",
             isRequired: true
         ))
@@ -96,7 +103,7 @@ final class SmartGearService: SmartGearServiceProtocol {
         if duration > 4 {
             items.append(GearItem(
                 category: .essential,
-                name: "Extra Water (1L per additional 2 hours)",
+                name: localizedName("gear.item.extra.water", localize: localize),
                 iconName: "drop.fill",
                 isRequired: true
             ))
@@ -104,21 +111,21 @@ final class SmartGearService: SmartGearServiceProtocol {
         
         items.append(GearItem(
             category: .essential,
-            name: "Mobile Phone (fully charged)",
+            name: localizedName("gear.item.mobile.phone", localize: localize),
             iconName: "iphone",
             isRequired: true
         ))
         
         items.append(GearItem(
             category: .essential,
-            name: "Power Bank",
+            name: localizedName("gear.item.power.bank", localize: localize),
             iconName: "battery.100",
             isRequired: true
         ))
         
         items.append(GearItem(
             category: .essential,
-            name: "ID Card / ID Document",
+            name: localizedName("gear.item.id.card", localize: localize),
             iconName: "person.text.rectangle.fill",
             isRequired: true
         ))
@@ -126,34 +133,34 @@ final class SmartGearService: SmartGearServiceProtocol {
         return items
     }
     
-    private func getClothingItems(weather: WeatherSnapshot, season: Season) -> [GearItem] {
+    private func getClothingItems(weather: WeatherSnapshot, season: Season, localize: ((String) -> String)?) -> [GearItem] {
         var items: [GearItem] = []
         
         // Base clothing
         items.append(GearItem(
             category: .clothing,
-            name: "Moisture-wicking T-shirt",
+            name: localizedName("gear.item.moisture.tshirt", localize: localize),
             iconName: "tshirt.fill",
             isRequired: true
         ))
         
         items.append(GearItem(
             category: .clothing,
-            name: "Hiking Pants / Shorts",
+            name: localizedName("gear.item.hiking.pants", localize: localize),
             iconName: "figure.walk",
             isRequired: true
         ))
         
         items.append(GearItem(
             category: .clothing,
-            name: "Hiking Shoes / Boots",
+            name: localizedName("gear.item.hiking.shoes", localize: localize),
             iconName: "shoe.fill",
             isRequired: true
         ))
         
         items.append(GearItem(
             category: .clothing,
-            name: "Socks (extra pair)",
+            name: localizedName("gear.item.socks", localize: localize),
             iconName: "sock.fill",
             isRequired: true
         ))
@@ -162,13 +169,13 @@ final class SmartGearService: SmartGearServiceProtocol {
         if weather.temperature < 15 || season == .winter {
             items.append(GearItem(
                 category: .clothing,
-                name: "Warm Jacket / Fleece",
+                name: localizedName("gear.item.warm.jacket", localize: localize),
                 iconName: "tshirt.fill",
                 isRequired: true
             ))
             items.append(GearItem(
                 category: .clothing,
-                name: "Beanie / Warm Hat",
+                name: localizedName("gear.item.beanie", localize: localize),
                 iconName: "hat.fill",
                 isRequired: true
             ))
@@ -177,13 +184,13 @@ final class SmartGearService: SmartGearServiceProtocol {
         if weather.temperature > 25 || season == .summer {
             items.append(GearItem(
                 category: .clothing,
-                name: "Sun Hat / Cap",
+                name: localizedName("gear.item.sun.hat", localize: localize),
                 iconName: "sun.max.fill",
                 isRequired: true
             ))
             items.append(GearItem(
                 category: .clothing,
-                name: "Sunglasses",
+                name: localizedName("gear.item.sunglasses", localize: localize),
                 iconName: "eyeglasses",
                 isRequired: true
             ))
@@ -192,7 +199,7 @@ final class SmartGearService: SmartGearServiceProtocol {
         if weather.humidity > 80 || weather.suggestion.lowercased().contains("rain") {
             items.append(GearItem(
                 category: .clothing,
-                name: "Rain Jacket / Poncho",
+                name: localizedName("gear.item.rain.jacket", localize: localize),
                 iconName: "cloud.rain.fill",
                 isRequired: true
             ))
@@ -201,7 +208,7 @@ final class SmartGearService: SmartGearServiceProtocol {
         if weather.uvIndex > 6 {
             items.append(GearItem(
                 category: .clothing,
-                name: "UV Protection Clothing",
+                name: localizedName("gear.item.uv.protection", localize: localize),
                 iconName: "sun.max.fill",
                 isRequired: true
             ))
@@ -210,12 +217,12 @@ final class SmartGearService: SmartGearServiceProtocol {
         return items
     }
     
-    private func getNavigationItems(difficulty: Trail.Difficulty) -> [GearItem] {
+    private func getNavigationItems(difficulty: Trail.Difficulty, localize: ((String) -> String)?) -> [GearItem] {
         var items: [GearItem] = []
         
         items.append(GearItem(
             category: .navigation,
-            name: "Offline Map (downloaded)",
+            name: localizedName("gear.item.offline.map", localize: localize),
             iconName: "map.fill",
             isRequired: true
         ))
@@ -223,13 +230,13 @@ final class SmartGearService: SmartGearServiceProtocol {
         if difficulty == .challenging {
             items.append(GearItem(
                 category: .navigation,
-                name: "Compass",
+                name: localizedName("gear.item.compass", localize: localize),
                 iconName: "location.north.circle.fill",
                 isRequired: true
             ))
             items.append(GearItem(
                 category: .navigation,
-                name: "GPS Device (optional backup)",
+                name: localizedName("gear.item.gps.device", localize: localize),
                 iconName: "location.fill",
                 isRequired: false
             ))
@@ -238,19 +245,19 @@ final class SmartGearService: SmartGearServiceProtocol {
         return items
     }
     
-    private func getSafetyItems(difficulty: Trail.Difficulty, weather: WeatherSnapshot) -> [GearItem] {
+    private func getSafetyItems(difficulty: Trail.Difficulty, weather: WeatherSnapshot, localize: ((String) -> String)?) -> [GearItem] {
         var items: [GearItem] = []
         
         items.append(GearItem(
             category: .safety,
-            name: "First Aid Kit",
+            name: localizedName("gear.item.first.aid", localize: localize),
             iconName: "cross.case.fill",
             isRequired: true
         ))
         
         items.append(GearItem(
             category: .safety,
-            name: "Whistle",
+            name: localizedName("gear.item.whistle", localize: localize),
             iconName: "speaker.wave.2.fill",
             isRequired: true
         ))
@@ -258,13 +265,13 @@ final class SmartGearService: SmartGearServiceProtocol {
         if difficulty == .challenging {
             items.append(GearItem(
                 category: .safety,
-                name: "Emergency Blanket",
+                name: localizedName("gear.item.emergency.blanket", localize: localize),
                 iconName: "rectangle.fill",
                 isRequired: true
             ))
             items.append(GearItem(
                 category: .safety,
-                name: "Headlamp / Flashlight",
+                name: localizedName("gear.item.headlamp", localize: localize),
                 iconName: "flashlight.on.fill",
                 isRequired: true
             ))
@@ -273,7 +280,7 @@ final class SmartGearService: SmartGearServiceProtocol {
         if weather.uvIndex > 6 {
             items.append(GearItem(
                 category: .safety,
-                name: "Sunscreen (SPF 50+)",
+                name: localizedName("gear.item.sunscreen", localize: localize),
                 iconName: "sun.max.fill",
                 isRequired: true
             ))
@@ -281,7 +288,7 @@ final class SmartGearService: SmartGearServiceProtocol {
         
         items.append(GearItem(
             category: .safety,
-            name: "Insect Repellent",
+            name: localizedName("gear.item.insect.repellent", localize: localize),
             iconName: "ant.fill",
             isRequired: true
         ))
@@ -289,45 +296,45 @@ final class SmartGearService: SmartGearServiceProtocol {
         return items
     }
     
-    private func getFoodItems(duration: Int, weather: WeatherSnapshot) -> [GearItem] {
+    private func getFoodItems(duration: Int, weather: WeatherSnapshot, localize: ((String) -> String)?) -> [GearItem] {
         var items: [GearItem] = []
         
         if duration <= 2 {
             items.append(GearItem(
                 category: .food,
-                name: "Energy Snacks",
+                name: localizedName("gear.item.energy.snacks", localize: localize),
                 iconName: "leaf.fill",
                 isRequired: true
             ))
         } else if duration <= 4 {
             items.append(GearItem(
                 category: .food,
-                name: "Energy Snacks",
+                name: localizedName("gear.item.energy.snacks", localize: localize),
                 iconName: "leaf.fill",
                 isRequired: true
             ))
             items.append(GearItem(
                 category: .food,
-                name: "Light Meal / Sandwich",
+                name: localizedName("gear.item.light.meal", localize: localize),
                 iconName: "fork.knife",
                 isRequired: true
             ))
         } else {
             items.append(GearItem(
                 category: .food,
-                name: "Energy Snacks",
+                name: localizedName("gear.item.energy.snacks", localize: localize),
                 iconName: "leaf.fill",
                 isRequired: true
             ))
             items.append(GearItem(
                 category: .food,
-                name: "Full Meal",
+                name: localizedName("gear.item.full.meal", localize: localize),
                 iconName: "fork.knife",
                 isRequired: true
             ))
             items.append(GearItem(
                 category: .food,
-                name: "Electrolyte Drinks / Sports Drink",
+                name: localizedName("gear.item.electrolyte.drink", localize: localize),
                 iconName: "drop.fill",
                 isRequired: true
             ))
@@ -336,7 +343,7 @@ final class SmartGearService: SmartGearServiceProtocol {
         if weather.temperature > 25 {
             items.append(GearItem(
                 category: .food,
-                name: "Electrolyte Tablets",
+                name: localizedName("gear.item.electrolyte.tablets", localize: localize),
                 iconName: "pills.fill",
                 isRequired: true
             ))
@@ -345,12 +352,12 @@ final class SmartGearService: SmartGearServiceProtocol {
         return items
     }
     
-    private func getToolsItems(difficulty: Trail.Difficulty, duration: Int) -> [GearItem] {
+    private func getToolsItems(difficulty: Trail.Difficulty, duration: Int, localize: ((String) -> String)?) -> [GearItem] {
         var items: [GearItem] = []
         
         items.append(GearItem(
             category: .tools,
-            name: "Multi-tool / Knife",
+            name: localizedName("gear.item.multi.tool", localize: localize),
             iconName: "wrench.and.screwdriver.fill",
             isRequired: difficulty == .challenging
         ))
@@ -358,7 +365,7 @@ final class SmartGearService: SmartGearServiceProtocol {
         if difficulty == .challenging {
             items.append(GearItem(
                 category: .tools,
-                name: "Trekking Poles",
+                name: localizedName("gear.item.trekking.poles", localize: localize),
                 iconName: "figure.walk",
                 isRequired: false
             ))
@@ -367,7 +374,7 @@ final class SmartGearService: SmartGearServiceProtocol {
         if duration > 6 {
             items.append(GearItem(
                 category: .tools,
-                name: "Trekking Poles",
+                name: localizedName("gear.item.trekking.poles", localize: localize),
                 iconName: "figure.walk",
                 isRequired: false
             ))
@@ -376,19 +383,19 @@ final class SmartGearService: SmartGearServiceProtocol {
         return items
     }
     
-    private func getOptionalItems(weather: WeatherSnapshot, season: Season) -> [GearItem] {
+    private func getOptionalItems(weather: WeatherSnapshot, season: Season, localize: ((String) -> String)?) -> [GearItem] {
         var items: [GearItem] = []
         
         items.append(GearItem(
             category: .optional,
-            name: "Camera",
+            name: localizedName("gear.item.camera", localize: localize),
             iconName: "camera.fill",
             isRequired: false
         ))
         
         items.append(GearItem(
             category: .optional,
-            name: "Binoculars",
+            name: localizedName("gear.item.binoculars", localize: localize),
             iconName: "eye.fill",
             isRequired: false
         ))
@@ -396,7 +403,7 @@ final class SmartGearService: SmartGearServiceProtocol {
         if season == .spring || season == .autumn {
             items.append(GearItem(
                 category: .optional,
-                name: "Lightweight Gloves",
+                name: localizedName("gear.item.lightweight.gloves", localize: localize),
                 iconName: "hand.raised.fill",
                 isRequired: false
             ))

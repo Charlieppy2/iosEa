@@ -2,13 +2,14 @@
 //  OfflineMapsFileStore.swift
 //  hikingHK
 //
-//  使用 FileManager + JSON 持久化離線地圖區域狀態，避開 SwiftData 的同步問題
+//  Uses FileManager + JSON to persist offline map region status, avoiding SwiftData synchronization issues.
+//  Refactored to use the unified BaseFileStore architecture.
 //
 
 import Foundation
 
 /// DTO used for JSON persistence of an offline map region.
-private struct PersistedOfflineRegion: Codable {
+struct PersistedOfflineRegion: FileStoreDTO {
     var id: UUID
     var name: String
     var downloadStatus: OfflineMapRegion.DownloadStatus
@@ -17,67 +18,46 @@ private struct PersistedOfflineRegion: Codable {
     var totalSize: Int64
     var downloadedAt: Date?
     var lastUpdated: Date
+    
+    // MARK: - FileStoreDTO Implementation
+    
+    /// Returns the ID of the region for identification.
+    var modelId: UUID { id }
 }
 
 /// Persists and loads offline map region metadata using the file system.
-final class OfflineMapsFileStore {
-    private let fileURL: URL
+/// Refactored to use the unified BaseFileStore architecture.
+@MainActor
+final class OfflineMapsFileStore: BaseFileStore<OfflineMapRegion, PersistedOfflineRegion> {
     
-    init(fileName: String = "offline_maps.json") {
-        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-            ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        self.fileURL = directory.appendingPathComponent(fileName)
+    init() {
+        super.init(fileName: "offline_maps.json")
     }
     
-    // MARK: - Public API
+    // MARK: - Custom Loading (with sorting)
     
+    /// Loads all regions sorted by name.
+    override func loadAll() throws -> [OfflineMapRegion] {
+        let all = try super.loadAll()
+        return all.sorted { $0.name < $1.name }
+    }
+    
+    // MARK: - Convenience Methods (backward compatibility)
+    
+    /// Convenience method for backward compatibility.
     func loadAllRegions() throws -> [OfflineMapRegion] {
-        let persisted = try loadPersistedRegions()
-        return persisted
-            .map { $0.toModel() }
-            .sorted { $0.name < $1.name }
+        return try loadAll()
     }
     
+    /// Convenience method for backward compatibility (batch save).
     func saveRegions(_ regions: [OfflineMapRegion]) throws {
-        let persisted = regions.map { PersistedOfflineRegion(from: $0) }
-        try persist(regions: persisted)
-    }
-    
-    // MARK: - Private helpers
-    
-    private func loadPersistedRegions() throws -> [PersistedOfflineRegion] {
-        let fm = FileManager.default
-        guard fm.fileExists(atPath: fileURL.path) else {
-            return []
-        }
-        
-        let data = try Data(contentsOf: fileURL)
-        if data.isEmpty {
-            return []
-        }
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode([PersistedOfflineRegion].self, from: data)
-    }
-    
-    private func persist(regions: [PersistedOfflineRegion]) throws {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
-        let data = try encoder.encode(regions)
-        
-        try FileManager.default.createDirectory(
-            at: fileURL.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
-        try data.write(to: fileURL, options: .atomic)
+        try saveAll(regions)
     }
 }
 
 // MARK: - DTO <-> Model Conversion
 
-private extension PersistedOfflineRegion {
+extension PersistedOfflineRegion {
     init(from model: OfflineMapRegion) {
         self.id = model.id
         self.name = model.name

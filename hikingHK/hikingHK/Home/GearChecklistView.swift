@@ -107,7 +107,8 @@ struct GearChecklistView: View {
                 }
             }
             .onAppear {
-                viewModel.configureIfNeeded(context: modelContext)
+                viewModel.configureIfNeeded(context: modelContext, languageManager: languageManager)
+                // Load gear items from JSON file store (like journals)
                 viewModel.loadGearItems(for: trail.id)
                 
                 // Generate if no items exist

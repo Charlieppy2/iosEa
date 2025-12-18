@@ -14,9 +14,10 @@ struct AuthView: View {
     
     /// Local form state for the user's name, email and password.
     @State private var name = ""
-    @State private var email = "jamie@trailcollective.hk"
-    @State private var password = "GoHike123"
+    @State private var email = ""
+    @State private var password = ""
     @State private var isRegistering = false
+    @State private var showQuickAccounts = false
     @FocusState private var focusedField: Field?
 
     /// Fields that can receive keyboard focus inside the form.
@@ -69,6 +70,9 @@ struct AuthView: View {
                 }
                 authActionButton
                 modeToggle
+                if !isRegistering {
+                    quickAccountButtons
+                }
                 Spacer()
             }
             .padding()
@@ -94,6 +98,22 @@ struct AuthView: View {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button(languageManager.localizedString(for: "done")) { focusedField = nil }
+                }
+            }
+            .onAppear {
+                // Clear form when view appears (e.g., after sign out)
+                if sessionManager.currentUser == nil {
+                    email = ""
+                    password = ""
+                    name = ""
+                }
+            }
+            .onChange(of: sessionManager.currentUser) { oldValue, newValue in
+                // Clear form when user signs out
+                if oldValue != nil && newValue == nil {
+                    email = ""
+                    password = ""
+                    name = ""
                 }
             }
         }
@@ -138,6 +158,70 @@ extension AuthView {
             }
             .buttonStyle(.plain)
         }
+    }
+    
+    /// Quick account selection buttons for demo accounts.
+    private var quickAccountButtons: some View {
+        VStack(spacing: 8) {
+            Button {
+                withAnimation {
+                    showQuickAccounts.toggle()
+                }
+            } label: {
+                HStack {
+                    Text(languageManager.localizedString(for: "auth.quick.accounts"))
+                        .font(.caption)
+                    Image(systemName: showQuickAccounts ? "chevron.up" : "chevron.down")
+                        .font(.caption2)
+                }
+                .foregroundStyle(Color.hikingBrown)
+            }
+            .buttonStyle(.plain)
+            
+            if showQuickAccounts {
+                VStack(spacing: 8) {
+                    quickAccountButton(
+                        email: "jamie@trailcollective.hk",
+                        password: "GoHike123",
+                        name: "Jamie Ho"
+                    )
+                    quickAccountButton(
+                        email: "alex@trailcollective.hk",
+                        password: "DragonBack!",
+                        name: "Alex Chan"
+                    )
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+    
+    /// A button that fills in credentials for a quick account.
+    private func quickAccountButton(email: String, password: String, name: String) -> some View {
+        Button {
+            withAnimation {
+                self.email = email
+                self.password = password
+                self.name = name
+                showQuickAccounts = false
+                focusedField = nil
+            }
+        } label: {
+            HStack {
+                Image(systemName: "person.circle.fill")
+                    .foregroundStyle(Color.hikingGreen)
+                Text(name)
+                    .font(.subheadline)
+                Spacer()
+                Text(email)
+                    .font(.caption)
+                    .foregroundStyle(Color.hikingStone)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
     }
 }
 

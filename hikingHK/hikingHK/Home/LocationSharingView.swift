@@ -75,6 +75,10 @@ struct LocationSharingView: View {
             .sheet(isPresented: $isShowingAddContact) {
                 addContactSheet
             }
+            .onAppear {
+                // Configure and load emergency contacts from JSON file store
+                viewModel.configureIfNeeded(context: modelContext)
+            }
             .alert(languageManager.localizedString(for: "location.share.confirm.sos"), isPresented: $isShowingSOSConfirmation) {
                 Button(languageManager.localizedString(for: "cancel"), role: .cancel) { }
                 Button(languageManager.localizedString(for: "location.share.send"), role: .destructive) {

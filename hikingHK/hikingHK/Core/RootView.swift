@@ -16,6 +16,7 @@ struct RootView: View {
     @StateObject private var appViewModel = AppViewModel()
     @StateObject private var languageManager = LanguageManager.shared
     @State private var didConfigure = false
+    @State private var viewRefreshID = UUID()
 
     var body: some View {
         Group {
@@ -29,11 +30,12 @@ struct RootView: View {
                 AuthView()
                     .environmentObject(sessionManager)
                     .environmentObject(languageManager)
-                    .id("logged_out") // Ensure the logged-out view has a stable unique ID
+                    .id("logged_out_\(viewRefreshID.uuidString)") // Force refresh when logging out
             }
         }
         .onChange(of: sessionManager.currentUser) { oldValue, newValue in
             print("🔄 RootView: currentUser changed from \(oldValue?.email ?? "nil") to \(newValue?.email ?? "nil")")
+            print("🔄 RootView: Will show \(newValue != nil ? "ContentView" : "AuthView")")
             
             // When the user logs in, reload user-scoped data
             if oldValue == nil && newValue != nil {
@@ -42,6 +44,16 @@ struct RootView: View {
                 // Ensure data is loaded after configuration
                 appViewModel.reloadUserData()
             }
+            
+            // When the user logs out, ensure the view refreshes
+            if oldValue != nil && newValue == nil {
+                print("🔄 RootView: User logged out, switching to AuthView...")
+                viewRefreshID = UUID() // Force view refresh
+            }
+        }
+        .onAppear {
+            print("🔄 RootView: Appeared, currentUser: \(sessionManager.currentUser?.email ?? "nil")")
+            print("🔄 RootView: Will show \(sessionManager.currentUser != nil ? "ContentView" : "AuthView")")
         }
         .task {
             guard !didConfigure else { return }
