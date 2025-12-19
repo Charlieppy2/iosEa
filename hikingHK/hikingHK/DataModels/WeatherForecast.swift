@@ -7,9 +7,29 @@
 
 import Foundation
 
+/// Supported regions within Hong Kong for weather forecasts.
+enum WeatherRegion: String, CaseIterable, Identifiable {
+    case hongKongIsland
+    case kowloon
+    case newTerritories
+    case lantau
+    
+    var id: String { rawValue }
+    
+    /// Localization key used to display the region name.
+    var localizationKey: String {
+        switch self {
+        case .hongKongIsland: return "weather.region.hong.kong.island"
+        case .kowloon: return "weather.region.kowloon"
+        case .newTerritories: return "weather.region.new.territories"
+        case .lantau: return "weather.region.lantau"
+        }
+    }
+}
+
 /// High-level daily and hourly weather forecast used by the Hiking HK UI.
 struct WeatherForecast {
-    let location: String
+    let region: WeatherRegion
     let dailyForecasts: [DailyForecast]
     let updatedAt: Date
     

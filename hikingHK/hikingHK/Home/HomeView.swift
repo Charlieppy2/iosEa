@@ -178,6 +178,8 @@ struct HomeView: View {
             }
             .sheet(isPresented: $isShowingWeatherForecast) {
                 WeatherForecastView()
+                    .environmentObject(viewModel)
+                    .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
             .sheet(item: $selectedSavedHike) { hike in

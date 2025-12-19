@@ -9,7 +9,8 @@ import Foundation
 
 /// Abstraction for fetching a multi-day weather forecast used in the planner and journal.
 protocol WeatherForecastServiceProtocol {
-    func fetchForecast() async throws -> WeatherForecast
+    /// Returns a multi-day forecast for a specific hiking trail.
+    func fetchForecast(for trail: Trail) async throws -> WeatherForecast
 }
 
 /// Simple mock-backed implementation of the forecast service.
@@ -29,25 +30,32 @@ struct WeatherForecastService: WeatherForecastServiceProtocol {
     
     /// Returns a weather forecast; currently generated from mock data
     /// to keep the UI functional without depending on the live API.
-    func fetchForecast() async throws -> WeatherForecast {
-        return generateMockForecast()
+    /// Each trail gets its OWN forecast by using the trail's ID to vary the baseline.
+    func fetchForecast(for trail: Trail) async throws -> WeatherForecast {
+        return generateMockForecast(for: trail)
     }
     
-    private func generateMockForecast() -> WeatherForecast {
+    private func generateMockForecast(for trail: Trail) -> WeatherForecast {
         let calendar = Calendar.current
         let now = Date()
         var dailyForecasts: [DailyForecast] = []
         
+        // Derive a stable offset from the trail ID so that each trail feels different
+        let hash = trail.id.uuidString.hashValue
+        let tempOffset = Double((hash % 6) - 3)          // -3 ... +2
+        let humidityOffset = Int((hash % 11) - 5)        // -5 ... +5
+        let windOffset = Double((hash % 9) - 4)          // -4 ... +4
+        
         for dayOffset in 0..<7 {
             guard let date = calendar.date(byAdding: .day, value: dayOffset, to: now) else { continue }
             
-            // Generate realistic weather data for Hong Kong
-            let baseTemp = 22.0 + Double.random(in: -3...5)
+            // Generate baseline weather; vary by trail-specific offsets
+            let baseTemp = 22.0 + tempOffset + Double.random(in: -3...5)
             let highTemp = baseTemp + Double.random(in: 3...7)
             let lowTemp = baseTemp - Double.random(in: 2...5)
-            let humidity = Int.random(in: 60...85)
+            let humidity = max(40, min(95, Int.random(in: 60...85) + humidityOffset))
             let uvIndex = dayOffset < 2 ? Int.random(in: 5...8) : Int.random(in: 3...7)
-            let windSpeed = Double.random(in: 10...25)
+            let windSpeed = max(2, Double.random(in: 10...25) + windOffset)
             let precipitationChance = Int.random(in: 0...40)
             
             // Determine condition based on precipitation chance
@@ -100,8 +108,23 @@ struct WeatherForecastService: WeatherForecastServiceProtocol {
             ))
         }
         
+        // We keep using WeatherRegion for now by mapping rough area based on district;
+        // this is mainly for future UI labeling and is not critical for the mock data itself.
+        let roughRegion: WeatherRegion = {
+            let district = trail.district.lowercased()
+            if district.contains("kowloon") {
+                return .kowloon
+            } else if district.contains("lantau") {
+                return .lantau
+            } else if district.contains("new territories") || district.contains("tai po") || district.contains("tsuen wan") || district.contains("sha tin") {
+                return .newTerritories
+            } else {
+                return .hongKongIsland
+            }
+        }()
+        
         return WeatherForecast(
-            location: "Hong Kong",
+            region: roughRegion,
             dailyForecasts: dailyForecasts,
             updatedAt: now
         )

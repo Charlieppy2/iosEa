@@ -24,13 +24,13 @@ final class WeatherForecastViewModel: ObservableObject {
     }
     
     /// Loads the latest weather forecast from the backend service.
-    func loadForecast() async {
+    func loadForecast(for trail: Trail) async {
         isLoading = true
         error = nil
         defer { isLoading = false }
         
         do {
-            forecast = try await forecastService.fetchForecast()
+            forecast = try await forecastService.fetchForecast(for: trail)
         } catch {
             self.error = "Failed to load weather forecast. Please try again later."
             print("Weather forecast error: \(error)")

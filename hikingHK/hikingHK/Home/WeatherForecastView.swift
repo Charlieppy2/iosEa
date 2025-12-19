@@ -9,13 +9,33 @@ import SwiftUI
 
 struct WeatherForecastView: View {
     @StateObject private var viewModel = WeatherForecastViewModel()
+    @EnvironmentObject private var appViewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedTrail: Trail?
+    @State private var isShowingLocationSearch = false
     
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
+                    if let trail = selectedTrail ?? defaultTrail {
+                        HStack(spacing: 8) {
+                            Image(systemName: "mappin.and.ellipse")
+                                .foregroundStyle(Color.hikingGreen)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(trail.localizedName(languageManager: languageManager))
+                                    .font(.headline)
+                                    .foregroundStyle(Color.hikingDarkGreen)
+                                Text(trail.localizedDistrict(languageManager: languageManager))
+                                    .font(.caption)
+                                    .foregroundStyle(Color.hikingBrown)
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                    }
+
                     if viewModel.isLoading {
                         ProgressView()
                             .padding()
@@ -43,9 +63,21 @@ struct WeatherForecastView: View {
                 .ignoresSafeArea()
             )
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        isShowingLocationSearch = true
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(Color.hikingGreen)
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        Task { await viewModel.loadForecast() }
+                        Task {
+                            if let trail = selectedTrail ?? defaultTrail {
+                                await viewModel.loadForecast(for: trail)
+                            }
+                        }
                     } label: {
                         Image(systemName: "arrow.clockwise")
                             .foregroundStyle(Color.hikingGreen)
@@ -54,9 +86,45 @@ struct WeatherForecastView: View {
                 }
             }
             .task {
-                await viewModel.loadForecast()
+                // 初次加载时优先使用「即將計劃」中的第一條路線
+                if selectedTrail == nil {
+                    selectedTrail = upcomingTrails.first ?? defaultTrail
+                }
+                if let trail = selectedTrail {
+                    await viewModel.loadForecast(for: trail)
+                }
+            }
+            .onChange(of: selectedTrail) { _, newValue in
+                guard let trail = newValue else { return }
+                Task { await viewModel.loadForecast(for: trail) }
+            }
+            .sheet(isPresented: $isShowingLocationSearch) {
+                WeatherLocationSearchView { trail in
+                    selectedTrail = trail
+                }
+                .environmentObject(appViewModel)
+                .environmentObject(languageManager)
             }
         }
+    }
+    
+    /// 當前「即將計劃」的路線（按日期排序後去重）
+    private var upcomingTrails: [Trail] {
+        let hikes = appViewModel.savedHikes.sorted { $0.scheduledDate < $1.scheduledDate }
+        var seen: Set<UUID> = []
+        var result: [Trail] = []
+        for hike in hikes {
+            if !seen.contains(hike.trail.id) {
+                seen.insert(hike.trail.id)
+                result.append(hike.trail)
+            }
+        }
+        return result
+    }
+    
+    /// 沒有即將計劃時的預設路線（取第一條已有路線）
+    private var defaultTrail: Trail? {
+        appViewModel.trails.first
     }
     
     private func bestHikingTimesSection(_ bestTimes: [BestHikingTime]) -> some View {
@@ -253,7 +321,11 @@ struct WeatherForecastView: View {
                 .foregroundStyle(Color.hikingBrown)
                 .multilineTextAlignment(.center)
             Button {
-                Task { await viewModel.loadForecast() }
+                Task {
+                    if let trail = selectedTrail ?? defaultTrail {
+                        await viewModel.loadForecast(for: trail)
+                    }
+                }
             } label: {
                 Text(languageManager.localizedString(for: "retry"))
                     .font(.headline)
@@ -277,6 +349,7 @@ struct WeatherForecastView: View {
 
 #Preview {
     WeatherForecastView()
+        .environmentObject(AppViewModel())
         .environmentObject(LanguageManager.shared)
 }
 
