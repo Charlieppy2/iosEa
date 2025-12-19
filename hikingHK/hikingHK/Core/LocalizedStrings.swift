@@ -121,6 +121,7 @@ struct LocalizedStrings {
         
         // Services
         "service.weather.api": "HK Weather API",
+        "service.csdi.api": "CSDI Geoportal API",
         "service.gps.tracking": "GPS tracking",
         "service.offline.maps": "Offline maps",
         "service.mapbox.api": "Mapbox API",
@@ -128,6 +129,13 @@ struct LocalizedStrings {
         "service.status.disconnected": "Disconnected",
         "service.status.unavailable": "Unavailable",
         "service.status.unknown": "Unknown",
+        
+        // Trails Data
+        "profile.trails.data": "Trails Data",
+        "profile.trails.total": "Total Trails",
+        "profile.trails.loading": "Loading trails from API...",
+        "profile.trails.refresh": "Refresh Trails",
+        "trails.loading": "Loading trails...",
         
         // API Status
         "api.status.title": "API Status",
@@ -848,6 +856,7 @@ struct LocalizedStrings {
         
         // Services
         "service.weather.api": "香港天文台天氣API",
+        "service.csdi.api": "CSDI 地理資訊平台 API",
         "service.gps.tracking": "GPS追蹤",
         "service.offline.maps": "離線地圖",
         "service.mapbox.api": "Mapbox API",
@@ -855,6 +864,13 @@ struct LocalizedStrings {
         "service.status.disconnected": "未連接",
         "service.status.unavailable": "不可用",
         "service.status.unknown": "未知",
+        
+        // Trails Data
+        "profile.trails.data": "路線數據",
+        "profile.trails.total": "路線總數",
+        "profile.trails.loading": "正在從 API 加載路線...",
+        "profile.trails.refresh": "刷新路線",
+        "trails.loading": "正在加載路線...",
         
         // API Status
         "api.status.title": "API狀態",

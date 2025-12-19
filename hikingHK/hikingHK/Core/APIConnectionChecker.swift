@@ -13,7 +13,6 @@ import Combine
 class APIConnectionChecker: ObservableObject {
     @Published var weatherAPIStatus: ConnectionStatus = .checking
     @Published var weatherWarningAPIStatus: ConnectionStatus = .checking
-    @Published var csdiAPIStatus: ConnectionStatus = .checking
     @Published var mapboxAPIStatus: ConnectionStatus = .notConfigured
     @Published var lastCheckTime: Date?
     
@@ -74,7 +73,6 @@ class APIConnectionChecker: ObservableObject {
     func checkAllAPIs() async {
         await checkWeatherAPI()
         await checkWeatherWarningAPI()
-        await checkCSDIAPI()
         checkMapboxAPI()
         lastCheckTime = Date()
     }
@@ -125,29 +123,6 @@ class APIConnectionChecker: ObservableObject {
         }
     }
     
-    /// Checks connectivity to a representative CSDI Geoportal endpoint.
-    func checkCSDIAPI() async {
-        csdiAPIStatus = .checking
-        
-        // Check one of the CSDI endpoints
-        let endpoint = URL(string: "https://portal.csdi.gov.hk/geoportal/?datasetId=afcd_rcd_1665568199103_4360&lang=en")!
-        
-        do {
-            let (_, response) = try await URLSession.shared.data(from: endpoint)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                if (200..<300).contains(httpResponse.statusCode) {
-                    csdiAPIStatus = .connected
-                } else {
-                    csdiAPIStatus = .error("HTTP \(httpResponse.statusCode)")
-                }
-            } else {
-                csdiAPIStatus = .disconnected
-            }
-        } catch {
-            csdiAPIStatus = .error(error.localizedDescription)
-        }
-    }
     
     /// Validates whether the Mapbox access token is present (but does not perform a live request).
     func checkMapboxAPI() {

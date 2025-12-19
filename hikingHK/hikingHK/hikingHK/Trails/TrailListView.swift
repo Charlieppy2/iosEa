@@ -48,6 +48,7 @@ struct TrailListView: View {
             .navigationTitle(languageManager.localizedString(for: "trails.title"))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
+                    // Filter menu
                     Menu {
                         Button(languageManager.localizedString(for: "trails.all.difficulties")) {
                             selectedDifficulty = nil

@@ -124,6 +124,17 @@ struct ProfileView: View {
                         status: apiChecker.mapboxAPIStatus
                     )
                 }
+                Section(languageManager.localizedString(for: "profile.trails.data")) {
+                    HStack {
+                        Label(languageManager.localizedString(for: "profile.trails.total"), systemImage: "map.fill")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Color.hikingDarkGreen)
+                        Spacer()
+                        Text("\(viewModel.trails.count)")
+                            .font(.headline)
+                            .foregroundStyle(Color.hikingGreen)
+                    }
+                }
                 Section(languageManager.localizedString(for: "profile.language")) {
                     languageSelectionRow
                 }
