@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import CoreLocation
+import Combine
 
 /// Main landing screen showing weather, featured trail, quick actions and upcoming hikes.
 struct HomeView: View {
@@ -27,15 +28,35 @@ struct HomeView: View {
     @State private var isShowingTrailPicker = false
     @StateObject private var locationManager = LocationManager()
     @State private var isShowingSOSConfirmation = false
+    @State private var featuredIndex: Int = 0
+    @State private var trailPendingPlan: Trail?
+    @State private var isShowingAddPlanConfirmation = false
+    private let featuredTimer = Timer.publish(every: 6, on: .main, in: .common).autoconnect()
+
+    /// Featured trails carousel data source – 当前简单使用所有 trails 作为精选候选。
+    private var featuredTrails: [Trail] {
+        viewModel.trails
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     weatherCard
-                    if let featured = viewModel.featuredTrail {
-                        featuredTrailCard()
+                    
+                    // 精选路线卡片轮播
+                    if !featuredTrails.isEmpty {
+                        TabView(selection: $featuredIndex) {
+                            ForEach(Array(featuredTrails.enumerated()), id: \.offset) { index, trail in
+                                featuredTrailCard(trail: trail)
+                                    .tag(index)
+                            }
+                        }
+                        .frame(height: 260)
+                        .tabViewStyle(.page(indexDisplayMode: .never))
+                        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: featuredIndex)
                     }
+                    
                     quickActions
                     savedHikesSection
                 }
@@ -174,6 +195,31 @@ struct HomeView: View {
                 )
                 .environmentObject(viewModel)
             }
+            .alert(languageManager.localizedString(for: "home.featured.add.to.plan.confirm"), isPresented: $isShowingAddPlanConfirmation) {
+                Button(languageManager.localizedString(for: "cancel"), role: .cancel) {
+                    trailPendingPlan = nil
+                }
+                Button(languageManager.localizedString(for: "ok")) {
+                    if let trail = trailPendingPlan {
+                        let defaultDate = Date().addingTimeInterval(60 * 60 * 24)
+                        viewModel.addSavedHike(for: trail, scheduledDate: defaultDate)
+                        viewModel.markFavorite(trail)
+                    }
+                    trailPendingPlan = nil
+                }
+            } message: {
+                Text(languageManager.localizedString(for: "home.featured.add.to.plan.message"))
+            }
+            .onReceive(featuredTimer) { _ in
+                guard !featuredTrails.isEmpty else { return }
+                // 自动每 3 秒轮播到下一个精选路线
+                let maxIndex = featuredTrails.count - 1
+                if featuredIndex >= maxIndex {
+                    featuredIndex = 0
+                } else {
+                    featuredIndex += 1
+                }
+            }
         }
     }
 
@@ -298,9 +344,7 @@ struct HomeView: View {
     }
 
     @ViewBuilder
-    private func featuredTrailCard() -> some View {
-        // 直接从 viewModel.featuredTrail 读取，确保使用最新的数据
-        if let trail = viewModel.featuredTrail {
+    private func featuredTrailCard(trail: Trail) -> some View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     VStack(alignment: .leading, spacing: 6) {
@@ -320,7 +364,14 @@ struct HomeView: View {
                     }
                     Spacer()
                     Button {
-                        viewModel.markFavorite(trail)
+                        if trail.isFavorite {
+                            // 已经是收藏，直接取消收藏，不弹窗
+                            viewModel.markFavorite(trail)
+                        } else {
+                            // 首次点亮时先弹出确认对话框
+                            trailPendingPlan = trail
+                            isShowingAddPlanConfirmation = true
+                        }
                     } label: {
                         Image(systemName: trail.isFavorite ? "heart.fill" : "heart")
                             .font(.title3)
@@ -387,7 +438,6 @@ struct HomeView: View {
                     )
                     .shadow(color: Color.hikingDarkGreen.opacity(0.15), radius: 20, x: 0, y: 8)
             )
-        }
     }
 
     private func statBadge(value: String, caption: String) -> some View {
@@ -1159,6 +1209,7 @@ struct OfflineMapsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager
     @State private var isCreatingRegions = false
+    @State private var regionToDelete: OfflineMapRegion?
     
     // 使用 ViewModel 的 regions 而不是 @Query
     private var regions: [OfflineMapRegion] {
@@ -1250,6 +1301,26 @@ struct OfflineMapsView: View {
                     Text(error)
                 }
             }
+            .confirmationDialog(
+                languageManager.localizedString(for: "offline.maps.delete.confirm"),
+                isPresented: Binding(
+                    get: { regionToDelete != nil },
+                    set: { if !$0 { regionToDelete = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button(languageManager.localizedString(for: "delete"), role: .destructive) {
+                    if let region = regionToDelete {
+                        viewModel.deleteRegion(region)
+                        regionToDelete = nil
+                    }
+                }
+                Button(languageManager.localizedString(for: "cancel"), role: .cancel) {
+                    regionToDelete = nil
+                }
+            } message: {
+                Text(languageManager.localizedString(for: "offline.maps.delete.message"))
+            }
         }
     }
     
@@ -1285,7 +1356,7 @@ struct OfflineMapsView: View {
                     }
                 } else if region.downloadStatus == .downloaded {
                     Button(role: .destructive) {
-                        viewModel.deleteRegion(region)
+                        regionToDelete = region
                     } label: {
                         Image(systemName: "trash")
                     }

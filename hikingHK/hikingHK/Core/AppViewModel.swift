@@ -138,7 +138,35 @@ final class AppViewModel: ObservableObject {
 
     /// Removes a saved hike from both memory and persistent storage.
     func removeSavedHike(_ hike: SavedHike) {
+        let trailId = hike.trail.id
+        
+        // 1. 先从「即將計劃」中移除這條計劃
         savedHikes.removeAll { $0.id == hike.id }
+        
+        // 2. 如果這條路線已經沒有任何計劃了，同步取消收藏狀態
+        let stillHasPlansForTrail = savedHikes.contains { $0.trail.id == trailId }
+        if !stillHasPlansForTrail {
+            if let index = trails.firstIndex(where: { $0.id == trailId }) {
+                var updatedTrail = trails[index]
+                if updatedTrail.isFavorite {
+                    updatedTrail.isFavorite = false
+                    trails[index] = updatedTrail
+                    
+                    // 如果這也是精選路線，保持 featuredTrail 一致
+                    if featuredTrail?.id == trailId {
+                        featuredTrail = updatedTrail
+                    }
+                    
+                    do {
+                        try trailDataStore?.setFavorite(false, trailId: trailId)
+                        print("✅ AppViewModel: Unfavorited trail '\(updatedTrail.name)' after deleting its last plan")
+                    } catch {
+                        print("❌ AppViewModel: Failed to unfavorite trail after deleting plan: \(error)")
+                    }
+                }
+            }
+        }
+        
         do {
             try trailDataStore?.delete(hike)
         } catch {

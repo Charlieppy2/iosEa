@@ -26,13 +26,16 @@ struct RootView: View {
                     .environmentObject(sessionManager)
                     .environmentObject(languageManager)
                     .id("logged_in_\(sessionManager.currentUser?.id.uuidString ?? "")") // Force refresh when the logged-in user changes
+                    .transition(.opacity)
             } else {
                 AuthView()
                     .environmentObject(sessionManager)
                     .environmentObject(languageManager)
                     .id("logged_out_\(viewRefreshID.uuidString)") // Force refresh when logging out
+                    .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 0.3), value: sessionManager.currentUser != nil)
         .onChange(of: sessionManager.currentUser) { oldValue, newValue in
             print("🔄 RootView: currentUser changed from \(oldValue?.email ?? "nil") to \(newValue?.email ?? "nil")")
             print("🔄 RootView: Will show \(newValue != nil ? "ContentView" : "AuthView")")

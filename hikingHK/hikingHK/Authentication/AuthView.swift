@@ -106,6 +106,7 @@ struct AuthView: View {
                     email = ""
                     password = ""
                     name = ""
+                    isRegistering = false
                 }
             }
             .onChange(of: sessionManager.currentUser) { oldValue, newValue in
@@ -114,6 +115,7 @@ struct AuthView: View {
                     email = ""
                     password = ""
                     name = ""
+                    isRegistering = false
                 }
             }
         }

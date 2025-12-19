@@ -166,6 +166,8 @@ struct LocalizedStrings {
         "home.featured.trail": "Featured Trail",
         "home.elev.gain": "Elev gain",
         "home.view.trail.plan": "View trail plan",
+        "home.featured.add.to.plan.confirm": "Add to upcoming plans?",
+        "home.featured.add.to.plan.message": "Do you want to add this featured trail to your upcoming plans?",
         "home.next.plans": "Next plans",
         "home.add": "Add",
         "home.no.hikes.scheduled": "No hikes scheduled",
@@ -654,6 +656,8 @@ struct LocalizedStrings {
         "offline.maps.status.downloaded": "Downloaded",
         "offline.maps.status.failed": "Failed",
         "offline.maps.status.updating": "Updating",
+        "offline.maps.delete.confirm": "Delete Offline Map",
+        "offline.maps.delete.message": "Are you sure you want to delete this offline map? This action cannot be undone.",
         
         // AR Identify
         "ar.scanning.skyline": "Scanning skyline…",
@@ -901,6 +905,8 @@ struct LocalizedStrings {
         "home.featured.trail": "精選路線",
         "home.elev.gain": "海拔上升",
         "home.view.trail.plan": "查看路線計劃",
+        "home.featured.add.to.plan.confirm": "加入即將計劃？",
+        "home.featured.add.to.plan.message": "是否將此精選路線加入「即將計劃」？",
         "home.next.plans": "即將計劃",
         "home.add": "添加",
         "home.no.hikes.scheduled": "尚無計劃的行山",
@@ -1382,6 +1388,8 @@ struct LocalizedStrings {
         "offline.maps.status.downloaded": "已下載",
         "offline.maps.status.failed": "失敗",
         "offline.maps.status.updating": "更新中",
+        "offline.maps.delete.confirm": "刪除離線地圖",
+        "offline.maps.delete.message": "您確定要刪除此離線地圖嗎？此操作無法撤銷。",
         
         // AR Identify
         "ar.scanning.skyline": "正在掃描天際線…",
