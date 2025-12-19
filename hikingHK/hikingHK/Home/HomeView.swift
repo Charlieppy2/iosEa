@@ -77,12 +77,23 @@ struct HomeView: View {
                     Button {
                         isShowingSOSConfirmation = true
                     } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "sos")
-                                .foregroundStyle(.red)
-                            Text(languageManager.localizedString(for: "home.sos.button"))
+                        // 英文版：只顯示文字 "SOS"
+                        // 中文版：顯示圖標 + "緊急求救"
+                        if languageManager.currentLanguage == .english {
+                            Text("SOS")
                                 .foregroundStyle(.red)
                                 .fontWeight(.bold)
+                        } else {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sos")
+                                    .foregroundStyle(.red)
+                                
+                                    .foregroundStyle(.red)
+                                    .fontWeight(.bold)
+                                Text(languageManager.localizedString(for: "home.sos.button"))
+                                    .foregroundStyle(.red)
+                                    .fontWeight(.bold)
+                            }
                         }
                     }
                 }
