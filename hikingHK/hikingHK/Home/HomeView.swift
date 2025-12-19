@@ -56,9 +56,13 @@ struct HomeView: View {
                     Button {
                         isShowingSOSConfirmation = true
                     } label: {
-                        Label(languageManager.localizedString(for: "home.sos.button"), systemImage: "sos")
-                            .foregroundStyle(.red)
-                            .fontWeight(.bold)
+                        HStack(spacing: 4) {
+                            Image(systemName: "sos")
+                                .foregroundStyle(.red)
+                            Text(languageManager.localizedString(for: "home.sos.button"))
+                                .foregroundStyle(.red)
+                                .fontWeight(.bold)
+                        }
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {

@@ -47,6 +47,11 @@ struct AchievementView: View {
                 // Ensure default achievements exist in the database before loading
                 AchievementSeeder.ensureDefaults(in: modelContext)
                 viewModel.configureIfNeeded(context: modelContext)
+                
+                // Load hike records and refresh achievement progress
+                Task {
+                    await refreshAchievementProgress()
+                }
             }
             .alert(languageManager.localizedString(for: "achievement.new.unlocked"), isPresented: .constant(!viewModel.newlyUnlockedAchievements.isEmpty)) {
                 Button(languageManager.localizedString(for: "achievement.view")) {
@@ -60,6 +65,18 @@ struct AchievementView: View {
                     Text(languageManager.localizedString(for: "achievement.congratulations").replacingOccurrences(of: "{title}", with: first.title))
                 }
             }
+        }
+    }
+    
+    /// Loads hike records and refreshes achievement progress
+    private func refreshAchievementProgress() async {
+        do {
+            let recordStore = HikeRecordStore(context: modelContext)
+            let hikeRecords = try recordStore.loadAllRecords()
+            viewModel.refreshAchievements(from: hikeRecords)
+        } catch {
+            print("⚠️ AchievementView: Failed to load hike records: \(error)")
+            // Continue with existing achievement data even if hike records fail to load
         }
     }
     

@@ -210,6 +210,12 @@ final class OfflineMapsViewModel: ObservableObject {
             
             // Reconcile each region's download status with the actual file system.
             for region in regions {
+                // Ensure totalSize is set if it's 0 (for regions created before this update)
+                if region.totalSize == 0 {
+                    region.totalSize = downloadService.getEstimatedSize(for: region.name)
+                    try? store.updateRegion(region)
+                }
+                
                 if downloadService.isRegionDownloaded(region) && region.downloadStatus != .downloaded {
                     // File exists but state is wrong → mark as downloaded.
                     region.downloadStatus = .downloaded

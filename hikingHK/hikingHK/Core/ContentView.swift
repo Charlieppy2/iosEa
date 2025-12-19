@@ -8,6 +8,7 @@
 import SwiftUI
 import UIKit
 
+
 /// Root tab-based container shown after the user has signed in.
 struct ContentView: View {
     @EnvironmentObject private var viewModel: AppViewModel

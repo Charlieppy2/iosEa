@@ -28,8 +28,10 @@ final class OfflineMapsStore {
         }
         
         print("OfflineMapsStore: Seeding default regions...")
+        let downloadService = OfflineMapsDownloadService()
         let defaultRegions = OfflineMapRegion.availableRegions.map { name in
-            OfflineMapRegion(name: name)
+            let estimatedSize = downloadService.getEstimatedSize(for: name)
+            return OfflineMapRegion(name: name, totalSize: estimatedSize)
         }
         
         for region in defaultRegions {
@@ -80,8 +82,10 @@ final class OfflineMapsStore {
     /// Primarily useful for debugging or testing seeding behaviour.
     func forceSeedRegions() throws -> [OfflineMapRegion] {
         print("OfflineMapsStore: Force seeding regions...")
+        let downloadService = OfflineMapsDownloadService()
         let defaultRegions = OfflineMapRegion.availableRegions.map { name in
-            OfflineMapRegion(name: name)
+            let estimatedSize = downloadService.getEstimatedSize(for: name)
+            return OfflineMapRegion(name: name, totalSize: estimatedSize)
         }
         
         for region in defaultRegions {
