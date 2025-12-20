@@ -104,8 +104,8 @@ struct WeatherService: WeatherServiceProtocol {
             // Step 1: warnings from real‑time rhrread API
             if let messages = payload.warningMessage, !messages.isEmpty {
                 print("📋 WeatherService: Found \(messages.count) warning message(s) from rhrread: \(messages)")
-                // Prefix each message with a warning symbol
-                warningMessages.append(contentsOf: messages.filter { !$0.isEmpty }.map { "⚠️ \($0)" })
+                // Add messages without warning symbol prefix
+                warningMessages.append(contentsOf: messages.filter { !$0.isEmpty })
             }
             
             // Step 2: warnings from warnsum API
@@ -115,8 +115,8 @@ struct WeatherService: WeatherServiceProtocol {
                 if !activeWarnings.isEmpty {
                     print("📋 WeatherService: Found \(activeWarnings.count) active warning(s) from warnsum")
                     for warning in activeWarnings {
-                        let warningText = "⚠️ \(warning.name) (\(warning.code))"
-                        // Avoid duplicates (compare without relying on the leading symbol)
+                        let warningText = "\(warning.name) (\(warning.code))"
+                        // Avoid duplicates
                         let exists = warningMessages.contains { $0.contains(warning.name) && $0.contains(warning.code) }
                         if !exists {
                             warningMessages.append(warningText)
@@ -127,18 +127,14 @@ struct WeatherService: WeatherServiceProtocol {
                 print("⚠️ WeatherService: Failed to fetch warnings from warnsum API: \(error)")
             }
             
-            // Merge all warning messages into a single string, ensuring each line has the symbol.
+            // Merge all warning messages into a single string
             let warningMessage: String? = {
                 guard !warningMessages.isEmpty else {
                     print("📋 WeatherService: No warning messages found")
                     return nil
                 }
-                // Ensure each message is prefixed with ⚠️ exactly once.
-                let messagesWithSymbol = warningMessages.map { message in
-                    message.contains("⚠️") ? message : "⚠️ \(message)"
-                }
-                let joined = messagesWithSymbol.joined(separator: "\n")
-                print("📋 WeatherService: Final warning message with symbols: \(joined)")
+                let joined = warningMessages.joined(separator: "\n")
+                print("📋 WeatherService: Final warning message: \(joined)")
                 return joined
             }()
             
