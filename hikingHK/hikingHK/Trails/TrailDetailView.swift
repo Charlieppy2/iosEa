@@ -11,6 +11,9 @@ import SwiftUI
 struct TrailDetailView: View {
     let trail: Trail
     @EnvironmentObject private var languageManager: LanguageManager
+    private let distancePostService = DistancePostService()
+    @State private var distancePosts: [DistancePost] = []
+    @State private var isLoadingDistancePosts: Bool = false
 
     var body: some View {
         ScrollView {
@@ -18,6 +21,7 @@ struct TrailDetailView: View {
                 header
                 TrailMapView(trail: trail)
                 timelineSection
+                distancePostsSection
                 facilitiesSection
                 highlightsSection
                 transportationSection
@@ -34,6 +38,23 @@ struct TrailDetailView: View {
         )
         .navigationTitle(trail.localizedName(languageManager: languageManager))
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await loadDistancePosts()
+        }
+    }
+    
+    /// Loads distance posts for the current trail.
+    private func loadDistancePosts() async {
+        isLoadingDistancePosts = true
+        defer { isLoadingDistancePosts = false }
+        
+        do {
+            distancePosts = try await distancePostService.fetchDistancePosts(for: trail.id)
+            print("✅ TrailDetailView: Loaded \(distancePosts.count) distance posts for trail \(trail.name)")
+        } catch {
+            print("⚠️ TrailDetailView: Failed to load distance posts: \(error)")
+            distancePosts = []
+        }
     }
 
     /// Top summary header with district, distance, elevation and duration.
@@ -60,6 +81,57 @@ struct TrailDetailView: View {
         }
     }
 
+    /// Section displaying distance posts along the trail.
+    private var distancePostsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(languageManager.localizedString(for: "distance.posts.title"))
+                .font(.headline)
+            
+            if isLoadingDistancePosts {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text(languageManager.localizedString(for: "distance.posts.loading"))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            } else if distancePosts.isEmpty {
+                Text(languageManager.localizedString(for: "distance.posts.no.posts"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(distancePosts.sorted(by: { $0.distanceFromStart < $1.distanceFromStart })) { post in
+                        HStack(spacing: 12) {
+                            Image(systemName: "mappin.circle.fill")
+                                .foregroundStyle(Color.orange)
+                                .font(.title3)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(languageManager.localizedString(for: "distance.posts.post.number")
+                                    .replacingOccurrences(of: "{number}", with: post.postNumber))
+                                    .font(.subheadline.weight(.semibold))
+                                Text(languageManager.localizedString(for: "distance.posts.distance.from.start")
+                                    .replacingOccurrences(of: "{distance}", with: String(format: "%.1f", post.distanceFromStart)))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                .padding()
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            }
+        }
+    }
+    
     /// Timeline-style list of checkpoints along the trail.
     private var timelineSection: some View {
         VStack(alignment: .leading, spacing: 12) {

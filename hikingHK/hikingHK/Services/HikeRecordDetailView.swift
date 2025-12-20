@@ -13,6 +13,7 @@ import MapKit
 struct HikeRecordDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var languageManager: LanguageManager
     let record: HikeRecord
     @State private var isShowingPlayback = false
     @State private var isShowingDeleteConfirmation = false
@@ -37,7 +38,7 @@ struct HikeRecordDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(record.trailName ?? "Hike Record")
+        .navigationTitle(record.trailName ?? languageManager.localizedString(for: "records.detail"))
         .navigationBarTitleDisplayMode(.inline)
         .background(
             ZStack {
@@ -60,19 +61,19 @@ struct HikeRecordDetailView: View {
         .sheet(isPresented: $isShowingPlayback) {
             HikePlaybackView(record: record)
         }
-        .alert("Delete Record", isPresented: $isShowingDeleteConfirmation) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
+        .alert(languageManager.localizedString(for: "records.delete"), isPresented: $isShowingDeleteConfirmation) {
+            Button(languageManager.localizedString(for: "cancel"), role: .cancel) { }
+            Button(languageManager.localizedString(for: "delete"), role: .destructive) {
                 deleteRecord()
             }
         } message: {
-            Text("Are you sure you want to delete this hike record? This action cannot be undone.")
+            Text(languageManager.localizedString(for: "records.delete.confirm"))
         }
     }
     
     private var mapSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Route Track")
+            Text(languageManager.localizedString(for: "records.route.track"))
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
             
@@ -86,7 +87,7 @@ struct HikeRecordDetailView: View {
                     
                     // Start point
                     if let start = record.routeCoordinates.first {
-                        Annotation("Start", coordinate: start) {
+                        Annotation(languageManager.localizedString(for: "records.start"), coordinate: start) {
                             Circle()
                                 .fill(Color.green)
                                 .frame(width: 16, height: 16)
@@ -96,7 +97,7 @@ struct HikeRecordDetailView: View {
                     
                     // End point
                     if let end = record.routeCoordinates.last {
-                        Annotation("End", coordinate: end) {
+                        Annotation(languageManager.localizedString(for: "records.end"), coordinate: end) {
                             Circle()
                                 .fill(Color.red)
                                 .frame(width: 16, height: 16)
@@ -107,7 +108,7 @@ struct HikeRecordDetailView: View {
                 .frame(height: 300)
                 .cornerRadius(16)
             } else {
-                Text("No Track Data")
+                Text(languageManager.localizedString(for: "records.no.track.data"))
                     .frame(height: 300)
                     .frame(maxWidth: .infinity)
                     .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
@@ -125,14 +126,14 @@ struct HikeRecordDetailView: View {
                     icon: "ruler.fill",
                     value: String(format: "%.2f", record.distanceKm),
                     unit: "km",
-                    label: "Distance",
+                    label: languageManager.localizedString(for: "records.distance"),
                     color: Color.hikingGreen
                 )
                 StatCard(
                     icon: "clock.fill",
                     value: record.formattedDuration,
                     unit: "",
-                    label: "Duration",
+                    label: languageManager.localizedString(for: "records.duration"),
                     color: Color.hikingSky
                 )
             }
@@ -142,14 +143,14 @@ struct HikeRecordDetailView: View {
                     icon: "speedometer",
                     value: String(format: "%.1f", record.averageSpeedKmh),
                     unit: "km/h",
-                    label: "Avg Speed",
+                    label: languageManager.localizedString(for: "records.avg.speed"),
                     color: Color.hikingBrown
                 )
                 StatCard(
                     icon: "arrow.up.arrow.down",
                     value: String(format: "%.0f", record.elevationGain),
                     unit: "m",
-                    label: "Elev Gain",
+                    label: languageManager.localizedString(for: "records.elev.gain"),
                     color: Color.hikingDarkGreen
                 )
             }
@@ -158,16 +159,31 @@ struct HikeRecordDetailView: View {
     
     private var detailedStatsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Detailed Statistics")
+            Text(languageManager.localizedString(for: "records.detailed.stats"))
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
             
             VStack(spacing: 12) {
-                DetailRow(label: "Max Speed", value: String(format: "%.1f km/h", record.maxSpeedKmh))
-                DetailRow(label: "Max Altitude", value: String(format: "%.0f m", record.maxAltitude))
-                DetailRow(label: "Min Altitude", value: String(format: "%.0f m", record.minAltitude))
-                DetailRow(label: "Elev Loss", value: String(format: "%.0f m", record.elevationLoss))
-                DetailRow(label: "Track Points", value: "\(record.trackPoints.count)")
+                DetailRow(
+                    label: languageManager.localizedString(for: "records.max.speed"),
+                    value: String(format: "%.1f km/h", record.maxSpeedKmh)
+                )
+                DetailRow(
+                    label: languageManager.localizedString(for: "records.max.altitude"),
+                    value: String(format: "%.0f m", record.maxAltitude)
+                )
+                DetailRow(
+                    label: languageManager.localizedString(for: "records.min.altitude"),
+                    value: String(format: "%.0f m", record.minAltitude)
+                )
+                DetailRow(
+                    label: languageManager.localizedString(for: "records.elev.loss"),
+                    value: String(format: "%.0f m", record.elevationLoss)
+                )
+                DetailRow(
+                    label: languageManager.localizedString(for: "records.track.points"),
+                    value: "\(record.trackPoints.count)"
+                )
             }
         }
         .padding()
@@ -177,7 +193,7 @@ struct HikeRecordDetailView: View {
     
     private var elevationChartSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Elevation Profile")
+            Text(languageManager.localizedString(for: "records.elevation.profile"))
                 .font(.headline)
                 .foregroundStyle(Color.hikingDarkGreen)
             
@@ -185,7 +201,7 @@ struct HikeRecordDetailView: View {
                 ElevationChart(points: record.trackPoints)
                     .frame(height: 200)
             } else {
-                Text("Insufficient Data")
+                Text(languageManager.localizedString(for: "records.insufficient.data"))
                     .frame(height: 200)
                     .frame(maxWidth: .infinity)
                     .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
@@ -203,7 +219,7 @@ struct HikeRecordDetailView: View {
             } label: {
                 HStack {
                     Image(systemName: "play.circle.fill")
-                    Text("3D Track Playback")
+                    Text(languageManager.localizedString(for: "records.3d.playback"))
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -374,6 +390,7 @@ struct ElevationChart: View {
 #Preview {
     NavigationStack {
         HikeRecordDetailView(record: HikeRecord())
+            .environmentObject(LanguageManager.shared)
     }
     .modelContainer(for: [HikeRecord.self, HikeTrackPoint.self], inMemory: true)
 }

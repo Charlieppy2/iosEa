@@ -241,6 +241,15 @@ struct LocalizedStrings {
         "map.offline.mode": "Offline",
         "map.offline.available": "Offline map available",
         "map.using.offline": "Using offline map",
+        "map.distance.post": "Distance Post",
+        "map.distance.post.number": "Post {number}",
+        
+        // Distance Posts
+        "distance.posts.title": "Distance Posts",
+        "distance.posts.post.number": "Post {number}",
+        "distance.posts.distance.from.start": "{distance} km from start",
+        "distance.posts.no.posts": "No distance posts available for this trail",
+        "distance.posts.loading": "Loading distance posts...",
         
         // Checkpoints
         "checkpoint.trailhead": "Trailhead",
@@ -492,6 +501,12 @@ struct LocalizedStrings {
         "records.3d.playback": "3D Track Playback",
         "records.delete": "Delete Record",
         "records.delete.confirm": "Are you sure you want to delete this hike record? This action cannot be undone.",
+        "records.distance": "Distance",
+        "records.duration": "Duration",
+        "records.avg.speed": "Avg Speed",
+        "records.elev.gain": "Elev Gain",
+        "records.start": "Start",
+        "records.end": "End",
         
         // Location Sharing
         "location.sharing.title": "Location Sharing",
@@ -985,6 +1000,15 @@ struct LocalizedStrings {
         "map.offline.mode": "離線模式",
         "map.offline.available": "離線地圖可用",
         "map.using.offline": "使用離線地圖",
+        "map.distance.post": "標距柱",
+        "map.distance.post.number": "標距柱 {number}",
+        
+        // Distance Posts
+        "distance.posts.title": "標距柱",
+        "distance.posts.post.number": "標距柱 {number}",
+        "distance.posts.distance.from.start": "距離起點 {distance} 公里",
+        "distance.posts.no.posts": "此路線暫無標距柱資料",
+        "distance.posts.loading": "載入標距柱資料中...",
         
         // Checkpoints
         "checkpoint.trailhead": "起點",
@@ -1229,6 +1253,12 @@ struct LocalizedStrings {
         "records.3d.playback": "3D 軌跡回放",
         "records.delete": "刪除記錄",
         "records.delete.confirm": "確定要刪除此行山記錄嗎？此操作無法撤銷。",
+        "records.distance": "距離",
+        "records.duration": "時長",
+        "records.avg.speed": "平均速度",
+        "records.elev.gain": "海拔上升",
+        "records.start": "起點",
+        "records.end": "終點",
         
         // Location Sharing
         "location.sharing.title": "位置分享",

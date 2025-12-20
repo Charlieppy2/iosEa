@@ -53,9 +53,12 @@ struct TrailMapView: View {
     @State private var offlineMapRegion: OfflineMapRegion?
     @State private var isOfflineMode: Bool = false
     @State private var hasOfflineMap: Bool = false
+    @State private var distancePosts: [DistancePost] = []
+    @State private var isLoadingDistancePosts: Bool = false
     
     private let routeService = MapboxRouteService()
     private let offlineMapLoader = OfflineMapLoader()
+    private let distancePostService = DistancePostService()
 
     init(trail: Trail) {
         self.trail = trail
@@ -107,6 +110,19 @@ struct TrailMapView: View {
                                 .shadow(radius: 3)
                         }
                     }
+                    // Distance posts markers
+                    ForEach(distancePosts) { post in
+                        Annotation(
+                            languageManager.localizedString(for: "map.distance.post.number")
+                                .replacingOccurrences(of: "{number}", with: post.postNumber),
+                            coordinate: post.coordinate
+                        ) {
+                            Image(systemName: "mappin.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(Color.orange)
+                                .shadow(radius: 2)
+                        }
+                    }
                 }
                 .frame(height: 220)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -140,6 +156,7 @@ struct TrailMapView: View {
             .task {
                 await checkOfflineMapAvailability()
                 await loadDynamicRoute()
+                await loadDistancePosts()
             }
             .onAppear {
                 setupNetworkMonitoring()
@@ -166,6 +183,20 @@ struct TrailMapView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+    
+    /// Loads distance posts for the current trail.
+    private func loadDistancePosts() async {
+        isLoadingDistancePosts = true
+        defer { isLoadingDistancePosts = false }
+        
+        do {
+            distancePosts = try await distancePostService.fetchDistancePosts(for: trail.id)
+            print("✅ TrailMapView: Loaded \(distancePosts.count) distance posts for trail \(trail.name)")
+        } catch {
+            print("⚠️ TrailMapView: Failed to load distance posts: \(error)")
+            distancePosts = []
         }
     }
 
