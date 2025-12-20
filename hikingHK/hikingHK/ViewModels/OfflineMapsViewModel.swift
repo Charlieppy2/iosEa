@@ -104,11 +104,21 @@ final class OfflineMapsViewModel: ObservableObject {
                         region.downloadProgress = progress
                         region.downloadedSize = downloaded
                         region.totalSize = total
+                        
+                        // If progress reaches 100%, immediately mark as downloaded
+                        if progress >= 1.0 {
+                            region.downloadStatus = .downloaded
+                            region.downloadProgress = 1.0
+                            region.downloadedAt = Date()
+                            region.downloadedSize = total
+                            self.downloadingRegion = nil
+                        }
+                        
                         try? self.fileStore.saveRegions(self.regions)
                     }
                 }
                 
-                // Download completed successfully.
+                // Download completed successfully - ensure final state is set
                 if !Task.isCancelled {
                     region.downloadStatus = .downloaded
                     region.downloadProgress = 1.0
