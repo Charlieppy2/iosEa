@@ -88,6 +88,7 @@ struct JournalListView: View {
             }
             .sheet(item: $selectedJournal) { journal in
                 JournalDetailView(journal: journal, viewModel: journalViewModel)
+                    .environmentObject(viewModel)
             }
         }
     }
@@ -179,7 +180,7 @@ struct JournalRow: View {
                 VStack(alignment: .leading, spacing: 8) {
                     // Title and date
                     HStack {
-                        Text(journal.title)
+                        Text(localizedTitle)
                             .font(.headline)
                             .foregroundStyle(Color.hikingDarkGreen)
                         Spacer()
@@ -246,6 +247,27 @@ struct JournalRow: View {
         formatter.dateStyle = .long
         formatter.timeStyle = .none
         return formatter.string(from: journal.hikeDate)
+    }
+    
+    /// 本地化標題：將 "Day 1", "Day 2" 等轉換為本地化版本
+    private var localizedTitle: String {
+        let title = journal.title
+        
+        // 檢查是否是 "Day X" 格式
+        if title.lowercased().hasPrefix("day ") {
+            let dayNumber = title.replacingOccurrences(of: "day ", with: "", options: .caseInsensitive).trimmingCharacters(in: .whitespaces)
+            
+            if let dayInt = Int(dayNumber) {
+                if languageManager.currentLanguage == .traditionalChinese {
+                    return "第 \(dayInt) 天"
+                } else {
+                    return "Day \(dayInt)"
+                }
+            }
+        }
+        
+        // 如果不是 "Day X" 格式，返回原始標題
+        return title
     }
     
     private var localizedTrailName: String? {

@@ -24,6 +24,7 @@ struct HomeView: View {
     @State private var isShowingRecommendations = false
     @State private var isShowingJournal = false
     @State private var isShowingWeatherForecast = false
+    @State private var isShowingBestHikingTime = false
     @State private var selectedSavedHike: SavedHike?
     @State private var isShowingTrailPicker = false
     @StateObject private var locationManager = LocationManager()
@@ -182,6 +183,12 @@ struct HomeView: View {
             }
             .sheet(isPresented: $isShowingWeatherForecast) {
                 WeatherForecastView()
+                    .environmentObject(viewModel)
+                    .environmentObject(languageManager)
+                    .presentationDetents([.large])
+            }
+            .sheet(isPresented: $isShowingBestHikingTime) {
+                BestHikingTimeView()
                     .environmentObject(viewModel)
                     .environmentObject(languageManager)
                     .presentationDetents([.large])
@@ -582,6 +589,9 @@ struct HomeView: View {
                 }
                 quickAction(icon: "cloud.sun.fill", title: languageManager.localizedString(for: "home.weather.forecast"), color: Color.hikingSky) {
                     isShowingWeatherForecast = true
+                }
+                quickAction(icon: "star.fill", title: languageManager.localizedString(for: "home.best.hiking.time"), color: Color.hikingGreen) {
+                    isShowingBestHikingTime = true
                 }
             }
         }
@@ -1129,6 +1139,7 @@ struct TrailAlertsView: View {
     @StateObject private var viewModel: TrailAlertsViewModel
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager
+    @State private var isShowingWarningHistory = false
     
     init() {
         _viewModel = StateObject(wrappedValue: TrailAlertsViewModel(languageManager: LanguageManager.shared))
@@ -1175,7 +1186,7 @@ struct TrailAlertsView: View {
                         dismiss()
                     }
                 }
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItemGroup(placement: .navigationBarLeading) {
                     Button {
                         Task {
                             await viewModel.fetchAlerts()
@@ -1184,7 +1195,17 @@ struct TrailAlertsView: View {
                         Image(systemName: "arrow.clockwise")
                     }
                     .disabled(viewModel.isLoading)
+                    
+                    Button {
+                        isShowingWarningHistory = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
                 }
+            }
+            .sheet(isPresented: $isShowingWarningHistory) {
+                WeatherWarningHistoryView()
+                    .environmentObject(languageManager)
             }
             .task {
                 viewModel.updateLanguageManager(languageManager)
@@ -1230,9 +1251,26 @@ struct TrailAlertsView: View {
                             .foregroundStyle(.secondary)
                         Text("•")
                             .foregroundStyle(.secondary)
-                        Text(alert.timeAgo(languageManager: languageManager))
-                            .font(.caption)
+                        // 顯示發佈時間
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock.fill")
+                                .font(.caption2)
+                            Text(formatIssueTime(alert.issuedAt, languageManager: languageManager))
+                                .font(.caption)
+                        }
+                        .foregroundStyle(.secondary)
+                        // 如果有更新時間，顯示更新時間
+                        if let updatedAt = alert.updatedAt {
+                            Text("•")
+                                .foregroundStyle(.secondary)
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.caption2)
+                                Text(formatUpdateTime(updatedAt, languageManager: languageManager))
+                                    .font(.caption)
+                            }
                             .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -1286,6 +1324,24 @@ struct TrailAlertsView: View {
         case .high: return .red
         case .critical: return .purple
         }
+    }
+    
+    /// 格式化發佈時間
+    private func formatIssueTime(_ date: Date, languageManager: LanguageManager) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: languageManager.currentLanguage == .english ? "en_US" : "zh_Hant_HK")
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return "\(languageManager.localizedString(for: "alert.issued.at")) \(formatter.string(from: date))"
+    }
+    
+    /// 格式化更新時間
+    private func formatUpdateTime(_ date: Date, languageManager: LanguageManager) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: languageManager.currentLanguage == .english ? "en_US" : "zh_Hant_HK")
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return "\(languageManager.localizedString(for: "alert.updated.at")) \(formatter.string(from: date))"
     }
 }
 

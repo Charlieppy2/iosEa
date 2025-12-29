@@ -79,6 +79,7 @@ struct HikeRecordsListView: View {
                     ForEach(records) { record in
                         NavigationLink {
                             HikeRecordDetailView(record: record)
+                                .environmentObject(viewModel)
                         } label: {
                             HikeRecordRow(record: record)
                                 .environmentObject(viewModel)

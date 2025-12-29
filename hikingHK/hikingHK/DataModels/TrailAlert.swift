@@ -15,6 +15,7 @@ struct TrailAlert: Identifiable, Equatable {
     let category: Category
     let severity: Severity
     let issuedAt: Date
+    let updatedAt: Date? // 更新時間（從 warnsum API 獲取）
     let expiresAt: Date?
     
     var isActive: Bool {

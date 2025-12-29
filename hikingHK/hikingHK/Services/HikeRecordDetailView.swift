@@ -14,6 +14,7 @@ struct HikeRecordDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var viewModel: AppViewModel
     let record: HikeRecord
     @State private var isShowingPlayback = false
     @State private var isShowingDeleteConfirmation = false
@@ -38,7 +39,7 @@ struct HikeRecordDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(record.trailName ?? languageManager.localizedString(for: "records.detail"))
+        .navigationTitle(localizedTrailName)
         .navigationBarTitleDisplayMode(.inline)
         .background(
             ZStack {
@@ -80,8 +81,9 @@ struct HikeRecordDetailView: View {
             if !record.routeCoordinates.isEmpty {
                 let center = calculateCenter()
                 let span = calculateSpan()
+                let region = MKCoordinateRegion(center: center, span: span)
                 
-                Map(position: .constant(.region(MKCoordinateRegion(center: center, span: span)))) {
+                Map(position: .constant(.region(region))) {
                     MapPolyline(coordinates: record.routeCoordinates)
                         .stroke(Color.hikingGreen, lineWidth: 4)
                     
@@ -105,13 +107,28 @@ struct HikeRecordDetailView: View {
                         }
                     }
                 }
+                .mapStyle(.standard(elevation: .realistic))
                 .frame(height: 300)
                 .cornerRadius(16)
             } else {
-                Text(languageManager.localizedString(for: "records.no.track.data"))
-                    .frame(height: 300)
-                    .frame(maxWidth: .infinity)
-                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
+                // 當沒有路線座標時，顯示香港中心地圖
+                let hongKongCenter = CLLocationCoordinate2D(latitude: 22.2783, longitude: 114.1747)
+                let hongKongRegion = MKCoordinateRegion(
+                    center: hongKongCenter,
+                    span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+                )
+                
+                Map(position: .constant(.region(hongKongRegion))) {
+                    // 顯示香港中心標記
+                    Annotation(languageManager.localizedString(for: "records.no.track.data"), coordinate: hongKongCenter) {
+                        Image(systemName: "mappin.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.red)
+                    }
+                }
+                .mapStyle(.standard(elevation: .realistic))
+                .frame(height: 300)
+                .cornerRadius(16)
             }
         }
         .padding()
@@ -125,7 +142,7 @@ struct HikeRecordDetailView: View {
                 StatCard(
                     icon: "ruler.fill",
                     value: String(format: "%.2f", record.distanceKm),
-                    unit: "km",
+                    unit: languageManager.localizedString(for: "records.unit.km"),
                     label: languageManager.localizedString(for: "records.distance"),
                     color: Color.hikingGreen
                 )
@@ -142,14 +159,14 @@ struct HikeRecordDetailView: View {
                 StatCard(
                     icon: "speedometer",
                     value: String(format: "%.1f", record.averageSpeedKmh),
-                    unit: "km/h",
+                    unit: languageManager.localizedString(for: "records.unit.kmh"),
                     label: languageManager.localizedString(for: "records.avg.speed"),
                     color: Color.hikingBrown
                 )
                 StatCard(
                     icon: "arrow.up.arrow.down",
                     value: String(format: "%.0f", record.elevationGain),
-                    unit: "m",
+                    unit: languageManager.localizedString(for: "records.unit.m"),
                     label: languageManager.localizedString(for: "records.elev.gain"),
                     color: Color.hikingDarkGreen
                 )
@@ -166,19 +183,19 @@ struct HikeRecordDetailView: View {
             VStack(spacing: 12) {
                 DetailRow(
                     label: languageManager.localizedString(for: "records.max.speed"),
-                    value: String(format: "%.1f km/h", record.maxSpeedKmh)
+                    value: String(format: "%.1f %@", record.maxSpeedKmh, languageManager.localizedString(for: "records.unit.kmh"))
                 )
                 DetailRow(
                     label: languageManager.localizedString(for: "records.max.altitude"),
-                    value: String(format: "%.0f m", record.maxAltitude)
+                    value: String(format: "%.0f %@", record.maxAltitude, languageManager.localizedString(for: "records.unit.m"))
                 )
                 DetailRow(
                     label: languageManager.localizedString(for: "records.min.altitude"),
-                    value: String(format: "%.0f m", record.minAltitude)
+                    value: String(format: "%.0f %@", record.minAltitude, languageManager.localizedString(for: "records.unit.m"))
                 )
                 DetailRow(
                     label: languageManager.localizedString(for: "records.elev.loss"),
-                    value: String(format: "%.0f m", record.elevationLoss)
+                    value: String(format: "%.0f %@", record.elevationLoss, languageManager.localizedString(for: "records.unit.m"))
                 )
                 DetailRow(
                     label: languageManager.localizedString(for: "records.track.points"),
@@ -231,7 +248,8 @@ struct HikeRecordDetailView: View {
     
     private func calculateCenter() -> CLLocationCoordinate2D {
         guard !record.routeCoordinates.isEmpty else {
-            return CLLocationCoordinate2D(latitude: 22.3, longitude: 114.2)
+            // 香港中心座標（中環）
+            return CLLocationCoordinate2D(latitude: 22.2783, longitude: 114.1747)
         }
         
         let sumLat = record.routeCoordinates.reduce(0) { $0 + $1.latitude }
@@ -261,6 +279,34 @@ struct HikeRecordDetailView: View {
             latitudeDelta: max((maxLat - minLat) * 1.3, 0.01),
             longitudeDelta: max((maxLon - minLon) * 1.3, 0.01)
         )
+    }
+    
+    /// 獲取本地化的路線名稱
+    private var localizedTrailName: String {
+        // 優先從 AppViewModel 中查找對應的 Trail 對象
+        if let trailId = record.trailId,
+           let trail = viewModel.trails.first(where: { $0.id == trailId }) {
+            return trail.localizedName(languageManager: languageManager)
+        }
+        
+        // 如果找不到 Trail 對象，嘗試從本地化字符串中獲取
+        if let trailName = record.trailName {
+            if let trailId = record.trailId {
+                let trailNameKey = "trail.\(trailId.uuidString.lowercased()).name"
+                let localizedName = languageManager.localizedString(for: trailNameKey)
+                
+                // 如果找到了本地化版本（不是原始 key），使用它
+                if localizedName != trailNameKey {
+                    return localizedName
+                }
+            }
+            
+            // 否則使用原始名稱
+            return trailName
+        }
+        
+        // 如果都沒有，返回默認標題
+        return languageManager.localizedString(for: "records.detail")
     }
     
     private func deleteRecord() {

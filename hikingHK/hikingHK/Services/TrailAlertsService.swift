@@ -47,6 +47,7 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
             
             for warning in warnings where warning.isActive {
                 let issueDate = parseDate(warning.issueTime) ?? Date()
+                let updateDate = parseDate(warning.updateTime)
                 alerts.append(TrailAlert(
                     id: UUID(),
                     title: warning.name,
@@ -54,6 +55,7 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
                     category: .weather,
                     severity: warning.severity,
                     issuedAt: issueDate,
+                    updatedAt: updateDate,
                     expiresAt: nil
                 ))
             }
@@ -84,6 +86,7 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
                             category: .weather,
                             severity: determineSeverity(warning),
                             issuedAt: Date(),
+                            updatedAt: nil,
                             expiresAt: nil
                         ))
                     }
@@ -99,6 +102,7 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
                     category: .weather,
                     severity: .high,
                     issuedAt: Date(),
+                    updatedAt: nil,
                     expiresAt: nil
                 ))
             }
@@ -169,6 +173,7 @@ struct TrailAlertsService: TrailAlertsServiceProtocol {
                 category: .maintenance,
                 severity: .medium,
                 issuedAt: Date().addingTimeInterval(-86400 * 2), // 2 days ago
+                updatedAt: nil,
                 expiresAt: Date().addingTimeInterval(86400 * 5) // 5 days from now
             )
         ]

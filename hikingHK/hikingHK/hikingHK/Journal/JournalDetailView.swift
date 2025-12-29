@@ -14,6 +14,7 @@ struct JournalDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var appViewModel: AppViewModel
     
     let journal: HikeJournal
     @ObservedObject var viewModel: JournalViewModel
@@ -28,18 +29,18 @@ struct JournalDetailView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     // Title and date
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(journal.title)
+                        Text(localizedTitle)
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundStyle(Color.hikingDarkGreen)
                         
-                        Text(journal.hikeDate, style: .date)
+                        Text(formattedDate)
                             .font(.subheadline)
                             .foregroundStyle(Color.hikingStone)
                     }
                     
                     // Trail information
-                    if let trailName = journal.trailName {
+                    if let trailName = localizedTrailName {
                         infoRow(
                             icon: "map.fill",
                             title: languageManager.localizedString(for: "journal.trail"),
@@ -49,7 +50,7 @@ struct JournalDetailView: View {
                     }
                     
                     // Location information
-                    if let locationName = journal.locationName {
+                    if let locationName = localizedLocationName {
                         infoRow(
                             icon: "location.fill",
                             title: languageManager.localizedString(for: "journal.location"),
@@ -183,6 +184,81 @@ struct JournalDetailView: View {
         }
     }
     
+    /// 本地化標題：將 "Day 1", "Day 2" 等轉換為本地化版本
+    private var localizedTitle: String {
+        let title = journal.title
+        
+        // 檢查是否是 "Day X" 格式
+        if title.lowercased().hasPrefix("day ") {
+            let dayNumber = title.replacingOccurrences(of: "day ", with: "", options: .caseInsensitive).trimmingCharacters(in: .whitespaces)
+            
+            if let dayInt = Int(dayNumber) {
+                if languageManager.currentLanguage == .traditionalChinese {
+                    return "第 \(dayInt) 天"
+                } else {
+                    return "Day \(dayInt)"
+                }
+            }
+        }
+        
+        // 如果不是 "Day X" 格式，返回原始標題
+        return title
+    }
+    
+    /// 格式化日期
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US")
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter.string(from: journal.hikeDate)
+    }
+    
+    /// 獲取本地化的路線名稱
+    private var localizedTrailName: String? {
+        // 優先從 AppViewModel 中查找對應的 Trail 對象
+        if let trailId = journal.trailId,
+           let trail = appViewModel.trails.first(where: { $0.id == trailId }) {
+            return trail.localizedName(languageManager: languageManager)
+        }
+        
+        // 如果找不到 Trail 對象，嘗試從本地化字符串中獲取
+        if let trailName = journal.trailName {
+            if let trailId = journal.trailId {
+                let trailNameKey = "trail.\(trailId.uuidString.lowercased()).name"
+                let localizedName = languageManager.localizedString(for: trailNameKey)
+                
+                // 如果找到了本地化版本（不是原始 key），使用它
+                if localizedName != trailNameKey {
+                    return localizedName
+                }
+            }
+            
+            // 否則使用原始名稱
+            return trailName
+        }
+        
+        return nil
+    }
+    
+    /// 獲取本地化的位置名稱
+    private var localizedLocationName: String? {
+        guard let locationName = journal.locationName else { return nil }
+        
+        // 嘗試從本地化字符串中獲取位置名稱
+        // 常見位置名稱的本地化
+        let locationKey = "trail.district.\(locationName.lowercased().replacingOccurrences(of: " ", with: "."))"
+        let localizedName = languageManager.localizedString(for: locationKey)
+        
+        // 如果找到了本地化版本（不是原始 key），使用它
+        if localizedName != locationKey {
+            return localizedName
+        }
+        
+        // 否則使用原始名稱
+        return locationName
+    }
+    
     private func infoRow(icon: String, title: String, value: String, color: Color) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
@@ -199,10 +275,10 @@ struct JournalDetailView: View {
     }
     
     private func generateShareContent() -> String {
-        var content = "\(journal.title)\n\n"
-        content += "\(languageManager.localizedString(for: "journal.share.date")): \(journal.hikeDate.formatted(date: .abbreviated, time: .omitted))\n\n"
+        var content = "\(localizedTitle)\n\n"
+        content += "\(languageManager.localizedString(for: "journal.share.date")): \(formattedDate)\n\n"
         
-        if let trailName = journal.trailName {
+        if let trailName = localizedTrailName {
             content += "\(languageManager.localizedString(for: "journal.share.trail")): \(trailName)\n"
         }
         

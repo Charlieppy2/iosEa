@@ -176,6 +176,7 @@ struct LocalizedStrings {
         "home.safety": "Safety",
         "home.sos.button": "SOS",
         "home.weather.forecast": "Weather Forecast",
+        "home.best.hiking.time": "Best Hiking Time",
         
         // Weather
         "weather.location.hko": "Hong Kong Observatory",
@@ -194,6 +195,7 @@ struct LocalizedStrings {
         "weather.forecast.today": "Today",
         "weather.forecast.comfort.index": "Comfort Index",
         "weather.forecast.precipitation": "Rain",
+        "weather.forecast.no.best.times": "No best hiking times available for the selected location.",
         "weather.temperature": "Temperature",
         "retry": "Retry",
         "weather.humidity": "Humidity",
@@ -454,11 +456,20 @@ struct LocalizedStrings {
         "alert.time.minutes.ago": "min ago",
         "alert.time.hours.ago": "hours ago",
         "alert.time.days.ago": "days ago",
+        "alert.issued.at": "Issued",
+        "alert.updated.at": "Updated",
         "alert.title.route.maintenance": "Route Maintenance",
         "alert.title.weather": "Weather Alert",
         "alert.title.safety": "Safety Alert",
         "alert.title.closure": "Trail Closure",
         "alert.detail.maclehose.section2.maintenance": "Section 2 of MacLehose Trail is partially closed near Long Ke due to slope works. Alternative route available.",
+        "alert.history.title": "Warning History",
+        "alert.history.empty": "No warning history",
+        "alert.history.description": "View past weather warnings and alerts",
+        "alert.history.filter.all": "All",
+        "alert.history.filter.active": "Active",
+        "alert.history.filter.cancelled": "Cancelled",
+        "alert.cancelled": "Cancelled",
         
         // Hike Plan
         "hike.plan.title": "Hike plan",
@@ -510,6 +521,9 @@ struct LocalizedStrings {
         "records.elev.gain": "Elev Gain",
         "records.start": "Start",
         "records.end": "End",
+        "records.unit.km": "km",
+        "records.unit.kmh": "km/h",
+        "records.unit.m": "m",
         
         // Location Sharing
         "location.sharing.title": "Location Sharing",
@@ -938,6 +952,7 @@ struct LocalizedStrings {
         "home.safety": "安全",
         "home.sos.button": "緊急求救",
         "home.weather.forecast": "天氣預測",
+        "home.best.hiking.time": "最佳行山時間",
         
         // Weather
         "weather.location.hko": "香港天文台",
@@ -956,6 +971,7 @@ struct LocalizedStrings {
         "weather.forecast.today": "今天",
         "weather.forecast.comfort.index": "舒適度指數",
         "weather.forecast.precipitation": "降雨",
+        "weather.forecast.no.best.times": "所選位置暫無最佳行山時間。",
         "weather.temperature": "溫度",
         "retry": "重試",
         "weather.humidity": "濕度",
@@ -1216,11 +1232,20 @@ struct LocalizedStrings {
         "alert.time.minutes.ago": "分鐘前",
         "alert.time.hours.ago": "小時前",
         "alert.time.days.ago": "天前",
+        "alert.issued.at": "發佈",
+        "alert.updated.at": "更新",
         "alert.title.route.maintenance": "路線維護",
         "alert.title.weather": "天氣警示",
         "alert.title.safety": "安全警示",
         "alert.title.closure": "路線封閉",
         "alert.detail.maclehose.section2.maintenance": "麥理浩徑第二段近浪茄因斜坡工程部分封閉。有替代路線可供使用。",
+        "alert.history.title": "警告歷史",
+        "alert.history.empty": "沒有警告歷史",
+        "alert.history.description": "查看過去的天氣警告和警示",
+        "alert.history.filter.all": "全部",
+        "alert.history.filter.active": "活躍",
+        "alert.history.filter.cancelled": "已取消",
+        "alert.cancelled": "已取消",
         
         // Hike Plan
         "hike.plan.title": "行山計劃",
@@ -1265,6 +1290,9 @@ struct LocalizedStrings {
         "records.elev.gain": "海拔上升",
         "records.start": "起點",
         "records.end": "終點",
+        "records.unit.km": "公里",
+        "records.unit.kmh": "公里/小時",
+        "records.unit.m": "米",
         
         // Location Sharing
         "location.sharing.title": "位置分享",

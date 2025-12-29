@@ -2,7 +2,7 @@
 //  WeatherService.swift
 //  hikingHK
 //
-//  Created by assistant on 17/11/2025.
+//  Created  on 17/11/2025.
 //
 
 import Foundation
@@ -51,17 +51,47 @@ struct WeatherService: WeatherServiceProtocol {
         return URL(string: "\(uvIndexEndpoint)\(langCode)")!
     }
     
+    /// 檢查當前時間是否在 UV 測量時間範圍內（早上 7 點到下午 6 點）
+    private func isWithinUVMeasurementHours() -> Bool {
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: Date())
+        return hour >= 7 && hour < 18
+    }
+    
     /// 從專門的 UV Index API 獲取紫外線指數
+    /// 注意：UV 指數通常在早上 7 點到下午 6 點之間才有數據，其他時間可能返回 0 或空
     private func fetchUVIndexFromDedicatedAPI(language: String) async -> Int {
+        let isDaytime = isWithinUVMeasurementHours()
+        
+        if !isDaytime {
+            print("ℹ️ WeatherService: Current time is outside UV measurement hours (7:00-18:00), UV index is expected to be 0")
+        }
+        
         let endpoint = uvIndexEndpointURL(language: language)
         print("🌤️ WeatherService: Fetching UV index from dedicated API: \(endpoint.absoluteString)")
         
         do {
             let (data, response) = try await session.data(from: endpoint)
             
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200..<300).contains(httpResponse.statusCode) else {
-                print("❌ WeatherService: UV API HTTP error")
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ WeatherService: UV API invalid response type")
+                return 0
+            }
+            
+            guard (200..<300).contains(httpResponse.statusCode) else {
+                print("❌ WeatherService: UV API HTTP error: \(httpResponse.statusCode)")
+                // 檢查是否是 HTML 響應（表示 API 需要參數）
+                if let responseString = String(data: data, encoding: .utf8),
+                   responseString.contains("Please include valid parameters") {
+                    print("⚠️ WeatherService: UV API requires additional parameters, using rhrread data only")
+                }
+                return 0
+            }
+            
+            // 檢查響應是否為 HTML（表示 API 格式錯誤）
+            if let responseString = String(data: data, encoding: .utf8),
+               responseString.contains("<!DOCTYPE") || responseString.contains("<html") {
+                print("⚠️ WeatherService: UV API returned HTML instead of JSON, API may require different parameters")
                 return 0
             }
             
@@ -69,8 +99,22 @@ struct WeatherService: WeatherServiceProtocol {
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 print("📊 WeatherService: UV API response keys: \(json.keys.sorted())")
                 
-                // UV API 的數據結構可能不同，需要根據實際響應調整
-                // 常見結構：{"data": [{"place": "...", "value": 5, ...}], ...}
+                // 嘗試解析為與 rhrread 類似的結構
+                if let uvindexDict = json["uvindex"] as? [String: Any],
+                   let dataArray = uvindexDict["data"] as? [[String: Any]] {
+                    for entry in dataArray {
+                        if let value = entry["value"] as? Int {
+                            print("✅ WeatherService: Found UV index from dedicated API: \(value)")
+                            return value
+                        } else if let valueString = entry["value"] as? String,
+                                  let value = Int(valueString) {
+                            print("✅ WeatherService: Found UV index from dedicated API (string): \(value)")
+                            return value
+                        }
+                    }
+                }
+                
+                // 嘗試其他可能的結構：{"data": [{"place": "...", "value": 5, ...}], ...}
                 if let dataArray = json["data"] as? [[String: Any]] {
                     for entry in dataArray {
                         if let value = entry["value"] as? Int {
@@ -84,7 +128,7 @@ struct WeatherService: WeatherServiceProtocol {
                     }
                 }
                 
-                // 嘗試其他可能的結構
+                // 嘗試直接值
                 if let value = json["value"] as? Int {
                     print("✅ WeatherService: Found UV index from dedicated API (direct): \(value)")
                     return value
@@ -92,9 +136,15 @@ struct WeatherService: WeatherServiceProtocol {
             }
             
             print("⚠️ WeatherService: Could not parse UV index from dedicated API")
+            if !isDaytime {
+                print("ℹ️ WeatherService: This is expected outside UV measurement hours (7:00-18:00)")
+            }
             return 0
         } catch {
             print("❌ WeatherService: Failed to fetch UV index from dedicated API: \(error)")
+            if !isDaytime {
+                print("ℹ️ WeatherService: UV index unavailable outside measurement hours (7:00-18:00) is normal")
+            }
             return 0
         }
     }
@@ -156,32 +206,47 @@ struct WeatherService: WeatherServiceProtocol {
             // 調試 UV 指數數據
             if let uvData = payload.uvindex {
                 print("📊 WeatherService: UV index data found - recordDesc: \(uvData.recordDesc ?? "nil")")
-                if let uvEntries = uvData.data {
+                if let uvEntries = uvData.data, !uvEntries.isEmpty {
                     print("📊 WeatherService: UV index entries count: \(uvEntries.count)")
                     for (index, entry) in uvEntries.enumerated() {
                         print("📊 WeatherService: UV entry \(index): place=\(entry.place ?? "nil"), value=\(entry.value?.description ?? "nil"), desc=\(entry.desc ?? "nil")")
                     }
                 } else {
-                    print("⚠️ WeatherService: UV index data array is nil")
+                    print("⚠️ WeatherService: UV index data array is nil or empty")
                 }
             } else {
-                print("⚠️ WeatherService: UV index dataset is nil")
+                print("⚠️ WeatherService: UV index dataset is nil (可能因為是晚上/早上，沒有太陽)")
             }
             
             // 獲取 UV 指數：先從 rhrread API 嘗試，如果沒有則從專門的 UV API 獲取
             var uvIndex: Int = {
                 guard let uvData = payload.uvindex,
-                      let uvEntries = uvData.data else {
-                    print("⚠️ WeatherService: No UV index data in rhrread response")
+                      let uvEntries = uvData.data, !uvEntries.isEmpty else {
+                    print("⚠️ WeatherService: No UV index data in rhrread response (可能是晚上/早上，沒有太陽)")
                     return -1 // 使用 -1 表示需要從專門的 API 獲取
                 }
                 
-                // 查找第一個非 nil 的 value
+                // 查找第一個非 nil 且非 0 的 value（0 可能是有效值，但我們優先選擇非 0 的值）
+                var foundValue: Int? = nil
                 for entry in uvEntries {
                     if let value = entry.value {
-                        print("✅ WeatherService: Found UV index from rhrread: \(value) from place: \(entry.place ?? "unknown")")
-                        return value
+                        print("📊 WeatherService: Found UV entry - place: \(entry.place ?? "unknown"), value: \(value)")
+                        if value > 0 {
+                            print("✅ WeatherService: Found UV index from rhrread: \(value) from place: \(entry.place ?? "unknown")")
+                            return value
+                        } else {
+                            // 記錄 0 值，但繼續查找
+                            if foundValue == nil {
+                                foundValue = value
+                            }
+                        }
                     }
+                }
+                
+                // 如果所有值都是 0，返回 0（這可能是有效的，表示晚上/早上）
+                if let zeroValue = foundValue {
+                    print("⚠️ WeatherService: All UV index entries are 0 (可能是晚上/早上，沒有太陽)")
+                    return zeroValue
                 }
                 
                 print("⚠️ WeatherService: All UV index entries have nil values in rhrread")
@@ -190,7 +255,13 @@ struct WeatherService: WeatherServiceProtocol {
             
             // 如果 rhrread API 沒有 UV 數據，嘗試從專門的 UV API 獲取
             if uvIndex == -1 {
+                print("🔄 WeatherService: Attempting to fetch UV index from dedicated API...")
                 uvIndex = await fetchUVIndexFromDedicatedAPI(language: language)
+                if uvIndex > 0 {
+                    print("✅ WeatherService: Successfully got UV index \(uvIndex) from dedicated API")
+                } else {
+                    print("⚠️ WeatherService: UV index is 0 or unavailable (可能是晚上/早上，沒有太陽)")
+                }
             }
             
             // Build warning messages from both real‑time API and warning summary API
@@ -329,32 +400,47 @@ struct WeatherService: WeatherServiceProtocol {
             // 調試 UV 指數數據
             if let uvData = payload.uvindex {
                 print("📊 WeatherService (all locations): UV index data found - recordDesc: \(uvData.recordDesc ?? "nil")")
-                if let uvEntries = uvData.data {
+                if let uvEntries = uvData.data, !uvEntries.isEmpty {
                     print("📊 WeatherService (all locations): UV index entries count: \(uvEntries.count)")
                     for (index, entry) in uvEntries.enumerated() {
                         print("📊 WeatherService (all locations): UV entry \(index): place=\(entry.place ?? "nil"), value=\(entry.value?.description ?? "nil"), desc=\(entry.desc ?? "nil")")
                     }
                 } else {
-                    print("⚠️ WeatherService (all locations): UV index data array is nil")
+                    print("⚠️ WeatherService (all locations): UV index data array is nil or empty")
                 }
             } else {
-                print("⚠️ WeatherService (all locations): UV index dataset is nil")
+                print("⚠️ WeatherService (all locations): UV index dataset is nil (可能因為是晚上/早上，沒有太陽)")
             }
             
             // 獲取 UV 指數：先從 rhrread API 嘗試，如果沒有則從專門的 UV API 獲取
             var uvIndex: Int = {
                 guard let uvData = payload.uvindex,
-                      let uvEntries = uvData.data else {
-                    print("⚠️ WeatherService (all locations): No UV index data in rhrread response")
+                      let uvEntries = uvData.data, !uvEntries.isEmpty else {
+                    print("⚠️ WeatherService (all locations): No UV index data in rhrread response (可能是晚上/早上，沒有太陽)")
                     return -1 // 使用 -1 表示需要從專門的 API 獲取
                 }
                 
-                // 查找第一個非 nil 的 value
+                // 查找第一個非 nil 且非 0 的 value（0 可能是有效值，但我們優先選擇非 0 的值）
+                var foundValue: Int? = nil
                 for entry in uvEntries {
                     if let value = entry.value {
-                        print("✅ WeatherService (all locations): Found UV index from rhrread: \(value) from place: \(entry.place ?? "unknown")")
-                        return value
+                        print("📊 WeatherService (all locations): Found UV entry - place: \(entry.place ?? "unknown"), value: \(value)")
+                        if value > 0 {
+                            print("✅ WeatherService (all locations): Found UV index from rhrread: \(value) from place: \(entry.place ?? "unknown")")
+                            return value
+                        } else {
+                            // 記錄 0 值，但繼續查找
+                            if foundValue == nil {
+                                foundValue = value
+                            }
+                        }
                     }
+                }
+                
+                // 如果所有值都是 0，返回 0（這可能是有效的，表示晚上/早上）
+                if let zeroValue = foundValue {
+                    print("⚠️ WeatherService (all locations): All UV index entries are 0 (可能是晚上/早上，沒有太陽)")
+                    return zeroValue
                 }
                 
                 print("⚠️ WeatherService (all locations): All UV index entries have nil values in rhrread")
@@ -363,7 +449,13 @@ struct WeatherService: WeatherServiceProtocol {
             
             // 如果 rhrread API 沒有 UV 數據，嘗試從專門的 UV API 獲取
             if uvIndex == -1 {
+                print("🔄 WeatherService (all locations): Attempting to fetch UV index from dedicated API...")
                 uvIndex = await fetchUVIndexFromDedicatedAPI(language: language)
+                if uvIndex > 0 {
+                    print("✅ WeatherService (all locations): Successfully got UV index \(uvIndex) from dedicated API")
+                } else {
+                    print("⚠️ WeatherService (all locations): UV index is 0 or unavailable (可能是晚上/早上，沒有太陽)")
+                }
             }
             
             // Get unique locations from temperature data
