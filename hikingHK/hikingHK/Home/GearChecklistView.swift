@@ -2,7 +2,7 @@
 //  GearChecklistView.swift
 //  hikingHK
 //
-//  Created for smart gear checklist UI
+//  Created by user on 17/11/2025.
 //
 
 import SwiftUI

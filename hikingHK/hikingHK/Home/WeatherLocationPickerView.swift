@@ -2,7 +2,7 @@
 //  WeatherLocationPickerView.swift
 //  hikingHK
 //
-//  Created for weather location selection
+//  Created by user on 17/11/2025.
 //
 
 import SwiftUI

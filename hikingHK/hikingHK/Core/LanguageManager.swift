@@ -2,7 +2,7 @@
 //  LanguageManager.swift
 //  hikingHK
 //
-//  Created for language switching functionality
+//  Created by user on 17/11/2025.
 //
 
 import Foundation

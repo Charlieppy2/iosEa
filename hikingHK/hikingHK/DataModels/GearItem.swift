@@ -2,7 +2,7 @@
 //  GearItem.swift
 //  hikingHK
 //
-//  Created for smart gear checklist
+//  Created by user on 17/11/2025.
 //
 
 import Foundation

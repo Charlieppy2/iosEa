@@ -2,7 +2,7 @@
 //  HikingTheme.swift
 //  hikingHK
 //
-//  Created for hiking theme colors and styles
+//  Created by user on 17/11/2025.
 //
 
 import SwiftUI

@@ -2,7 +2,7 @@
 //  WeatherForecastView.swift
 //  hikingHK
 //
-//  Created for weather forecast functionality
+//  Created by user on 17/11/2025.
 //
 
 import SwiftUI
@@ -157,6 +157,9 @@ struct WeatherForecastView: View {
                     .foregroundStyle(Color.hikingDarkGreen)
             }
             
+            // Color legend
+            colorLegend
+            
             ForEach(forecasts) { forecast in
                 dailyForecastCard(forecast)
             }
@@ -164,6 +167,37 @@ struct WeatherForecastView: View {
         .padding()
         .background(Color.hikingCardGradient, in: RoundedRectangle(cornerRadius: 16))
         .hikingCard()
+    }
+    
+    private var colorLegend: some View {
+        HStack(spacing: 16) {
+            // Good for hiking indicator
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.hikingGreen.opacity(0.1))
+                    .frame(width: 20, height: 20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.hikingGreen.opacity(0.3), lineWidth: 1)
+                    )
+                Text(languageManager.localizedString(for: "weather.forecast.good.for.hiking"))
+                    .font(.caption)
+                    .foregroundStyle(Color.hikingBrown)
+            }
+            
+            // Other days indicator
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color(.secondarySystemBackground))
+                    .frame(width: 20, height: 20)
+                Text(languageManager.localizedString(for: "weather.forecast.other.days"))
+                    .font(.caption)
+                    .foregroundStyle(Color.hikingBrown)
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 8))
     }
     
     private func dailyForecastCard(_ forecast: DailyForecast) -> some View {

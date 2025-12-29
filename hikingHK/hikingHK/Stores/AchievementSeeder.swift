@@ -2,7 +2,7 @@
 //  AchievementSeeder.swift
 //  hikingHK
 //
-//  用於保證在任何裝置上都會有預設的成就資料，避免出現「0 / 0 成就」而沒有列表的情況。
+//  Created by user on 17/11/2025.
 //
 
 import Foundation

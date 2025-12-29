@@ -3,7 +3,7 @@
 //  LocationSharingView.swift
 //  hikingHK
 //
-//  Created by assistant on 17/11/2025.
+//  Created by user on 17/11/2025.
 //
 
 import SwiftUI
@@ -42,6 +42,11 @@ struct LocationSharingView: View {
                     // Current location information
                     if viewModel.isSharing, let location = viewModel.currentLocation {
                         locationInfoCard(location)
+                        
+                        // Show warning if location is simulator default
+                        if !viewModel.isLocationValid {
+                            simulatorLocationWarning
+                        }
                     }
                     
                     // Shareable link
@@ -364,6 +369,27 @@ struct LocationSharingView: View {
         case .high: return .red
         case .critical: return .red
         }
+    }
+    
+    private var simulatorLocationWarning: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                Text(languageManager.localizedString(for: "location.share.simulator.warning.title"))
+                    .font(.headline)
+                    .foregroundStyle(Color.hikingDarkGreen)
+            }
+            Text(languageManager.localizedString(for: "location.share.simulator.warning.message"))
+                .font(.subheadline)
+                .foregroundStyle(Color.hikingBrown)
+        }
+        .padding()
+        .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+        )
     }
 }
 

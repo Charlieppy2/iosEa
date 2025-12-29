@@ -2,7 +2,7 @@
 //  TrailRecommendationView.swift
 //  hikingHK
 //
-//  Created by assistant on 17/11/2025.
+//  Created by user on 17/11/2025.
 //
 
 import SwiftUI
@@ -13,8 +13,8 @@ struct TrailRecommendationView: View {
     @EnvironmentObject private var appViewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
     @StateObject private var viewModel: TrailRecommendationViewModel
-    @State private var isShowingPreferenceSettings = false
     @State private var availableHours: Double = 4.0
+    @State private var isExpandingPreferences = false
     
     init(appViewModel: AppViewModel) {
         _viewModel = StateObject(wrappedValue: TrailRecommendationViewModel(appViewModel: appViewModel))
@@ -49,24 +49,6 @@ struct TrailRecommendationView: View {
                 }
                 .ignoresSafeArea()
             )
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        isShowingPreferenceSettings = true
-                    } label: {
-                        Image(systemName: "person.crop.circle.badge.gearshape")
-                            .foregroundStyle(Color.hikingGreen)
-                    }
-                }
-            }
-            .sheet(isPresented: $isShowingPreferenceSettings) {
-                PreferenceSettingsView(preference: viewModel.userPreference ?? UserPreference()) { preference in
-                    viewModel.updateUserPreference(preference)
-                    Task {
-                        await viewModel.generateRecommendations(availableTime: availableHours * 3600)
-                    }
-                }
-            }
             .onAppear {
                 viewModel.configureIfNeeded(context: modelContext)
                 Task {
@@ -97,6 +79,33 @@ struct TrailRecommendationView: View {
                 .tint(Color.hikingGreen)
             }
             
+            // Preference settings section
+            if let preference = viewModel.userPreference {
+                Divider()
+                
+                Button {
+                    withAnimation {
+                        isExpandingPreferences.toggle()
+                    }
+                } label: {
+                    HStack {
+                        Text(languageManager.localizedString(for: "preferences.title"))
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Color.hikingDarkGreen)
+                        Spacer()
+                        Image(systemName: isExpandingPreferences ? "chevron.up" : "chevron.down")
+                            .font(.caption)
+                            .foregroundStyle(Color.hikingGreen)
+                    }
+                }
+                .buttonStyle(.plain)
+                
+                if isExpandingPreferences {
+                    preferenceSettingsContent(preference: preference)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
+            
             Button {
                 Task {
                     await viewModel.generateRecommendations(availableTime: availableHours * 3600)
@@ -115,6 +124,88 @@ struct TrailRecommendationView: View {
         .padding()
         .background(Color.hikingCardGradient, in: RoundedRectangle(cornerRadius: 16))
         .hikingCard()
+    }
+    
+    @ViewBuilder
+    private func preferenceSettingsContent(preference: UserPreference) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Fitness Level
+            VStack(alignment: .leading, spacing: 8) {
+                Text(languageManager.localizedString(for: "preferences.fitness.level"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Picker("", selection: Binding(
+                    get: { preference.fitnessLevel },
+                    set: { newValue in
+                        preference.fitnessLevel = newValue
+                        viewModel.updateUserPreference(preference)
+                        Task {
+                            await viewModel.generateRecommendations(availableTime: availableHours * 3600)
+                        }
+                    }
+                )) {
+                    ForEach(UserPreference.FitnessLevel.allCases, id: \.self) { level in
+                        Text(level.localizedRawValue(languageManager: languageManager)).tag(level)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+            
+            // Scenery Preferences
+            VStack(alignment: .leading, spacing: 8) {
+                Text(languageManager.localizedString(for: "preferences.scenery"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                    ForEach(UserPreference.SceneryType.allCases, id: \.self) { scenery in
+                        Toggle(isOn: Binding(
+                            get: { preference.preferredScenery.contains(scenery) },
+                            set: { isOn in
+                                if isOn {
+                                    if !preference.preferredScenery.contains(scenery) {
+                                        preference.preferredScenery.append(scenery)
+                                    }
+                                } else {
+                                    preference.preferredScenery.removeAll { $0 == scenery }
+                                }
+                                viewModel.updateUserPreference(preference)
+                                Task {
+                                    await viewModel.generateRecommendations(availableTime: availableHours * 3600)
+                                }
+                            }
+                        )) {
+                            Label(scenery.localizedRawValue(languageManager: languageManager), systemImage: scenery.icon)
+                                .font(.caption)
+                        }
+                        .toggleStyle(.button)
+                    }
+                }
+            }
+            
+            // Difficulty Preference
+            VStack(alignment: .leading, spacing: 8) {
+                Text(languageManager.localizedString(for: "preferences.difficulty"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Picker("", selection: Binding(
+                    get: { preference.preferredDifficulty },
+                    set: { newValue in
+                        preference.preferredDifficulty = newValue
+                        viewModel.updateUserPreference(preference)
+                        Task {
+                            await viewModel.generateRecommendations(availableTime: availableHours * 3600)
+                        }
+                    }
+                )) {
+                    Text(languageManager.localizedString(for: "preferences.no.preference")).tag(Trail.Difficulty?.none)
+                    ForEach(Trail.Difficulty.allCases, id: \.self) { difficulty in
+                        Text(difficulty.localizedRawValue(languageManager: languageManager)).tag(Trail.Difficulty?.some(difficulty))
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+        }
+        .padding(.top, 8)
     }
     
     private func formatAvailableTime(_ hours: Double) -> String {
@@ -230,11 +321,13 @@ struct RecommendationCard: View {
             // Basic trail information
             HStack(spacing: 16) {
                 Label("\(recommendation.trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) \(languageManager.localizedString(for: "unit.km"))", systemImage: "ruler")
+                    .foregroundStyle(Color.hikingStone)
                 Label("\(recommendation.trail.estimatedDurationMinutes / 60)\(languageManager.localizedString(for: "unit.h"))", systemImage: "clock")
+                    .foregroundStyle(Color.hikingStone)
                 Label(recommendation.trail.difficulty.localizedRawValue(languageManager: languageManager), systemImage: recommendation.trail.difficulty.icon)
+                    .foregroundStyle(difficultyColor(for: recommendation.trail.difficulty))
             }
             .font(.caption)
-            .foregroundStyle(Color.hikingStone)
             
             // Action buttons
             HStack(spacing: 12) {
@@ -263,21 +356,64 @@ struct RecommendationCard: View {
             }
         }
         .padding()
-        .background(Color.hikingCardGradient, in: RoundedRectangle(cornerRadius: 16))
-        .hikingCard()
+        .background(difficultyBackgroundColor(for: recommendation.trail.difficulty), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(difficultyAccentColor(for: recommendation.trail.difficulty).opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: 15, x: 0, y: 5)
         .sheet(isPresented: $isShowingDetail) {
             NavigationStack {
                 TrailDetailView(trail: recommendation.trail)
             }
         }
     }
+    
+    /// Returns the background color for the trail difficulty, matching TrailListView
+    private func difficultyBackgroundColor(for difficulty: Trail.Difficulty) -> Color {
+        switch difficulty {
+        case .easy:
+            return Color.hikingDifficultyEasyBackground
+        case .moderate:
+            return Color.hikingDifficultyModerateBackground
+        case .challenging:
+            return Color.hikingDifficultyChallengingBackground
+        }
+    }
+    
+    /// Returns the accent color for the trail difficulty, matching TrailListView
+    private func difficultyAccentColor(for difficulty: Trail.Difficulty) -> Color {
+        switch difficulty {
+        case .easy:
+            return Color.hikingGreen
+        case .moderate:
+            return Color.orange
+        case .challenging:
+            return Color.red
+        }
+    }
+    
+    /// Returns the accent color for the trail difficulty (for text), matching TrailListView
+    private func difficultyColor(for difficulty: Trail.Difficulty) -> Color {
+        return difficultyAccentColor(for: difficulty)
+    }
 }
 
 struct PreferenceSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager
-    @State var preference: UserPreference
+    @Bindable var preference: UserPreference
     let onSave: (UserPreference) -> Void
+    
+    @State private var minDistance: Double
+    @State private var maxDistance: Double
+    
+    init(preference: UserPreference, onSave: @escaping (UserPreference) -> Void) {
+        self.preference = preference
+        self.onSave = onSave
+        _minDistance = State(initialValue: preference.preferredDistance?.minKm ?? 0)
+        _maxDistance = State(initialValue: preference.preferredDistance?.maxKm ?? 20)
+    }
     
     var body: some View {
         NavigationStack {
@@ -296,7 +432,9 @@ struct PreferenceSettingsView: View {
                             get: { preference.preferredScenery.contains(scenery) },
                             set: { isOn in
                                 if isOn {
-                                    preference.preferredScenery.append(scenery)
+                                    if !preference.preferredScenery.contains(scenery) {
+                                        preference.preferredScenery.append(scenery)
+                                    }
                                 } else {
                                     preference.preferredScenery.removeAll { $0 == scenery }
                                 }
@@ -308,7 +446,12 @@ struct PreferenceSettingsView: View {
                 }
                 
                 Section(languageManager.localizedString(for: "preferences.difficulty")) {
-                    Picker(languageManager.localizedString(for: "preferences.difficulty"), selection: $preference.preferredDifficulty) {
+                    Picker(languageManager.localizedString(for: "preferences.difficulty"), selection: Binding(
+                        get: { preference.preferredDifficulty },
+                        set: { newValue in
+                            preference.preferredDifficulty = newValue
+                        }
+                    )) {
                         Text(languageManager.localizedString(for: "preferences.no.preference")).tag(Trail.Difficulty?.none)
                         ForEach(Trail.Difficulty.allCases, id: \.self) { difficulty in
                             Text(difficulty.localizedRawValue(languageManager: languageManager)).tag(Trail.Difficulty?.some(difficulty))
@@ -317,14 +460,28 @@ struct PreferenceSettingsView: View {
                 }
                 
                 Section(languageManager.localizedString(for: "preferences.distance")) {
-                    VStack {
+                    VStack(spacing: 16) {
                         HStack {
-                            Text("\(languageManager.localizedString(for: "preferences.min")): \(Int(preference.preferredDistance?.minKm ?? 0)) km")
+                            Text("\(languageManager.localizedString(for: "preferences.min")): \(Int(minDistance)) km")
                             Spacer()
-                            Text("\(languageManager.localizedString(for: "preferences.max")): \(Int(preference.preferredDistance?.maxKm ?? 20)) km")
+                            Text("\(languageManager.localizedString(for: "preferences.max")): \(Int(maxDistance)) km")
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(languageManager.localizedString(for: "preferences.min"))
+                                .font(.subheadline)
+                            Slider(value: $minDistance, in: 0...maxDistance, step: 0.5)
+                                .tint(Color.hikingGreen)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(languageManager.localizedString(for: "preferences.max"))
+                                .font(.subheadline)
+                            Slider(value: $maxDistance, in: minDistance...50, step: 0.5)
+                                .tint(Color.hikingGreen)
+                        }
                     }
                 }
             }
@@ -338,6 +495,11 @@ struct PreferenceSettingsView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(languageManager.localizedString(for: "save")) {
+                        // Update distance range before saving
+                        preference.preferredDistance = UserPreference.DistanceRange(
+                            minKm: minDistance,
+                            maxKm: maxDistance
+                        )
                         onSave(preference)
                         dismiss()
                     }

@@ -2,8 +2,7 @@
 //  LocationSharingStore.swift
 //  hikingHK
 //
-//  Created by assistant on 17/11/2025.
-//
+//  Created by user on 17/11/2025.
 
 import Foundation
 import SwiftData

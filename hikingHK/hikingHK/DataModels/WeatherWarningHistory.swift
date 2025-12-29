@@ -2,7 +2,7 @@
 //  WeatherWarningHistory.swift
 //  hikingHK
 //
-//  Created for weather warning history tracking
+//  Created by user on 17/11/2025.
 //
 
 import Foundation

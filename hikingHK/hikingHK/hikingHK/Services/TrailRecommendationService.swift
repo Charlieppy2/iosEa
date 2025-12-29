@@ -103,7 +103,14 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
             
             // 4. Score based on how much time the user has available
             if let time = availableTime {
-                score += scoreBasedOnAvailableTime(trail: trail, availableTime: time, reasons: &reasons)
+                let timeScore = scoreBasedOnAvailableTime(trail: trail, availableTime: time, reasons: &reasons)
+                score += timeScore
+                
+                // If the trail clearly exceeds available time, significantly penalize it
+                let trailDuration = TimeInterval(trail.estimatedDurationMinutes * 60)
+                if trailDuration > time * 1.15 { // More than 15% over available time
+                    score -= 0.5 // Heavy penalty
+                }
             }
             
             // 5. Score based on past hiking history (learning user habits)
@@ -115,15 +122,38 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
             // Clamp score into 0–1 range
             score = min(max(score, 0), 1)
             
-            if score > 0.3 { // Only recommend trails with a score above a minimum threshold
+            // Filter out trails that clearly exceed available time
+            // Allow trails up to 10% over available time to account for buffer time
+            var shouldRecommend = score > 0.3
+            if let time = availableTime {
+                let trailDuration = TimeInterval(trail.estimatedDurationMinutes * 60)
+                // Only exclude trails that are more than 10% over available time
+                // This allows 1-hour trails to show when user selects 1 hour
+                if trailDuration > time * 1.1 {
+                    shouldRecommend = false
+                }
+            }
+            
+            if shouldRecommend {
                 recommendations.append(
                     TrailRecommendation(trail: trail, score: score, reasons: reasons)
                 )
             }
         }
         
-        // Sort by final score (highest first)
-        return recommendations.sorted { $0.score > $1.score }
+        // Sort by difficulty first (easy -> moderate -> challenging), then by score (highest first)
+        return recommendations.sorted { lhs, rhs in
+            let lhsDifficultyOrder = difficultyOrder(lhs.trail.difficulty)
+            let rhsDifficultyOrder = difficultyOrder(rhs.trail.difficulty)
+            
+            // If same difficulty, sort by score (higher score first)
+            if lhsDifficultyOrder == rhsDifficultyOrder {
+                return lhs.score > rhs.score
+            }
+            
+            // Otherwise, sort by difficulty order (easy first)
+            return lhsDifficultyOrder < rhsDifficultyOrder
+        }
     }
     
     // MARK: - Scoring functions
@@ -296,7 +326,17 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
         let trailDuration = TimeInterval(trail.estimatedDurationMinutes * 60)
         
         // If the available time is enough to comfortably complete the trail
-        if availableTime >= trailDuration {
+        // Allow a small buffer (5%) to account for variations in hiking pace
+        if availableTime >= trailDuration * 0.95 {
+            score += 0.15 // Increased score for perfect time match
+            reasons.append(
+                localizedReason(
+                    "recommendations.reason.time.enough",
+                    fallback: "You have enough time to complete this trail"
+                )
+            )
+        } else if availableTime >= trailDuration * 0.8 {
+            // Time is slightly tight but still feasible
             score += 0.1
             reasons.append(
                 localizedReason(
@@ -315,7 +355,7 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
             )
         } else {
             // Clearly not enough time – penalize this trail
-            score -= 0.1
+            score -= 0.2
         }
         
         return score
@@ -402,6 +442,16 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
     }
     
     // MARK: - Helper functions
+    
+    /// Returns the sort order for difficulty (lower number = higher priority)
+    /// Easy = 0, Moderate = 1, Challenging = 2
+    private func difficultyOrder(_ difficulty: Trail.Difficulty) -> Int {
+        switch difficulty {
+        case .easy: return 0
+        case .moderate: return 1
+        case .challenging: return 2
+        }
+    }
     
     private func matchesScenery(trailText: String, scenery: UserPreference.SceneryType) -> Bool {
         let keywords: [UserPreference.SceneryType: [String]] = [

@@ -2,7 +2,7 @@
 //  TrailDetailView.swift
 //  hikingHK
 //
-//  Created by assistant on 17/11/2025.
+//  Created by user on 17/11/2025.
 //
 
 import SwiftUI
@@ -176,19 +176,31 @@ struct TrailDetailView: View {
     }
 
     private func localizedCheckpointTitle(_ title: String) -> String {
-        let key = "checkpoint.\(title.lowercased().replacingOccurrences(of: " ", with: ".").replacingOccurrences(of: "'", with: ""))"
+        // Normalize the title key
+        let normalizedTitle = title.lowercased()
+            .replacingOccurrences(of: " ", with: ".")
+            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: "-", with: ".")
+        let key = "checkpoint.\(normalizedTitle)"
         let localized = languageManager.localizedString(for: key)
         return localized != key ? localized : title
     }
     
     private func localizedCheckpointSubtitle(_ subtitle: String) -> String {
-        let key = "checkpoint.\(subtitle.lowercased())"
+        // Normalize the subtitle key
+        let normalizedSubtitle = subtitle.lowercased()
+            .replacingOccurrences(of: " ", with: ".")
+            .replacingOccurrences(of: "'", with: "")
+        let key = "checkpoint.\(normalizedSubtitle)"
         let localized = languageManager.localizedString(for: key)
         return localized != key ? localized : subtitle
     }
     
     private func localizedFacilityName(_ name: String) -> String {
-        let key = "facility.\(name.lowercased().replacingOccurrences(of: " ", with: "."))"
+        let normalizedName = name.lowercased()
+            .replacingOccurrences(of: " ", with: ".")
+            .replacingOccurrences(of: "'", with: "")
+        let key = "facility.\(normalizedName)"
         let localized = languageManager.localizedString(for: key)
         return localized != key ? localized : name
     }

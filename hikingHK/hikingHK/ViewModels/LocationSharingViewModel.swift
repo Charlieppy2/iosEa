@@ -2,7 +2,7 @@
 //  LocationSharingViewModel.swift
 //  hikingHK
 //
-//  Created by assistant on 17/11/2025.
+//  Created by user on 17/11/2025.
 //
 
 import Foundation
@@ -286,7 +286,34 @@ final class LocationSharingViewModel: ObservableObject {
     /// Generates a shareable map link for the user's current location.
     func generateShareLink() -> String? {
         guard let location = currentLocation ?? locationManager.currentLocation else { return nil }
+        
+        // Check if location is the iOS Simulator default (San Francisco)
+        // This is a common issue when testing on simulator
+        let isSimulatorDefault = abs(location.coordinate.latitude - 37.785834) < 0.0001 &&
+                                 abs(location.coordinate.longitude - (-122.406417)) < 0.0001
+        
+        if isSimulatorDefault {
+            print("⚠️ LocationSharingViewModel: Detected iOS Simulator default location (San Francisco)")
+            print("⚠️ Please set a custom location in the Simulator: Features > Location > Custom Location")
+        }
+        
         return sharingService.generateShareLink(location: location.coordinate)
+    }
+    
+    /// Checks if the current location is valid (not simulator default or invalid).
+    var isLocationValid: Bool {
+        guard let location = currentLocation ?? locationManager.currentLocation else { return false }
+        
+        // Check if location is the iOS Simulator default (San Francisco)
+        let isSimulatorDefault = abs(location.coordinate.latitude - 37.785834) < 0.0001 &&
+                                 abs(location.coordinate.longitude - (-122.406417)) < 0.0001
+        
+        // Check if location is in Hong Kong area (rough bounds)
+        let isInHongKong = location.coordinate.latitude >= 22.0 && location.coordinate.latitude <= 23.0 &&
+                           location.coordinate.longitude >= 113.0 && location.coordinate.longitude <= 115.0
+        
+        // Location is valid if it's not the simulator default, or if it's actually in Hong Kong
+        return !isSimulatorDefault || isInHongKong
     }
 }
 

@@ -2,7 +2,7 @@
 //  BestHikingTimeView.swift
 //  hikingHK
 //
-//  Created for best hiking time recommendations
+//  Created by user on 17/11/2025.
 //
 
 import SwiftUI
@@ -12,39 +12,40 @@ struct BestHikingTimeView: View {
     @EnvironmentObject private var appViewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedLocationIndex: Int = 0
-    @State private var isShowingLocationPicker = false
+    @State private var selectedTrail: Trail?
+    @State private var isShowingTrailSearch = false
     
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Location selector using weather API locations
-                    let snapshots = appViewModel.weatherSnapshots.isEmpty ? [appViewModel.weatherSnapshot] : appViewModel.weatherSnapshots
-                    let currentSnapshot = snapshots[selectedLocationIndex]
+                    // Trail selector
+                    let currentTrail = selectedTrail ?? defaultTrail
                     
-                    Button {
-                        isShowingLocationPicker = true
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "mappin.and.ellipse")
-                                .foregroundStyle(Color.hikingGreen)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(localizedLocation(currentSnapshot.location))
-                                    .font(.headline)
-                                    .foregroundStyle(Color.hikingDarkGreen)
-                                Text("\(String(format: "%.1f", currentSnapshot.temperature))°C • \(currentSnapshot.humidity)%")
+                    if let trail = currentTrail {
+                        Button {
+                            isShowingTrailSearch = true
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "mappin.and.ellipse")
+                                    .foregroundStyle(Color.hikingGreen)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(trail.localizedName(languageManager: languageManager))
+                                        .font(.headline)
+                                        .foregroundStyle(Color.hikingDarkGreen)
+                                    Text(trail.localizedDistrict(languageManager: languageManager))
+                                        .font(.caption)
+                                        .foregroundStyle(Color.hikingBrown)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.down")
                                     .font(.caption)
-                                    .foregroundStyle(Color.hikingBrown)
+                                    .foregroundStyle(Color.hikingDarkGreen)
                             }
-                            Spacer()
-                            Image(systemName: "chevron.down")
-                                .font(.caption)
-                                .foregroundStyle(Color.hikingDarkGreen)
+                            .padding(.horizontal)
                         }
-                        .padding(.horizontal)
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                     
                     if viewModel.isLoading {
                         ProgressView()
@@ -74,7 +75,7 @@ struct BestHikingTimeView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         Task {
-                            await loadForecastForCurrentLocation()
+                            await loadForecastForCurrentTrail()
                         }
                     } label: {
                         Image(systemName: "arrow.clockwise")
@@ -84,70 +85,54 @@ struct BestHikingTimeView: View {
                 }
             }
             .task {
-                await loadForecastForCurrentLocation()
+                if selectedTrail == nil {
+                    selectedTrail = upcomingTrails.first ?? defaultTrail
+                }
+                await loadForecastForCurrentTrail()
             }
-            .onChange(of: selectedLocationIndex) { _, _ in
-                Task { await loadForecastForCurrentLocation() }
+            .onChange(of: selectedTrail) { _, newValue in
+                guard let trail = newValue else { return }
+                Task { await loadForecastForTrail(trail) }
             }
-            .onChange(of: appViewModel.weatherSnapshots) { _, _ in
-                Task { await loadForecastForCurrentLocation() }
-            }
-            .sheet(isPresented: $isShowingLocationPicker) {
-                WeatherLocationPickerView(
-                    snapshots: appViewModel.weatherSnapshots.isEmpty ? [appViewModel.weatherSnapshot] : appViewModel.weatherSnapshots,
-                    selectedIndex: $selectedLocationIndex
-                )
+            .sheet(isPresented: $isShowingTrailSearch) {
+                WeatherLocationSearchView { trail in
+                    selectedTrail = trail
+                }
+                .environmentObject(appViewModel)
                 .environmentObject(languageManager)
-                .presentationDetents([.large])
             }
         }
     }
     
-    /// 根據當前選擇的地區加載天氣預報
-    private func loadForecastForCurrentLocation() async {
-        let snapshots = appViewModel.weatherSnapshots.isEmpty ? [appViewModel.weatherSnapshot] : appViewModel.weatherSnapshots
-        guard selectedLocationIndex < snapshots.count else { return }
-        
-        let selectedSnapshot = snapshots[selectedLocationIndex]
-        let locationName = selectedSnapshot.location
-        
-        // 嘗試找到對應的路線（用於獲取座標等信息）
-        // 如果找不到，使用默認路線
-        let trail = findTrailForLocation(locationName) ?? appViewModel.trails.first
-        
-        if let trail = trail {
-            await viewModel.loadForecast(for: trail)
+    /// 根據當前選擇的路線加載天氣預報
+    private func loadForecastForCurrentTrail() async {
+        if let trail = selectedTrail ?? defaultTrail {
+            await loadForecastForTrail(trail)
         }
     }
     
-    /// 根據地區名稱查找對應的路線
-    private func findTrailForLocation(_ locationName: String) -> Trail? {
-        // 嘗試根據地區名稱匹配路線
-        // 例如："Sai Kung" -> 查找西貢的路線
-        let locationKey = locationName.lowercased()
-        
-        // 簡單匹配邏輯：根據地區名稱關鍵字匹配
-        for trail in appViewModel.trails {
-            let district = trail.district.lowercased()
-            if district.contains(locationKey) || locationKey.contains(district) {
-                return trail
+    /// 為指定路線加載天氣預報
+    private func loadForecastForTrail(_ trail: Trail) async {
+        await viewModel.loadForecast(for: trail)
+    }
+    
+    /// 當前「即將計劃」的路線（按日期排序後去重）
+    private var upcomingTrails: [Trail] {
+        let hikes = appViewModel.savedHikes.sorted { $0.scheduledDate < $1.scheduledDate }
+        var seen: Set<UUID> = []
+        var result: [Trail] = []
+        for hike in hikes {
+            if !seen.contains(hike.trail.id) {
+                seen.insert(hike.trail.id)
+                result.append(hike.trail)
             }
         }
-        
-        // 如果找不到，返回 nil，使用默認路線
-        return nil
+        return result
     }
     
-    /// 本地化地區名稱
-    private func localizedLocation(_ location: String) -> String {
-        // Prefer Hong Kong Observatory label
-        if location == "Hong Kong Observatory" {
-            return languageManager.localizedString(for: "weather.location.hko")
-        }
-        // Localize other known locations
-        let locationKey = "weather.location.\(location.lowercased().replacingOccurrences(of: " ", with: ".").replacingOccurrences(of: "'", with: ""))"
-        let localized = languageManager.localizedString(for: locationKey)
-        return localized != locationKey ? localized : location
+    /// 沒有即將計劃時的預設路線（取第一條已有路線）
+    private var defaultTrail: Trail? {
+        appViewModel.trails.first
     }
     
     private func bestHikingTimesSection(_ bestTimes: [BestHikingTime]) -> some View {
@@ -227,7 +212,7 @@ struct BestHikingTimeView: View {
                 .multilineTextAlignment(.center)
             Button {
                 Task {
-                    await loadForecastForCurrentLocation()
+                    await loadForecastForCurrentTrail()
                 }
             } label: {
                 Text(languageManager.localizedString(for: "retry"))

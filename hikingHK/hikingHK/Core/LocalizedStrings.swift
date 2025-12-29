@@ -2,8 +2,9 @@
 //  LocalizedStrings.swift
 //  hikingHK
 //
-//  Created for storing localized strings
+//  Created by user on 17/11/2025.
 //
+
 
 import Foundation
 
@@ -196,6 +197,8 @@ struct LocalizedStrings {
         "weather.forecast.comfort.index": "Comfort Index",
         "weather.forecast.precipitation": "Rain",
         "weather.forecast.no.best.times": "No best hiking times available for the selected location.",
+        "weather.forecast.good.for.hiking": "Good for hiking",
+        "weather.forecast.other.days": "Other days",
         "weather.temperature": "Temperature",
         "retry": "Retry",
         "weather.humidity": "Humidity",
@@ -263,11 +266,17 @@ struct LocalizedStrings {
         "checkpoint.peak": "Peak",
         "checkpoint.start": "Start",
         "checkpoint.photo.spot": "Photo spot",
+        "checkpoint.starting.point": "Starting point",
+        "checkpoint.photo.stop": "Photo stop",
+        "checkpoint.halfway.point": "Halfway point",
         
         // Dragon's Back Checkpoints
         "checkpoint.to.tei.wan": "To Tei Wan",
         "checkpoint.dragons.back.ridge": "Dragon's Back Ridge",
         "checkpoint.big.wave.bay": "Big Wave Bay",
+        "checkpoint.ng.tung.chai": "Ng Tung Chai",
+        "checkpoint.bottom.fall": "Bottom Fall",
+        "checkpoint.main.fall": "Main Fall",
         
         // Facilities
         "facility.country.park.toilet": "Country park toilet",
@@ -277,6 +286,8 @@ struct LocalizedStrings {
         "facility.camping": "Camping",
         "facility.big.wave.bay.showers": "Big Wave Bay showers",
         "facility.water.kiosks": "Water kiosks",
+        "facility.village.stores": "Village stores",
+        "facility.taxi.stand": "Taxi stand",
         
         // Checkpoint Names (MacLehose Section 4)
         "checkpoint.kei.ling.ha": "Kei Ling Ha",
@@ -301,6 +312,12 @@ struct LocalizedStrings {
         "checkpoint.stanley.gap": "Stanley Gap",
         "checkpoint.tai.tam": "Tai Tam",
         "checkpoint.stanley": "Stanley",
+        
+        // Tai Mo Shan Waterfalls Trail
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.highlight.main.fall.35.m.drop": "Main Fall 35 m drop",
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.highlight.shaded.bamboo.forest": "Shaded bamboo forest",
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.highlight.stream.play.area": "Stream play area",
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.transportation": "Bus 64K/64P to Ng Tung Chai village; return identical route.",
         
         // Units
         "unit.km": "km",
@@ -735,6 +752,8 @@ struct LocalizedStrings {
         "location.share.contact.phone": "Phone Number",
         "location.share.contact.email": "Email (Optional)",
         "location.share.primary": "Primary",
+        "location.share.simulator.warning.title": "Simulator Location Detected",
+        "location.share.simulator.warning.message": "The current location appears to be the iOS Simulator default (San Francisco). Please set a custom location in the Simulator: Features > Location > Custom Location, or test on a real device.",
         "error": "Error",
         
         // Hike Records (additional)
@@ -972,6 +991,8 @@ struct LocalizedStrings {
         "weather.forecast.comfort.index": "舒適度指數",
         "weather.forecast.precipitation": "降雨",
         "weather.forecast.no.best.times": "所選位置暫無最佳行山時間。",
+        "weather.forecast.good.for.hiking": "適合行山",
+        "weather.forecast.other.days": "其他日子",
         "weather.temperature": "溫度",
         "retry": "重試",
         "weather.humidity": "濕度",
@@ -1039,11 +1060,17 @@ struct LocalizedStrings {
         "checkpoint.peak": "山峰",
         "checkpoint.start": "起點",
         "checkpoint.photo.spot": "拍照點",
+        "checkpoint.starting.point": "起點",
+        "checkpoint.photo.stop": "拍照點",
+        "checkpoint.halfway.point": "中點",
         
         // Dragon's Back Checkpoints
         "checkpoint.to.tei.wan": "土地灣",
         "checkpoint.dragons.back.ridge": "龍脊",
         "checkpoint.big.wave.bay": "大浪灣",
+        "checkpoint.ng.tung.chai": "梧桐寨",
+        "checkpoint.bottom.fall": "下瀑布",
+        "checkpoint.main.fall": "主瀑布",
         
         // Facilities
         "facility.country.park.toilet": "郊野公園洗手間",
@@ -1053,6 +1080,8 @@ struct LocalizedStrings {
         "facility.camping": "露營",
         "facility.big.wave.bay.showers": "大浪灣淋浴設施",
         "facility.water.kiosks": "水站",
+        "facility.village.stores": "村莊商店",
+        "facility.taxi.stand": "的士站",
         
         // Checkpoint Names (MacLehose Section 4)
         "checkpoint.kei.ling.ha": "企嶺下",
@@ -1077,6 +1106,12 @@ struct LocalizedStrings {
         "checkpoint.stanley.gap": "赤柱峽",
         "checkpoint.tai.tam": "大潭",
         "checkpoint.stanley": "赤柱",
+        
+        // Tai Mo Shan Waterfalls Trail
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.highlight.main.fall.35.m.drop": "主瀑布 35 米落差",
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.highlight.shaded.bamboo.forest": "陰涼竹林",
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.highlight.stream.play.area": "溪流遊樂區",
+        "trail.b0f98fdf-2f2f-4c19-a032-654b2c73e0b7.transportation": "乘搭 64K/64P 巴士前往梧桐寨村；回程路線相同。",
         
         // Units
         "unit.km": "公里",
@@ -1504,6 +1539,8 @@ struct LocalizedStrings {
         "location.share.contact.phone": "電話號碼",
         "location.share.contact.email": "電子郵件（可選）",
         "location.share.primary": "主要",
+        "location.share.simulator.warning.title": "檢測到模擬器位置",
+        "location.share.simulator.warning.message": "當前位置似乎是 iOS 模擬器的默認位置（舊金山）。請在模擬器中設置自定義位置：功能 > 位置 > 自定義位置，或在真實設備上測試。",
         "error": "錯誤",
         
         // Hike Records (additional)
