@@ -29,6 +29,8 @@ struct HomeView: View {
     @StateObject private var locationManager = LocationManager()
     @State private var isShowingSOSConfirmation = false
     @State private var featuredIndex: Int = 0
+    @State private var weatherIndex: Int = 0
+    @State private var isShowingLocationPicker = false
     @State private var trailPendingPlan: Trail?
     @State private var isShowingAddPlanConfirmation = false
     private let featuredTimer = Timer.publish(every: 6, on: .main, in: .common).autoconnect()
@@ -52,7 +54,7 @@ struct HomeView: View {
                                     .tag(index)
                             }
                         }
-                        .frame(height: 260)
+                        .frame(height: 380)
                         .tabViewStyle(.page(indexDisplayMode: .never))
                         .animation(.spring(response: 0.5, dampingFraction: 0.8), value: featuredIndex)
                     }
@@ -163,6 +165,7 @@ struct HomeView: View {
             }
             .sheet(isPresented: $isShowingHikeRecords) {
                 HikeRecordsListView()
+                    .environmentObject(viewModel)
                     .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
@@ -173,6 +176,7 @@ struct HomeView: View {
             }
             .sheet(isPresented: $isShowingJournal) {
                 JournalListView()
+                    .environmentObject(viewModel)
                     .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
@@ -181,6 +185,14 @@ struct HomeView: View {
                     .environmentObject(viewModel)
                     .environmentObject(languageManager)
                     .presentationDetents([.large])
+            }
+            .sheet(isPresented: $isShowingLocationPicker) {
+                WeatherLocationPickerView(
+                    snapshots: viewModel.weatherSnapshots.isEmpty ? [viewModel.weatherSnapshot] : viewModel.weatherSnapshots,
+                    selectedIndex: $weatherIndex
+                )
+                .environmentObject(languageManager)
+                .presentationDetents([.large])
             }
             .sheet(item: $selectedSavedHike) { hike in
                 SavedHikeDetailSheet(
@@ -237,55 +249,103 @@ struct HomeView: View {
     }
 
     private var weatherCard: some View {
-        let snapshot = viewModel.weatherSnapshot
-        return VStack(alignment: .leading, spacing: 12) {
+        let snapshots = viewModel.weatherSnapshots.isEmpty ? [viewModel.weatherSnapshot] : viewModel.weatherSnapshots
+        
+        return TabView(selection: $weatherIndex) {
+            ForEach(Array(snapshots.enumerated()), id: \.offset) { index, snapshot in
+                weatherCardContent(snapshot: snapshot)
+                    .tag(index)
+            }
+        }
+        .frame(height: 280) // 增加高度確保所有內容都能完整顯示
+        .tabViewStyle(.page(indexDisplayMode: snapshots.count > 1 ? .automatic : .never))
+        .onChange(of: viewModel.weatherSnapshots) { _, newSnapshots in
+            // Update index when snapshots change, prefer Hong Kong Observatory
+            if let hkoIndex = newSnapshots.firstIndex(where: { $0.location == "Hong Kong Observatory" }) {
+                weatherIndex = hkoIndex
+            } else if !newSnapshots.isEmpty {
+                weatherIndex = 0
+            }
+        }
+    }
+    
+    private func weatherCardContent(snapshot: WeatherSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Label(localizedLocation(snapshot.location), systemImage: "location.fill")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(Color.hikingDarkGreen)
+                Button {
+                    isShowingLocationPicker = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Label(localizedLocation(snapshot.location), systemImage: "location.fill")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Color.hikingDarkGreen)
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                            .foregroundStyle(Color.hikingDarkGreen)
+                    }
+                }
                 Spacer()
                 Image(systemName: "sun.max.fill")
+                    .font(.title3)
                     .foregroundStyle(Color.hikingBrown)
             }
             if viewModel.isLoadingWeather {
                 ProgressView()
                     .progressViewStyle(.circular)
                     .tint(Color.hikingGreen)
-            }
-            HStack(alignment: .top, spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(String(format: "%.1f", snapshot.temperature))°C")
-                        .font(.system(size: 46, weight: .bold))
-                        .foregroundStyle(Color.hikingDarkGreen)
-                    if !snapshot.suggestion.isEmpty {
-                        Text(localizedWeatherSuggestion(snapshot.suggestion))
-                            .font(.subheadline)
-                            .foregroundStyle(Color.hikingBrown)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 8)
+            } else {
+                HStack(alignment: .top, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("\(String(format: "%.1f", snapshot.temperature))°C")
+                            .font(.system(size: 52, weight: .bold))
+                            .foregroundStyle(Color.hikingDarkGreen)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 8) {
+                        label(value: "\(snapshot.humidity)%", caption: languageManager.localizedString(for: "weather.humidity"))
+                        label(value: "\(snapshot.uvIndex)", caption: languageManager.localizedString(for: "weather.uv.index"))
                     }
                 }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 6) {
-                    label(value: "\(snapshot.humidity)%", caption: languageManager.localizedString(for: "weather.humidity"))
-                    label(value: "\(snapshot.uvIndex)", caption: languageManager.localizedString(for: "weather.uv.index"))
-                }
-            }
-            Divider()
-                .background(Color.hikingBrown.opacity(0.2))
-            if let warning = snapshot.warningMessage, !warning.isEmpty {
-                Label(warning, systemImage: "exclamationmark.triangle.fill")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.orange)
-            } else if let error = viewModel.weatherError {
+                Divider()
+                    .background(Color.hikingBrown.opacity(0.2))
+                    .padding(.vertical, 6)
+                // 顯示警告或建議（不重複顯示）
+                if let warning = snapshot.warningMessage, !warning.isEmpty {
+                    Label(warning, systemImage: "exclamationmark.triangle.fill")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if let error = viewModel.weatherError {
                     Label(localizedWeatherError(error), systemImage: "wifi.slash")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.hikingStone)
-            } else if !snapshot.suggestion.isEmpty {
-                Text(localizedWeatherSuggestion(snapshot.suggestion))
-                    .font(.subheadline)
-                    .foregroundStyle(Color.hikingBrown)
+                        .font(.body)
+                        .foregroundStyle(Color.hikingStone)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if !snapshot.suggestion.isEmpty {
+                    Text(localizedWeatherSuggestion(snapshot.suggestion))
+                        .font(.body)
+                        .foregroundStyle(Color.hikingBrown)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                
+                // 查看九天天氣預報按鈕（只顯示圖標）
+                Button {
+                    isShowingWeatherForecast = true
+                } label: {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(Color.hikingGreen)
+                    }
+                    .padding(.top, 4)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
         }
-        .padding()
+        .padding(20)
         .hikingCard()
     }
     
@@ -346,12 +406,12 @@ struct HomeView: View {
     }
 
     private func label(value: String, caption: String) -> some View {
-        VStack(alignment: .trailing, spacing: 2) {
+        VStack(alignment: .trailing, spacing: 4) {
             Text(value)
-                .font(.title3.weight(.semibold))
+                .font(.title2.weight(.semibold))
                 .foregroundStyle(Color.hikingDarkGreen)
             Text(caption)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(Color.hikingBrown)
         }
     }
@@ -359,18 +419,21 @@ struct HomeView: View {
     @ViewBuilder
     private func featuredTrailCard(trail: Trail) -> some View {
             VStack(alignment: .leading, spacing: 16) {
-                HStack {
+                HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 6) {
                             Image(systemName: "mountain.2.fill")
+                                .font(.title3)
                                 .foregroundStyle(Color.hikingGreen)
                             Text(languageManager.localizedString(for: "home.featured.trail"))
-                                .font(.caption.weight(.semibold))
+                                .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Color.hikingDarkGreen)
                         }
                         Text(trail.localizedName(languageManager: languageManager))
                             .font(.title2.bold())
                             .foregroundStyle(Color.hikingDarkGreen)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                         Label(trail.localizedDistrict(languageManager: languageManager), systemImage: "mappin.circle.fill")
                             .font(.subheadline)
                             .foregroundStyle(Color.hikingBrown)
@@ -391,22 +454,29 @@ struct HomeView: View {
                             .foregroundStyle(trail.isFavorite ? .red : Color.hikingStone)
                     }
                 }
+                
                 HStack(spacing: 12) {
                     statBadge(value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km", caption: languageManager.localizedString(for: "trails.distance"))
                     statBadge(value: "\(trail.elevationGain) m", caption: languageManager.localizedString(for: "home.elev.gain"))
                     statBadge(value: "\(trail.estimatedDurationMinutes / 60) h", caption: languageManager.localizedString(for: "trails.duration"))
                 }
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(trail.highlights, id: \.self) { highlight in
-                            Text(localizedHighlight(highlight, for: trail))
-                                .font(.caption.weight(.medium))
-                                .padding(.vertical, 6)
-                                .padding(.horizontal, 12)
-                                .hikingBadge(color: Color.hikingGreen)
+                
+                if !trail.highlights.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(trail.highlights, id: \.self) { highlight in
+                                Text(localizedHighlight(highlight, for: trail))
+                                    .font(.caption.weight(.medium))
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 12)
+                                    .hikingBadge(color: Color.hikingGreen)
+                            }
                         }
+                        .padding(.horizontal, 4)
                     }
+                    .frame(height: 36)
                 }
+                
                 NavigationLink {
                     TrailDetailView(trail: trail)
                 } label: {
@@ -415,17 +485,19 @@ struct HomeView: View {
                             .font(.headline.weight(.semibold))
                         Spacer()
                         Image(systemName: "arrow.right.circle.fill")
+                            .font(.title3)
                     }
                     .foregroundStyle(.white)
-                    .padding()
+                    .padding(.vertical, 14)
+                    .padding(.horizontal, 18)
                     .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .fill(Color.hikingGradient)
                             .shadow(color: Color.hikingGreen.opacity(0.4), radius: 8, x: 0, y: 4)
                     )
                 }
             }
-            .padding()
+            .padding(18)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(
@@ -456,14 +528,15 @@ struct HomeView: View {
     private func statBadge(value: String, caption: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
-                .font(.headline.weight(.semibold))
+                .font(.title3.weight(.bold))
                 .foregroundStyle(Color.hikingDarkGreen)
             Text(caption)
                 .font(.caption)
                 .foregroundStyle(Color.hikingBrown)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 8)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color.hikingTan.opacity(0.3))

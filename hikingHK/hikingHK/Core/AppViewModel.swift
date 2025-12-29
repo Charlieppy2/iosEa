@@ -18,6 +18,8 @@ final class AppViewModel: ObservableObject {
     @Published var highlightedDistrict: String = "Sai Kung"
     /// Latest snapshot of real-time weather used across the app.
     @Published var weatherSnapshot: WeatherSnapshot
+    /// All available weather snapshots for different locations.
+    @Published var weatherSnapshots: [WeatherSnapshot] = []
     @Published var weatherError: String?
     @Published var isLoadingWeather = false
     /// Planned or completed hikes saved by the user.
@@ -34,6 +36,7 @@ final class AppViewModel: ObservableObject {
     ) {
         self.trails = trails
         self.weatherSnapshot = weatherSnapshot
+        self.weatherSnapshots = [weatherSnapshot] // Initialize with single snapshot
         self.savedHikes = savedHikes
         self.featuredTrail = trails.first
         self.weatherService = weatherService
@@ -189,10 +192,24 @@ final class AppViewModel: ObservableObject {
         print("🌤️ AppViewModel: Refreshing weather (language: \(language))")
         
         do {
-            let snapshot = try await weatherService.fetchSnapshot(language: language)
-            weatherSnapshot = snapshot
+            // Fetch all locations for swipeable weather cards
+            let snapshots = try await weatherService.fetchSnapshotsForAllLocations(language: language)
+            if !snapshots.isEmpty {
+                weatherSnapshots = snapshots
+                // Set the first snapshot as the default (or prefer Hong Kong Observatory)
+                if let hkoIndex = snapshots.firstIndex(where: { $0.location == "Hong Kong Observatory" }) {
+                    weatherSnapshot = snapshots[hkoIndex]
+                } else {
+                    weatherSnapshot = snapshots.first ?? weatherSnapshot
+                }
+            } else {
+                // Fallback to single snapshot if multi-location fetch fails
+                let snapshot = try await weatherService.fetchSnapshot(language: language)
+                weatherSnapshot = snapshot
+                weatherSnapshots = [snapshot]
+            }
             weatherError = nil
-            print("✅ AppViewModel: Weather refreshed successfully")
+            print("✅ AppViewModel: Weather refreshed successfully for \(weatherSnapshots.count) locations")
         } catch let error as WeatherServiceError {
             // Provide more detailed information based on the specific error type
             let errorMessage: String

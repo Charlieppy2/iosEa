@@ -170,6 +170,9 @@ final class JournalViewModel: ObservableObject {
     var journalsByMonth: [String: [HikeJournal]] {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
+        // 使用當前語言設置
+        let savedLanguage = UserDefaults.standard.string(forKey: "appLanguage") ?? "en"
+        formatter.locale = Locale(identifier: savedLanguage == "zh-Hant" ? "zh_Hant_HK" : "en_US")
 
         return Dictionary(grouping: journals) { journal in
             formatter.string(from: journal.hikeDate)
@@ -179,6 +182,9 @@ final class JournalViewModel: ObservableObject {
     var sortedMonths: [String] {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
+        // 使用當前語言設置
+        let savedLanguage = UserDefaults.standard.string(forKey: "appLanguage") ?? "en"
+        formatter.locale = Locale(identifier: savedLanguage == "zh-Hant" ? "zh_Hant_HK" : "en_US")
 
         return journalsByMonth.keys.sorted { m1, m2 in
             guard let d1 = formatter.date(from: m1),

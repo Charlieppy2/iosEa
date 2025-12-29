@@ -185,7 +185,7 @@ struct WeatherForecastView: View {
             HStack {
                 Image(systemName: "calendar")
                     .foregroundStyle(Color.hikingGreen)
-                Text(languageManager.localizedString(for: "weather.forecast.7day"))
+                Text(languageManager.localizedString(for: "weather.forecast.9day"))
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(Color.hikingDarkGreen)
             }

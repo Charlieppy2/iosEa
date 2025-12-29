@@ -10,6 +10,7 @@ import Foundation
 /// Abstraction for fetching a lightweight real-time weather snapshot for the app.
 protocol WeatherServiceProtocol {
     func fetchSnapshot(language: String) async throws -> WeatherSnapshot
+    func fetchSnapshotsForAllLocations(language: String) async throws -> [WeatherSnapshot]
 }
 
 struct WeatherService: WeatherServiceProtocol {
@@ -19,6 +20,8 @@ struct WeatherService: WeatherServiceProtocol {
     
     // Base endpoint - language will be appended
     private let baseEndpoint = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang="
+    // UV Index API endpoint
+    private let uvIndexEndpoint = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=uvindex&lang="
 
     init(session: URLSession? = nil, decoder: JSONDecoder? = nil, warningService: WeatherWarningServiceProtocol? = nil) {
         // Configure URLSession with reasonable timeouts for mobile networks
@@ -40,6 +43,60 @@ struct WeatherService: WeatherServiceProtocol {
         // Map language codes: en -> en, zh-Hant -> tc
         let langCode = language == "zh-Hant" ? "tc" : "en"
         return URL(string: "\(baseEndpoint)\(langCode)")!
+    }
+    
+    private func uvIndexEndpointURL(language: String) -> URL {
+        // Map language codes: en -> en, zh-Hant -> tc
+        let langCode = language == "zh-Hant" ? "tc" : "en"
+        return URL(string: "\(uvIndexEndpoint)\(langCode)")!
+    }
+    
+    /// 從專門的 UV Index API 獲取紫外線指數
+    private func fetchUVIndexFromDedicatedAPI(language: String) async -> Int {
+        let endpoint = uvIndexEndpointURL(language: language)
+        print("🌤️ WeatherService: Fetching UV index from dedicated API: \(endpoint.absoluteString)")
+        
+        do {
+            let (data, response) = try await session.data(from: endpoint)
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200..<300).contains(httpResponse.statusCode) else {
+                print("❌ WeatherService: UV API HTTP error")
+                return 0
+            }
+            
+            // 嘗試解析 UV API 響應
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                print("📊 WeatherService: UV API response keys: \(json.keys.sorted())")
+                
+                // UV API 的數據結構可能不同，需要根據實際響應調整
+                // 常見結構：{"data": [{"place": "...", "value": 5, ...}], ...}
+                if let dataArray = json["data"] as? [[String: Any]] {
+                    for entry in dataArray {
+                        if let value = entry["value"] as? Int {
+                            print("✅ WeatherService: Found UV index from dedicated API: \(value)")
+                            return value
+                        } else if let valueString = entry["value"] as? String,
+                                  let value = Int(valueString) {
+                            print("✅ WeatherService: Found UV index from dedicated API (string): \(value)")
+                            return value
+                        }
+                    }
+                }
+                
+                // 嘗試其他可能的結構
+                if let value = json["value"] as? Int {
+                    print("✅ WeatherService: Found UV index from dedicated API (direct): \(value)")
+                    return value
+                }
+            }
+            
+            print("⚠️ WeatherService: Could not parse UV index from dedicated API")
+            return 0
+        } catch {
+            print("❌ WeatherService: Failed to fetch UV index from dedicated API: \(error)")
+            return 0
+        }
     }
 
     /// Fetches and builds a `WeatherSnapshot` from HKO real-time weather
@@ -96,7 +153,45 @@ struct WeatherService: WeatherServiceProtocol {
                 throw WeatherServiceError.missingKeyFields
             }
 
-            let uvIndex = payload.uvindex?.data?.compactMap { $0.value }.first ?? 0
+            // 調試 UV 指數數據
+            if let uvData = payload.uvindex {
+                print("📊 WeatherService: UV index data found - recordDesc: \(uvData.recordDesc ?? "nil")")
+                if let uvEntries = uvData.data {
+                    print("📊 WeatherService: UV index entries count: \(uvEntries.count)")
+                    for (index, entry) in uvEntries.enumerated() {
+                        print("📊 WeatherService: UV entry \(index): place=\(entry.place ?? "nil"), value=\(entry.value?.description ?? "nil"), desc=\(entry.desc ?? "nil")")
+                    }
+                } else {
+                    print("⚠️ WeatherService: UV index data array is nil")
+                }
+            } else {
+                print("⚠️ WeatherService: UV index dataset is nil")
+            }
+            
+            // 獲取 UV 指數：先從 rhrread API 嘗試，如果沒有則從專門的 UV API 獲取
+            var uvIndex: Int = {
+                guard let uvData = payload.uvindex,
+                      let uvEntries = uvData.data else {
+                    print("⚠️ WeatherService: No UV index data in rhrread response")
+                    return -1 // 使用 -1 表示需要從專門的 API 獲取
+                }
+                
+                // 查找第一個非 nil 的 value
+                for entry in uvEntries {
+                    if let value = entry.value {
+                        print("✅ WeatherService: Found UV index from rhrread: \(value) from place: \(entry.place ?? "unknown")")
+                        return value
+                    }
+                }
+                
+                print("⚠️ WeatherService: All UV index entries have nil values in rhrread")
+                return -1
+            }()
+            
+            // 如果 rhrread API 沒有 UV 數據，嘗試從專門的 UV API 獲取
+            if uvIndex == -1 {
+                uvIndex = await fetchUVIndexFromDedicatedAPI(language: language)
+            }
             
             // Build warning messages from both real‑time API and warning summary API
             var warningMessages: [String] = []
@@ -155,6 +250,164 @@ struct WeatherService: WeatherServiceProtocol {
                 suggestion: suggestion,
                 updatedAt: Date()
             )
+        } catch let urlError as URLError {
+            print("❌ WeatherService: Network error - \(urlError.localizedDescription)")
+            print("   Code: \(urlError.code.rawValue)")
+            print("   Description: \(urlError.localizedDescription)")
+            throw WeatherServiceError.networkError(urlError)
+        } catch let decodingError as DecodingError {
+            print("❌ WeatherService: Decoding error - \(decodingError.localizedDescription)")
+            // 打印详细的解码错误信息
+            switch decodingError {
+            case .typeMismatch(let type, let context):
+                print("   Type mismatch: Expected \(type), at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                print("   Debug description: \(context.debugDescription)")
+            case .valueNotFound(let type, let context):
+                print("   Value not found: Expected \(type), at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                print("   Debug description: \(context.debugDescription)")
+            case .keyNotFound(let key, let context):
+                print("   Key not found: \(key.stringValue), at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                print("   Debug description: \(context.debugDescription)")
+            case .dataCorrupted(let context):
+                print("   Data corrupted at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                print("   Debug description: \(context.debugDescription)")
+            @unknown default:
+                print("   Unknown decoding error")
+            }
+            throw WeatherServiceError.decodingError(decodingError)
+        } catch {
+            print("❌ WeatherService: Unknown error - \(error.localizedDescription)")
+            throw error
+        }
+    }
+    
+    /// Fetches weather snapshots for all available locations from the API.
+    func fetchSnapshotsForAllLocations(language: String = "en") async throws -> [WeatherSnapshot] {
+        let endpoint = endpointURL(language: language)
+        print("🌤️ WeatherService: Fetching weather for all locations from \(endpoint.absoluteString)")
+        
+        do {
+            let (data, response) = try await session.data(from: endpoint)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ WeatherService: Invalid response type")
+                throw WeatherServiceError.invalidResponse
+            }
+            
+            guard (200..<300).contains(httpResponse.statusCode) else {
+                print("❌ WeatherService: HTTP \(httpResponse.statusCode)")
+                throw WeatherServiceError.invalidResponse
+            }
+            
+            let payload = try decoder.decode(HKORealTimeWeather.self, from: data)
+            
+            // Build warning messages (same for all locations)
+            var warningMessages: [String] = []
+            
+            if let messages = payload.warningMessage, !messages.isEmpty {
+                warningMessages.append(contentsOf: messages.filter { !$0.isEmpty })
+            }
+            
+            do {
+                let warnings = try await warningService.fetchWarnings(language: language)
+                let activeWarnings = warnings.filter { $0.isActive }
+                if !activeWarnings.isEmpty {
+                    for warning in activeWarnings {
+                        let warningText = "\(warning.name) (\(warning.code))"
+                        let exists = warningMessages.contains { $0.contains(warning.name) && $0.contains(warning.code) }
+                        if !exists {
+                            warningMessages.append(warningText)
+                        }
+                    }
+                }
+            } catch {
+                print("⚠️ WeatherService: Failed to fetch warnings from warnsum API: \(error)")
+            }
+            
+            let warningMessage: String? = warningMessages.isEmpty ? nil : warningMessages.joined(separator: "\n")
+            
+            // 調試 UV 指數數據
+            if let uvData = payload.uvindex {
+                print("📊 WeatherService (all locations): UV index data found - recordDesc: \(uvData.recordDesc ?? "nil")")
+                if let uvEntries = uvData.data {
+                    print("📊 WeatherService (all locations): UV index entries count: \(uvEntries.count)")
+                    for (index, entry) in uvEntries.enumerated() {
+                        print("📊 WeatherService (all locations): UV entry \(index): place=\(entry.place ?? "nil"), value=\(entry.value?.description ?? "nil"), desc=\(entry.desc ?? "nil")")
+                    }
+                } else {
+                    print("⚠️ WeatherService (all locations): UV index data array is nil")
+                }
+            } else {
+                print("⚠️ WeatherService (all locations): UV index dataset is nil")
+            }
+            
+            // 獲取 UV 指數：先從 rhrread API 嘗試，如果沒有則從專門的 UV API 獲取
+            var uvIndex: Int = {
+                guard let uvData = payload.uvindex,
+                      let uvEntries = uvData.data else {
+                    print("⚠️ WeatherService (all locations): No UV index data in rhrread response")
+                    return -1 // 使用 -1 表示需要從專門的 API 獲取
+                }
+                
+                // 查找第一個非 nil 的 value
+                for entry in uvEntries {
+                    if let value = entry.value {
+                        print("✅ WeatherService (all locations): Found UV index from rhrread: \(value) from place: \(entry.place ?? "unknown")")
+                        return value
+                    }
+                }
+                
+                print("⚠️ WeatherService (all locations): All UV index entries have nil values in rhrread")
+                return -1
+            }()
+            
+            // 如果 rhrread API 沒有 UV 數據，嘗試從專門的 UV API 獲取
+            if uvIndex == -1 {
+                uvIndex = await fetchUVIndexFromDedicatedAPI(language: language)
+            }
+            
+            // Get unique locations from temperature data
+            let uniqueLocations = Array(Set(payload.temperature.data.map { $0.place }))
+            
+            var snapshots: [WeatherSnapshot] = []
+            
+            // Create a snapshot for each location
+            for location in uniqueLocations {
+                guard let tempEntry = payload.temperature.data.first(where: { $0.place == location }),
+                      let temperature = tempEntry.value else {
+                    continue
+                }
+                
+                // Try to find matching humidity entry, fallback to first available
+                let humidityEntry = payload.humidity.data.first(where: { $0.place == location }) ?? payload.humidity.data.first
+                guard let humidityValue = humidityEntry?.value else {
+                    continue
+                }
+                
+                let suggestion = WeatherSuggestionBuilder.suggestion(
+                    uvIndex: uvIndex,
+                    humidity: Int(humidityValue),
+                    hasWarning: warningMessage != nil && !warningMessage!.isEmpty
+                )
+                
+                let snapshot = WeatherSnapshot(
+                    location: location,
+                    temperature: temperature,
+                    humidity: Int(humidityValue),
+                    uvIndex: uvIndex,
+                    warningMessage: warningMessage,
+                    suggestion: suggestion,
+                    updatedAt: Date()
+                )
+                
+                snapshots.append(snapshot)
+            }
+            
+            // Sort by location name for consistent ordering
+            snapshots.sort { $0.location < $1.location }
+            
+            print("✅ WeatherService: Successfully fetched \(snapshots.count) location snapshots")
+            return snapshots
         } catch let urlError as URLError {
             print("❌ WeatherService: Network error - \(urlError.localizedDescription)")
             print("   Code: \(urlError.code.rawValue)")

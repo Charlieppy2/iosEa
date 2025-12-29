@@ -180,6 +180,7 @@ struct LocalizedStrings {
         // Weather
         "weather.location.hko": "Hong Kong Observatory",
         "weather.location.kings.park": "King's Park",
+        "weather.select.location": "Select Location",
         "weather.forecast.title": "Weather Forecast",
         "weather.region": "Region",
         "weather.region.hong.kong.island": "Hong Kong Island",
@@ -188,6 +189,8 @@ struct LocalizedStrings {
         "weather.region.lantau": "Lantau Island",
         "weather.forecast.best.times": "Best Hiking Times",
         "weather.forecast.7day": "7-Day Forecast",
+        "weather.forecast.9day": "9-Day Forecast",
+        "weather.view.9day.forecast": "View 9-Day Forecast",
         "weather.forecast.today": "Today",
         "weather.forecast.comfort.index": "Comfort Index",
         "weather.forecast.precipitation": "Rain",
@@ -939,6 +942,7 @@ struct LocalizedStrings {
         // Weather
         "weather.location.hko": "香港天文台",
         "weather.location.kings.park": "京士柏",
+        "weather.select.location": "選擇地區",
         "weather.forecast.title": "天氣預測",
         "weather.region": "地區",
         "weather.region.hong.kong.island": "香港島",
@@ -947,6 +951,8 @@ struct LocalizedStrings {
         "weather.region.lantau": "大嶼山",
         "weather.forecast.best.times": "最佳行山時間",
         "weather.forecast.7day": "7天預測",
+        "weather.forecast.9day": "9天天氣預報",
+        "weather.view.9day.forecast": "查看九天天氣預報",
         "weather.forecast.today": "今天",
         "weather.forecast.comfort.index": "舒適度指數",
         "weather.forecast.precipitation": "降雨",

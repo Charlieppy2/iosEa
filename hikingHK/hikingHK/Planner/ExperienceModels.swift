@@ -8,7 +8,7 @@
 import Foundation
 
 /// Lightweight snapshot of weather conditions used across the app.
-struct WeatherSnapshot {
+struct WeatherSnapshot: Equatable {
     let location: String
     let temperature: Double
     let humidity: Int

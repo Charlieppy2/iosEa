@@ -11,18 +11,19 @@ import SwiftData
 struct JournalListView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
-    @StateObject private var viewModel: JournalViewModel
+    @EnvironmentObject private var viewModel: AppViewModel
+    @StateObject private var journalViewModel: JournalViewModel
     @State private var isShowingCreateJournal = false
     @State private var selectedJournal: HikeJournal?
     
     init() {
-        _viewModel = StateObject(wrappedValue: JournalViewModel())
+        _journalViewModel = StateObject(wrappedValue: JournalViewModel())
     }
     
     var body: some View {
         NavigationStack {
             ScrollView {
-                if viewModel.journals.isEmpty {
+                if journalViewModel.journals.isEmpty {
                     emptyStateView
                 } else {
                     timelineView
@@ -49,17 +50,17 @@ struct JournalListView: View {
             }
             .task {
                 // Configure the view model when the view first appears
-                viewModel.configureIfNeeded(context: modelContext)
+                journalViewModel.configureIfNeeded(context: modelContext)
             }
             .onAppear {
                 // On every appearance, ensure configuration and then refresh data
                 print("🔄 JournalListView: View appeared")
-                viewModel.configureIfNeeded(context: modelContext, skipRefresh: true)
+                journalViewModel.configureIfNeeded(context: modelContext, skipRefresh: true)
                 // Delay refresh slightly to give the JSON store time to sync
                 Task { @MainActor in
                     try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
                     print("🔄 JournalListView: Refreshing journals on appear...")
-                    viewModel.refreshJournals()
+                    journalViewModel.refreshJournals()
                 }
             }
             .onChange(of: isShowingCreateJournal) { oldValue, newValue in
@@ -73,20 +74,20 @@ struct JournalListView: View {
                         try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
                         print("🔄 JournalListView: Refreshing journals after delay...")
                         // Only refresh if the array is empty to avoid overwriting manual additions
-                        if viewModel.journals.isEmpty {
+                        if journalViewModel.journals.isEmpty {
                             print("🔄 JournalListView: Array is empty, refreshing from database...")
-                            viewModel.refreshJournals()
+                            journalViewModel.refreshJournals()
                         } else {
-                            print("🔄 JournalListView: Array has \(viewModel.journals.count) items, skipping refresh to preserve manual additions")
+                            print("🔄 JournalListView: Array has \(journalViewModel.journals.count) items, skipping refresh to preserve manual additions")
                         }
                     }
                 }
             }
             .sheet(isPresented: $isShowingCreateJournal) {
-                CreateJournalView(viewModel: viewModel)
+                CreateJournalView(viewModel: journalViewModel)
             }
             .sheet(item: $selectedJournal) { journal in
-                JournalDetailView(journal: journal, viewModel: viewModel)
+                JournalDetailView(journal: journal, viewModel: journalViewModel)
             }
         }
     }
@@ -123,8 +124,8 @@ struct JournalListView: View {
     
     private var timelineView: some View {
         VStack(alignment: .leading, spacing: 24) {
-            ForEach(viewModel.sortedMonths, id: \.self) { month in
-                monthSection(month: month, journals: viewModel.journalsByMonth[month] ?? [])
+            ForEach(journalViewModel.sortedMonths, id: \.self) { month in
+                monthSection(month: month, journals: journalViewModel.journalsByMonth[month] ?? [])
             }
         }
         .padding()
@@ -147,6 +148,7 @@ struct JournalListView: View {
                 JournalRow(journal: journal) {
                     selectedJournal = journal
                 }
+                .environmentObject(viewModel)
             }
         }
     }
@@ -154,6 +156,7 @@ struct JournalListView: View {
 
 struct JournalRow: View {
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var viewModel: AppViewModel
     let journal: HikeJournal
     let onTap: () -> Void
     
@@ -180,13 +183,13 @@ struct JournalRow: View {
                             .font(.headline)
                             .foregroundStyle(Color.hikingDarkGreen)
                         Spacer()
-                        Text(journal.hikeDate, style: .date)
+                        Text(formattedDate)
                             .font(.caption)
                             .foregroundStyle(Color.hikingStone)
                     }
                     
                     // Trail name (if any)
-                    if let trailName = journal.trailName {
+                    if let trailName = localizedTrailName {
                         HStack(spacing: 4) {
                             Image(systemName: "map.fill")
                                 .font(.caption)
@@ -209,7 +212,7 @@ struct JournalRow: View {
                             Image(systemName: "photo.fill")
                                 .font(.caption)
                                 .foregroundStyle(Color.hikingGreen)
-                            Text("\(journal.photos.count) photo\(journal.photos.count > 1 ? "s" : "")")
+                            Text(photoCountText)
                                 .font(.caption)
                                 .foregroundStyle(Color.hikingStone)
                         }
@@ -235,6 +238,34 @@ struct JournalRow: View {
             .hikingCard()
         }
         .buttonStyle(.plain)
+    }
+    
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US")
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter.string(from: journal.hikeDate)
+    }
+    
+    private var localizedTrailName: String? {
+        guard let trailName = journal.trailName else { return nil }
+        // 如果有 trailId，嘗試從 viewModel 獲取本地化的路線名稱
+        if let trailId = journal.trailId,
+           let trail = viewModel.trails.first(where: { $0.id == trailId }) {
+            return trail.localizedName(languageManager: languageManager)
+        }
+        // 否則返回原始名稱
+        return trailName
+    }
+    
+    private var photoCountText: String {
+        let count = journal.photos.count
+        if languageManager.currentLanguage == .traditionalChinese {
+            return "\(count) 張照片"
+        } else {
+            return "\(count) photo\(count > 1 ? "s" : "")"
+        }
     }
     
     /// Convert the saved English weather suggestion into the current app language.

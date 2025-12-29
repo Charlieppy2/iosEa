@@ -11,6 +11,7 @@ import SwiftData
 struct HikeRecordsListView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var viewModel: AppViewModel
     @Query(sort: \HikeRecord.startTime, order: .reverse) private var records: [HikeRecord]
     @State private var selectedRecord: HikeRecord?
     @State private var isShowingHikeTracking = false
@@ -80,6 +81,7 @@ struct HikeRecordsListView: View {
                             HikeRecordDetailView(record: record)
                         } label: {
                             HikeRecordRow(record: record)
+                                .environmentObject(viewModel)
                         }
                     }
                 }
@@ -129,15 +131,16 @@ struct FeatureRow: View {
 struct HikeRecordRow: View {
     let record: HikeRecord
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var viewModel: AppViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(record.trailName ?? languageManager.localizedString(for: "hike.records.unnamed.trail"))
+                    Text(localizedTrailName)
                         .font(.headline)
                         .foregroundStyle(Color.hikingDarkGreen)
-                    Text(record.startTime, style: .date)
+                    Text(formattedDate)
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
                 }
@@ -161,6 +164,24 @@ struct HikeRecordRow: View {
             }
         }
         .padding(.vertical, 4)
+    }
+    
+    private var localizedTrailName: String {
+        // 如果有 trailId，嘗試從 viewModel 獲取本地化的路線名稱
+        if let trailId = record.trailId,
+           let trail = viewModel.trails.first(where: { $0.id == trailId }) {
+            return trail.localizedName(languageManager: languageManager)
+        }
+        // 否則使用保存的路線名稱或默認文本
+        return record.trailName ?? languageManager.localizedString(for: "hike.records.unnamed.trail")
+    }
+    
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US")
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter.string(from: record.startTime)
     }
 }
 
