@@ -37,6 +37,7 @@ struct TransportView: View {
     @State private var availableStations: [String] = [] // All unique stations from search results
     @State private var allStations: [String] = [] // All stations from all routes (for pre-search filtering)
     @State private var isLoadingAllRoutes = false // Loading state for all routes
+    @State private var cachedStationsByDistrict: [(district: String, stations: [String])] = [] // Cached stations by district to prevent menu from closing
     
     private let mtrService = MTRService()
     private let kmbService = KMBService()
@@ -550,6 +551,9 @@ struct TransportView: View {
                         .padding(.horizontal)
                     
                     VStack(spacing: 12) {
+                        // Filter section - moved above search bar
+                        filterSection
+                        
                         HStack(spacing: 12) {
                             Image(systemName: "magnifyingglass")
                                 .foregroundStyle(.secondary)
@@ -576,9 +580,6 @@ struct TransportView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color(.secondarySystemBackground))
                         )
-                        
-                        // Filter section - always visible, before search button
-                        filterSection
                         
                         Button {
                             Task {
@@ -1065,8 +1066,32 @@ struct TransportView: View {
                     self.allStations = Array(stations).sorted()
                     self.isLoadingAllRoutes = false
                     self.busRoutes = allRoutes // Store all routes for filtering
+                    
+                    // Update cached stations by district to prevent menu from closing
+                    let stationsToUse = self.allStations
+                    var grouped: [String: [String]] = [:]
+                    
+                    for station in stationsToUse {
+                        let district = self.getDistrict(for: station)
+                        if !district.isEmpty {
+                            if grouped[district] == nil {
+                                grouped[district] = []
+                            }
+                            grouped[district]?.append(station)
+                        }
+                    }
+                    
+                    let districtOrder = self.languageManager.currentLanguage == .english 
+                        ? ["Hong Kong Island", "Kowloon", "New Territories"]
+                        : ["港島", "九龍", "新界"]
+                    
+                    self.cachedStationsByDistrict = districtOrder.compactMap { district in
+                        guard let stations = grouped[district], !stations.isEmpty else { return nil }
+                        return (district: district, stations: stations.sorted())
+                    }
+                    
                     print("✅ Loaded all stations: \(self.allStations.count) unique stations")
-                    print("📊 Stations by district: \(self.stationsByDistrict.count) districts")
+                    print("📊 Stations by district: \(self.cachedStationsByDistrict.count) districts")
                     print("📊 Loaded \(allRoutes.count) routes")
                     // Apply filters after loading routes
                     applyFilters()
@@ -1276,8 +1301,13 @@ struct TransportView: View {
         return ""
     }
     
-    /// Get stations grouped by district - use allStations if available, otherwise use availableStations
+    /// Get stations grouped by district - use cached version to prevent menu from closing
     private var stationsByDistrict: [(district: String, stations: [String])] {
+        // Use cached version if available and not empty, otherwise compute
+        if !cachedStationsByDistrict.isEmpty {
+            return cachedStationsByDistrict
+        }
+        
         let stationsToUse = allStations.isEmpty ? availableStations : allStations
         var grouped: [String: [String]] = [:]
         
@@ -1297,10 +1327,14 @@ struct TransportView: View {
             ? ["Hong Kong Island", "Kowloon", "New Territories"]
             : ["港島", "九龍", "新界"]
         
-        return districtOrder.compactMap { district in
+        let result: [(district: String, stations: [String])] = districtOrder.compactMap { district in
             guard let stations = grouped[district], !stations.isEmpty else { return nil }
             return (district: district, stations: stations.sorted())
         }
+        
+        // Cache the result
+        cachedStationsByDistrict = result
+        return result
     }
     
     private var filterSection: some View {
