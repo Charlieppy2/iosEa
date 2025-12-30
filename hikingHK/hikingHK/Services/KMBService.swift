@@ -245,10 +245,11 @@ struct KMBService: KMBServiceProtocol {
     
     init(session: URLSession? = nil, decoder: JSONDecoder? = nil) {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 10.0
-        configuration.timeoutIntervalForResource = 15.0
-        // Note: waitsForConnectivity may cause warnings in simulator, but doesn't affect functionality
+        configuration.timeoutIntervalForRequest = 5.0 // Reduced from 10.0 for faster response
+        configuration.timeoutIntervalForResource = 8.0 // Reduced from 15.0 for faster response
         configuration.waitsForConnectivity = false
+        configuration.httpMaximumConnectionsPerHost = 10 // Allow more concurrent connections
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData // Always fetch fresh data
         
         self.session = session ?? URLSession(configuration: configuration)
         

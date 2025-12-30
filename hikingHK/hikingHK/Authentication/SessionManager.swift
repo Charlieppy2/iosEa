@@ -16,6 +16,7 @@ final class SessionManager: ObservableObject {
     @Published private(set) var currentUser: UserAccount?
     /// Latest authentication error message to show in the UI.
     @Published private(set) var authError: String?
+    
     /// Indicates that a sign-in or sign-up request is in progress.
     @Published var isAuthenticating = false
     /// Becomes `true` once the underlying SwiftData store has been configured.

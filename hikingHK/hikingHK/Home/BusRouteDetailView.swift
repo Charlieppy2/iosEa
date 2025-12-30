@@ -26,11 +26,11 @@ struct BusRouteDetailView: View {
                 // Route header with improved design
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .center, spacing: 12) {
-                        // Route number badge
+                        // Route number badge - fixed width for 5 characters
                         Text(route.route)
-                            .font(.system(size: 32, weight: .bold))
+                            .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(.white)
-                            .frame(width: 60, height: 60)
+                            .frame(width: 70, height: 60)
                             .background(
                                 LinearGradient(
                                     colors: [Color.orange, Color.orange.opacity(0.8)],
@@ -41,26 +41,20 @@ struct BusRouteDetailView: View {
                             )
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            // Direction indicator with destination - more prominent
+                            // Direction indicator with destination - same line as route number
                             HStack(spacing: 8) {
                                 Image(systemName: route.bound == "O" ? "arrow.right.circle.fill" : "arrow.left.circle.fill")
                                     .foregroundStyle(.orange)
-                                    .font(.title2)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(route.bound == "O" ? languageManager.localizedString(for: "transport.bus.outbound") : languageManager.localizedString(for: "transport.bus.inbound"))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    Text(route.bound == "O" ? route.localizedDestination(languageManager: languageManager) : route.localizedOrigin(languageManager: languageManager))
-                                        .font(.headline)
-                                        .foregroundStyle(.orange)
-                                }
+                                    .font(.title3)
+                                Text(route.bound == "O" ? 
+                                     "\(languageManager.localizedString(for: "transport.bus.outbound")) \(route.localizedDestination(languageManager: languageManager))" :
+                                     "\(languageManager.localizedString(for: "transport.bus.inbound")) \(route.localizedOrigin(languageManager: languageManager))")
+                                    .font(.title3.bold())
+                                    .foregroundStyle(.orange)
+                                    .lineLimit(1)
+                                    .fixedSize(horizontal: false, vertical: false)
                             }
-                            .padding(.vertical, 4)
-                            .padding(.horizontal, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.orange.opacity(0.1))
-                            )
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             
                             // Origin and destination with labels
                             VStack(alignment: .leading, spacing: 6) {
@@ -160,15 +154,15 @@ struct BusRouteDetailView: View {
                     print("✅ Loaded \(self.routeStops.count) stops for route \(route.route)")
                 }
                 
-                // Load ETA for first 10 stops initially, then load more as needed
+                // Load ETA for first 5 stops initially for faster display, then load more
                 if !stops.isEmpty {
-                    let initialStopsToLoad = Array(stops.prefix(10))
+                    let initialStopsToLoad = Array(stops.prefix(5))
                     await loadETAsForStopsParallel(stops: initialStopsToLoad)
                     
-                    // Load remaining stops in background
-                    if stops.count > 10 {
-                        let remainingStops = Array(stops.dropFirst(10))
-                        Task {
+                    // Load remaining stops in background immediately (don't wait)
+                    if stops.count > 5 {
+                        let remainingStops = Array(stops.dropFirst(5))
+                        Task.detached(priority: .userInitiated) {
                             await loadETAsForStopsParallel(stops: remainingStops)
                         }
                     }
@@ -189,7 +183,7 @@ struct BusRouteDetailView: View {
         
         await withTaskGroup(of: (stopId: String, etas: [KMBETA]?).self) { group in
             for stop in stops {
-                group.addTask {
+                group.addTask(priority: .userInitiated) {
                     do {
                         let etas = try await kmbService.fetchETA(
                             stopId: stop.stop,
@@ -205,15 +199,29 @@ struct BusRouteDetailView: View {
             }
             
             var allETAs: [KMBETA] = []
+            var processedCount = 0
             for await result in group {
                 if let etas = result.etas {
                     allETAs.append(contentsOf: etas)
+                    processedCount += 1
+                    // Update UI incrementally for better perceived performance
+                    if processedCount <= 5 {
+                        await MainActor.run {
+                            self.busETAs.append(contentsOf: etas)
+                        }
+                    }
                 }
             }
             
             let loadTime = Date().timeIntervalSince(startTime)
             await MainActor.run {
-                self.busETAs.append(contentsOf: allETAs)
+                // Only append remaining ETAs if we didn't already add them incrementally
+                if processedCount > 5 {
+                    let newETAs = allETAs.filter { eta in
+                        !self.busETAs.contains { $0.id == eta.id }
+                    }
+                    self.busETAs.append(contentsOf: newETAs)
+                }
                 self.isLoading = false
                 print("✅ Loaded \(allETAs.count) ETAs for route \(route.route) in \(String(format: "%.2f", loadTime))s")
             }
@@ -231,9 +239,9 @@ struct BusRouteDetailView: View {
         let isLoading = routeStops.contains(where: { $0.id == stop.id }) && stopETAs.isEmpty && !isLoading
         
         return VStack(alignment: .leading, spacing: 0) {
-            // Stop name header with icon
-            HStack(spacing: 12) {
-                // Station icon badge
+            // Stop name header with icon - compact
+            HStack(spacing: 10) {
+                // Station icon badge - smaller
                 ZStack {
                     Circle()
                         .fill(
@@ -243,28 +251,29 @@ struct BusRouteDetailView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 40, height: 40)
+                        .frame(width: 36, height: 36)
                     
                     Image(systemName: "mappin.circle.fill")
                         .foregroundStyle(.white)
-                        .font(.title3)
+                        .font(.subheadline)
                 }
                 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(stop.localizedName(languageManager: languageManager))
-                        .font(.headline.bold())
+                        .font(.headline)
                         .foregroundStyle(.primary)
                     
                     if let stopCode = stop.stop.split(separator: "(").last?.replacingOccurrences(of: ")", with: ""), !stopCode.isEmpty {
                         Text("(\(stopCode))")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                 }
                 
                 Spacer()
             }
-            .padding()
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
             .background(
                 LinearGradient(
                     colors: [Color.orange.opacity(0.1), Color.orange.opacity(0.05)],
@@ -281,62 +290,64 @@ struct BusRouteDetailView: View {
                 
                 ForEach(Array(groupedETAs.keys.sorted()), id: \.self) { destination in
                     if let etas = groupedETAs[destination] {
-                        VStack(alignment: .leading, spacing: 12) {
-                            // Destination header
-                            HStack(spacing: 8) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            // Destination header - compact
+                            HStack(spacing: 6) {
                                 Image(systemName: "flag.circle.fill")
                                     .foregroundStyle(.blue)
-                                    .font(.title3)
-                                VStack(alignment: .leading, spacing: 2) {
+                                    .font(.subheadline)
+                                VStack(alignment: .leading, spacing: 1) {
                                     Text(languageManager.localizedString(for: "trail.end.point"))
-                                        .font(.caption)
+                                        .font(.caption2)
                                         .foregroundStyle(.secondary)
                                     Text(destination)
-                                        .font(.title3.bold())
+                                        .font(.headline)
                                         .foregroundStyle(.primary)
                                 }
                             }
                             
-                            // ETA times section
-                            VStack(alignment: .leading, spacing: 8) {
+                            // ETA times section - compact
+                            HStack(spacing: 8) {
                                 Text(languageManager.localizedString(for: "transport.bus.eta"))
-                                    .font(.caption.bold())
+                                    .font(.caption2)
                                     .foregroundStyle(.secondary)
-                                    .textCase(.uppercase)
                                 
                                 // ETA badges in a row
-                                HStack(spacing: 10) {
-                                    ForEach(etas.prefix(2)) { eta in
-                                        ETABadge(time: eta.formattedETA)
-                                    }
+                                ForEach(etas.prefix(2)) { eta in
+                                    ETABadge(time: eta.formattedETA)
                                 }
                             }
                         }
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Color(.systemBackground))
                     }
                 }
             } else if isLoading {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     ProgressView()
-                        .scaleEffect(0.9)
+                        .scaleEffect(0.8)
                     Text(languageManager.localizedString(for: "transport.bus.loading.eta"))
-                        .font(.subheadline)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Color(.systemBackground))
             } else {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     Image(systemName: "exclamationmark.circle.fill")
                         .foregroundStyle(.orange)
-                        .font(.title3)
-                    Text(languageManager.localizedString(for: "transport.bus.no.eta.found"))
                         .font(.subheadline)
+                    Text(languageManager.localizedString(for: "transport.bus.no.eta.found"))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Color(.systemBackground))
             }
         }
         .background(
@@ -365,19 +376,19 @@ struct BusRouteDetailView: View {
             icon = "clock.fill"
         }
         
-        return HStack(spacing: 6) {
+        return HStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.caption2)
             Text(time)
-                .font(.headline)
+                .font(.subheadline.bold())
         }
         .foregroundStyle(.white)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
         .background(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: 8)
                 .fill(backgroundColor)
-                .shadow(color: backgroundColor.opacity(0.3), radius: 4, x: 0, y: 2)
+                .shadow(color: backgroundColor.opacity(0.3), radius: 3, x: 0, y: 1)
         )
     }
 }

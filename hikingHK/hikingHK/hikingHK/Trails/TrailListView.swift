@@ -48,24 +48,24 @@ struct TrailListView: View {
             .navigationTitle(languageManager.localizedString(for: "trails.title"))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    // Filter menu
-                    Menu {
-                        Button(languageManager.localizedString(for: "trails.all.difficulties")) {
-                            selectedDifficulty = nil
-                        }
-                        Divider()
-                        ForEach(Trail.Difficulty.allCases) { difficulty in
-                            Button {
-                                selectedDifficulty = difficulty
-                            } label: {
-                                Label(
-                                    difficulty.localizedRawValue(languageManager: languageManager),
-                                    systemImage: difficulty.icon
-                                )
+                        // Filter menu
+                        Menu {
+                            Button(languageManager.localizedString(for: "trails.all.difficulties")) {
+                                selectedDifficulty = nil
                             }
-                        }
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
+                            Divider()
+                            ForEach(Trail.Difficulty.allCases) { difficulty in
+                                Button {
+                                    selectedDifficulty = difficulty
+                                } label: {
+                                    Label(
+                                        difficulty.localizedRawValue(languageManager: languageManager),
+                                        systemImage: difficulty.icon
+                                    )
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
                     }
                 }
             }

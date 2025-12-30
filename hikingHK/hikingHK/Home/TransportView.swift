@@ -21,6 +21,7 @@ struct TransportView: View {
     // Bus states
     @State private var busRoutes: [KMBRoute] = []
     @State private var searchResults: [KMBRoute] = []
+    @State private var filteredResults: [KMBRoute] = []
     @State private var selectedRoute: KMBRoute?
     @State private var routeStops: [KMBStop] = []
     @State private var currentStopPage: Int = 0
@@ -30,6 +31,12 @@ struct TransportView: View {
     @State private var navigationRoute: KMBRoute?
     @State private var isLoadingBus = false
     @State private var busError: String?
+    
+    // Filter states
+    @State private var selectedFilterStation: String? = nil // Selected station name for filtering
+    @State private var availableStations: [String] = [] // All unique stations from search results
+    @State private var allStations: [String] = [] // All stations from all routes (for pre-search filtering)
+    @State private var isLoadingAllRoutes = false // Loading state for all routes
     
     private let mtrService = MTRService()
     private let kmbService = KMBService()
@@ -570,6 +577,9 @@ struct TransportView: View {
                                 .fill(Color(.secondarySystemBackground))
                         )
                         
+                        // Filter section - always visible, before search button
+                        filterSection
+                        
                         Button {
                             Task {
                                 await searchBusRoutes()
@@ -600,11 +610,21 @@ struct TransportView: View {
                         ProgressView()
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding()
-                    } else if !searchResults.isEmpty {
-                        // Show results if we have any, regardless of error state
+                    } else if !searchResults.isEmpty || !filteredResults.isEmpty || selectedFilterStation != nil {
+                        // Show results if we have any, or if a filter is selected
                         searchResultsView
                             .onAppear {
-                                print("📱 searchResultsView appeared with \(searchResults.count) results")
+                                print("📱 searchResultsView appeared with \(searchResults.count) results, \(filteredResults.count) filtered")
+                                if filteredResults.isEmpty {
+                                    if !searchResults.isEmpty {
+                                        applyFilters()
+                                    } else if !busRoutes.isEmpty {
+                                        applyFilters()
+                                    } else if selectedFilterStation != nil {
+                                        // If filter is selected but routes not loaded, load them
+                                        loadAllStations()
+                                    }
+                                }
                             }
                     } else if let error = busError, !error.isEmpty {
                         VStack(spacing: 12) {
@@ -666,7 +686,7 @@ struct TransportView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(languageManager.localizedString(for: "transport.bus.results"))
                         .font(.title3.bold())
-                    Text("\(searchResults.count) \(languageManager.localizedString(for: "transport.bus.routes.found"))")
+                    Text("\(filteredResults.count) \(languageManager.localizedString(for: "transport.bus.routes.found"))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -675,52 +695,61 @@ struct TransportView: View {
             .padding(.horizontal)
             
             // Route cards with improved design
-            ForEach(searchResults.prefix(20)) { route in
+            ForEach(filteredResults.prefix(20)) { route in
                 NavigationLink(value: route) {
-                    HStack(spacing: 12) {
-                        // Route number badge
+                    HStack(spacing: 14) {
+                        // Route number badge - fixed width for 5 characters
                         Text(route.route)
                             .font(.system(size: 20, weight: .bold))
                             .foregroundStyle(.white)
-                            .frame(width: 50, height: 50)
+                            .frame(width: 70, height: 58)
                             .background(
                                 LinearGradient(
                                     colors: [Color.orange, Color.orange.opacity(0.8)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
-                                in: RoundedRectangle(cornerRadius: 10)
+                                in: RoundedRectangle(cornerRadius: 14)
                             )
                         
                         // Route information
                         VStack(alignment: .leading, spacing: 6) {
-                            // Direction indicator with destination
-                            HStack(spacing: 6) {
+                            // Route number and direction in the same line - ensure they stay on one line
+                            HStack(spacing: 8) {
                                 Image(systemName: route.bound == "O" ? "arrow.right.circle.fill" : "arrow.left.circle.fill")
                                     .foregroundStyle(.orange)
-                                    .font(.caption)
+                                    .font(.body)
                                 Text(route.bound == "O" ? 
                                      "\(languageManager.localizedString(for: "transport.bus.outbound")) \(route.localizedDestination(languageManager: languageManager))" :
                                      "\(languageManager.localizedString(for: "transport.bus.inbound")) \(route.localizedOrigin(languageManager: languageManager))")
-                                    .font(.caption.bold())
+                                    .font(.body.bold())
                                     .foregroundStyle(.orange)
+                                    .lineLimit(1)
+                                    .fixedSize(horizontal: false, vertical: false)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             
                             // Origin and destination
-                            VStack(alignment: .leading, spacing: 3) {
-                                HStack(spacing: 4) {
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack(spacing: 6) {
                                     Image(systemName: "mappin.circle.fill")
                                         .foregroundStyle(.green)
-                                        .font(.caption2)
+                                        .font(.subheadline)
+                                    Text(languageManager.localizedString(for: "trail.start.point"))
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
                                     Text(route.localizedOrigin(languageManager: languageManager))
                                         .font(.subheadline)
                                         .foregroundStyle(.primary)
                                 }
                                 
-                                HStack(spacing: 4) {
+                                HStack(spacing: 6) {
                                     Image(systemName: "flag.circle.fill")
                                         .foregroundStyle(.red)
-                                        .font(.caption2)
+                                        .font(.subheadline)
+                                    Text(languageManager.localizedString(for: "trail.end.point"))
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
                                     Text(route.localizedDestination(languageManager: languageManager))
                                         .font(.subheadline)
                                         .foregroundStyle(.primary)
@@ -732,13 +761,14 @@ struct TransportView: View {
                         
                         Image(systemName: "chevron.right")
                             .foregroundStyle(.secondary)
-                            .font(.caption)
+                            .font(.subheadline)
                     }
-                    .padding()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color(.systemBackground))
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.secondarySystemBackground))
                             .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                     )
                 }
@@ -860,11 +890,16 @@ struct TransportView: View {
     }
     
     private func searchBusRoutes() {
-        guard !searchText.isEmpty else { return }
+        guard !searchText.isEmpty else {
+            searchResults = []
+            filteredResults = []
+            return
+        }
         
         isLoadingBus = true
         busError = nil
         searchResults = []
+        filteredResults = []
         selectedRoute = nil
         routeStops = []
         selectedStop = nil
@@ -876,10 +911,17 @@ struct TransportView: View {
                 let results = try await kmbService.searchRoutes(keyword: searchText)
                 await MainActor.run {
                     self.searchResults = results
+                    // Initialize filteredResults with all results, then apply filters
+                    if self.filteredResults.isEmpty {
+                        self.filteredResults = results
+                    }
+                    updateAvailableStations()
+                    applyFilters()
                     self.isLoadingBus = false
                     self.busError = nil // Clear any previous errors
                     print("✅ Bus search successful: Found \(results.count) routes for '\(searchText)'")
                     print("📱 Updated searchResults: \(self.searchResults.count) items")
+                    print("📱 Filtered results: \(self.filteredResults.count) items")
                     print("📱 isLoadingBus: \(self.isLoadingBus)")
                     print("📱 busError: \(self.busError ?? "nil")")
                     if results.isEmpty {
@@ -891,6 +933,7 @@ struct TransportView: View {
                     self.busError = languageManager.localizedString(for: "transport.bus.error.load.failed")
                     self.isLoadingBus = false
                     self.searchResults = []
+                    self.filteredResults = []
                     print("❌ Bus search error: \(error.localizedDescription)")
                     print("❌ Error type: \(type(of: error))")
                     if let kmbError = error as? KMBServiceError {
@@ -898,6 +941,370 @@ struct TransportView: View {
                     }
                 }
             }
+        }
+    }
+    
+    private func applyFilters() {
+        var filtered: [KMBRoute] = []
+        
+        // If we have search results, use them; otherwise use all routes
+        if !searchResults.isEmpty {
+            filtered = searchResults
+        } else if !busRoutes.isEmpty {
+            filtered = busRoutes
+        } else {
+            // If no routes loaded yet and a station is selected, try to load them
+            if selectedFilterStation != nil && !isLoadingAllRoutes {
+                loadAllStations()
+            }
+            filteredResults = []
+            return
+        }
+        
+        // Filter by selected station
+        if let station = selectedFilterStation {
+            filtered = filtered.filter { route in
+                let origin = route.localizedOrigin(languageManager: languageManager)
+                let destination = route.localizedDestination(languageManager: languageManager)
+                // Use contains for partial matching (e.g., "中環 (林士街)" matches "中環")
+                return origin.contains(station) || destination.contains(station) || 
+                       station.contains(origin) || station.contains(destination)
+            }
+        }
+        
+        filteredResults = filtered
+        print("🔍 Applied filters - Original: \(searchResults.isEmpty ? busRoutes.count : searchResults.count), Filtered: \(filteredResults.count)")
+        print("🔍 Selected station: \(selectedFilterStation ?? "none")")
+    }
+    
+    private func updateAvailableStations() {
+        var stations = Set<String>()
+        
+        for route in searchResults {
+            stations.insert(route.localizedOrigin(languageManager: languageManager))
+            stations.insert(route.localizedDestination(languageManager: languageManager))
+        }
+        
+        availableStations = Array(stations).sorted()
+        print("📍 Updated available stations: \(availableStations.count) unique stations")
+    }
+    
+    /// Load all routes to get all available stations for pre-search filtering
+    private func loadAllStations() {
+        guard allStations.isEmpty && !isLoadingAllRoutes else { 
+            print("⏭️ Skipping loadAllStations - already loaded or loading")
+            return 
+        }
+        
+        isLoadingAllRoutes = true
+        print("🔄 Starting to load all stations...")
+        Task {
+            do {
+                let allRoutes = try await kmbService.fetchRouteList()
+                var stations = Set<String>()
+                
+                for route in allRoutes {
+                    stations.insert(route.localizedOrigin(languageManager: languageManager))
+                    stations.insert(route.localizedDestination(languageManager: languageManager))
+                }
+                
+                await MainActor.run {
+                    self.allStations = Array(stations).sorted()
+                    self.isLoadingAllRoutes = false
+                    self.busRoutes = allRoutes // Store all routes for filtering
+                    print("✅ Loaded all stations: \(self.allStations.count) unique stations")
+                    print("📊 Stations by district: \(self.stationsByDistrict.count) districts")
+                    print("📊 Loaded \(allRoutes.count) routes")
+                    // Apply filters after loading routes
+                    applyFilters()
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoadingAllRoutes = false
+                    print("❌ Failed to load all stations: \(error)")
+                }
+            }
+        }
+    }
+    
+    /// Get district for a station name
+    private func getDistrict(for station: String) -> String {
+        // Common Hong Kong districts mapping
+        let districtMap: [String: String] = [
+            // Hong Kong Island
+            "中環": "港島",
+            "金鐘": "港島",
+            "灣仔": "港島",
+            "銅鑼灣": "港島",
+            "天后": "港島",
+            "炮台山": "港島",
+            "北角": "港島",
+            "鰂魚涌": "港島",
+            "太古": "港島",
+            "西灣河": "港島",
+            "筲箕灣": "港島",
+            "柴灣": "港島",
+            "上環": "港島",
+            "西環": "港島",
+            "堅尼地城": "港島",
+            "香港": "港島",
+            "Central": "Hong Kong Island",
+            "Admiralty": "Hong Kong Island",
+            "Wan Chai": "Hong Kong Island",
+            "Causeway Bay": "Hong Kong Island",
+            "Tin Hau": "Hong Kong Island",
+            "Fortress Hill": "Hong Kong Island",
+            "North Point": "Hong Kong Island",
+            "Quarry Bay": "Hong Kong Island",
+            "Tai Koo": "Hong Kong Island",
+            "Sai Wan Ho": "Hong Kong Island",
+            "Shau Kei Wan": "Hong Kong Island",
+            "Chai Wan": "Hong Kong Island",
+            "Sheung Wan": "Hong Kong Island",
+            "Sai Wan": "Hong Kong Island",
+            "Kennedy Town": "Hong Kong Island",
+            
+            // Kowloon
+            "尖沙咀": "九龍",
+            "佐敦": "九龍",
+            "油麻地": "九龍",
+            "旺角": "九龍",
+            "太子": "九龍",
+            "深水埗": "九龍",
+            "長沙灣": "九龍",
+            "荔枝角": "九龍",
+            "美孚": "九龍",
+            "黃大仙": "九龍",
+            "鑽石山": "九龍",
+            "彩虹": "九龍",
+            "九龍灣": "九龍",
+            "牛頭角": "九龍",
+            "觀塘": "九龍",
+            "藍田": "九龍",
+            "油塘": "九龍",
+            "紅磡": "九龍",
+            "土瓜灣": "九龍",
+            "何文田": "九龍",
+            "九龍塘": "九龍",
+            "樂富": "九龍",
+            "黃埔": "九龍",
+            "Tsim Sha Tsui": "Kowloon",
+            "Jordan": "Kowloon",
+            "Yau Ma Tei": "Kowloon",
+            "Mong Kok": "Kowloon",
+            "Prince Edward": "Kowloon",
+            "Sham Shui Po": "Kowloon",
+            "Cheung Sha Wan": "Kowloon",
+            "Lai Chi Kok": "Kowloon",
+            "Mei Foo": "Kowloon",
+            "Wong Tai Sin": "Kowloon",
+            "Diamond Hill": "Kowloon",
+            "Choi Hung": "Kowloon",
+            "Kowloon Bay": "Kowloon",
+            "Ngau Tau Kok": "Kowloon",
+            "Kwun Tong": "Kowloon",
+            "Lam Tin": "Kowloon",
+            "Yau Tong": "Kowloon",
+            "Hung Hom": "Kowloon",
+            "To Kwa Wan": "Kowloon",
+            "Ho Man Tin": "Kowloon",
+            "Kowloon Tong": "Kowloon",
+            "Lok Fu": "Kowloon",
+            "Whampoa": "Kowloon",
+            
+            // New Territories
+            "沙田": "新界",
+            "大圍": "新界",
+            "火炭": "新界",
+            "馬鞍山": "新界",
+            "大埔": "新界",
+            "太和": "新界",
+            "粉嶺": "新界",
+            "上水": "新界",
+            "元朗": "新界",
+            "天水圍": "新界",
+            "屯門": "新界",
+            "荃灣": "新界",
+            "葵涌": "新界",
+            "青衣": "新界",
+            "東涌": "新界",
+            "將軍澳": "新界",
+            "調景嶺": "新界",
+            "坑口": "新界",
+            "寶琳": "新界",
+            "康城": "新界",
+            "Sha Tin": "New Territories",
+            "Tai Wai": "New Territories",
+            "Fo Tan": "New Territories",
+            "Ma On Shan": "New Territories",
+            "Tai Po": "New Territories",
+            "Tai Wo": "New Territories",
+            "Fanling": "New Territories",
+            "Sheung Shui": "New Territories",
+            "Yuen Long": "New Territories",
+            "Tin Shui Wai": "New Territories",
+            "Tuen Mun": "New Territories",
+            "Tsuen Wan": "New Territories",
+            "Kwai Chung": "New Territories",
+            "Tsing Yi": "New Territories",
+            "Tung Chung": "New Territories",
+            "Tseung Kwan O": "New Territories",
+            "Tiu Keng Leng": "New Territories",
+            "Hang Hau": "New Territories",
+            "Po Lam": "New Territories",
+            "LOHAS Park": "New Territories"
+        ]
+        
+        // Check if station name contains any district keyword
+        for (keyword, district) in districtMap {
+            if station.contains(keyword) {
+                return district
+            }
+        }
+        
+        // Default to "其他" (Others) if not found
+        return languageManager.currentLanguage == .english ? "Others" : "其他"
+    }
+    
+    /// Get stations grouped by district - use allStations if available, otherwise use availableStations
+    private var stationsByDistrict: [(district: String, stations: [String])] {
+        let stationsToUse = allStations.isEmpty ? availableStations : allStations
+        var grouped: [String: [String]] = [:]
+        
+        for station in stationsToUse {
+            let district = getDistrict(for: station)
+            if grouped[district] == nil {
+                grouped[district] = []
+            }
+            grouped[district]?.append(station)
+        }
+        
+        // Sort districts: 港島/Hong Kong Island, 九龍/Kowloon, 新界/New Territories, 其他/Others
+        let districtOrder = languageManager.currentLanguage == .english 
+            ? ["Hong Kong Island", "Kowloon", "New Territories", "Others"]
+            : ["港島", "九龍", "新界", "其他"]
+        
+        return districtOrder.compactMap { district in
+            guard let stations = grouped[district], !stations.isEmpty else { return nil }
+            return (district: district, stations: stations.sorted())
+        }
+    }
+    
+    private var filterSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "line.3.horizontal.decrease.circle")
+                    .foregroundStyle(.orange)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "transport.bus.filter"))
+                    .font(.headline)
+                
+                Spacer()
+                
+                if selectedFilterStation != nil {
+                    Button {
+                        selectedFilterStation = nil
+                        applyFilters()
+                    } label: {
+                        Text(languageManager.localizedString(for: "transport.bus.filter.clear"))
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                }
+            }
+            
+            // Station filter - Dropdown style with district grouping
+            VStack(alignment: .leading, spacing: 8) {
+                Text(languageManager.localizedString(for: "transport.bus.filter.station"))
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+                
+                Menu {
+                    // All option
+                    Button {
+                        selectedFilterStation = nil
+                        applyFilters()
+                    } label: {
+                        HStack {
+                            Text(languageManager.localizedString(for: "transport.bus.filter.all"))
+                            if selectedFilterStation == nil {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    // Stations grouped by district
+                    if isLoadingAllRoutes && allStations.isEmpty && availableStations.isEmpty {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text(languageManager.localizedString(for: "transport.bus.loading.eta"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding()
+                    } else if stationsByDistrict.isEmpty {
+                        Text("暫無車站選項")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding()
+                    } else {
+                        ForEach(stationsByDistrict, id: \.district) { group in
+                            Section {
+                                ForEach(group.stations, id: \.self) { station in
+                                    Button {
+                                        selectedFilterStation = station
+                                        applyFilters()
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "mappin.circle.fill")
+                                                .font(.caption)
+                                            Text(station)
+                                            if selectedFilterStation == station {
+                                                Spacer()
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
+                                }
+                            } header: {
+                                Text(group.district)
+                            }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "mappin.circle.fill")
+                            .foregroundStyle(.orange)
+                            .font(.subheadline)
+                        Text(selectedFilterStation ?? languageManager.localizedString(for: "transport.bus.filter.all"))
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(.secondarySystemBackground))
+                    )
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.secondarySystemBackground))
+        )
+        .task {
+            // Load all stations when filter section appears (for pre-search filtering)
+            loadAllStations()
         }
     }
     

@@ -865,6 +865,10 @@ struct LocalizedStrings {
         "transport.bus.outbound": "Outbound",
         "transport.bus.inbound": "Inbound",
         "transport.bus.error.load.failed": "Unable to load bus information",
+        "transport.bus.filter": "Filter",
+        "transport.bus.filter.station": "Station",
+        "transport.bus.filter.all": "All",
+        "transport.bus.filter.clear": "Clear Filters",
         
         // Home Quick Actions
         "home.transport": "Transport"
@@ -1714,6 +1718,10 @@ struct LocalizedStrings {
         "transport.bus.outbound": "往",
         "transport.bus.inbound": "返",
         "transport.bus.error.load.failed": "無法載入巴士資訊",
+        "transport.bus.filter": "篩選",
+        "transport.bus.filter.station": "車站",
+        "transport.bus.filter.all": "全部",
+        "transport.bus.filter.clear": "清除篩選",
         
         // Home Quick Actions
         "home.transport": "交通"
