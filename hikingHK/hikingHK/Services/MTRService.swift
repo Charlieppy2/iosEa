@@ -14,9 +14,40 @@ struct MTRScheduleResponse: Codable {
     let data: [String: MTRStationSchedule]?
     
     // Helper to convert to MTRScheduleData format
+    // Merge all station schedules to get complete UP and DOWN data
     func toScheduleData() -> MTRScheduleData? {
-        guard let data = data, let firstStation = data.values.first else { return nil }
-        return MTRScheduleData(UP: firstStation.UP, DOWN: firstStation.DOWN)
+        guard let data = data, !data.isEmpty else { return nil }
+        
+        // Merge UP and DOWN trains from all stations in the response
+        var allUP: [MTRTrain] = []
+        var allDOWN: [MTRTrain] = []
+        
+        for stationSchedule in data.values {
+            if let up = stationSchedule.UP {
+                allUP.append(contentsOf: up)
+            }
+            if let down = stationSchedule.DOWN {
+                allDOWN.append(contentsOf: down)
+            }
+        }
+        
+        // Sort by time/sequence to show earliest trains first
+        allUP.sort { train1, train2 in
+            let time1 = Int(train1.formattedTime) ?? 999
+            let time2 = Int(train2.formattedTime) ?? 999
+            return time1 < time2
+        }
+        
+        allDOWN.sort { train1, train2 in
+            let time1 = Int(train1.formattedTime) ?? 999
+            let time2 = Int(train2.formattedTime) ?? 999
+            return time1 < time2
+        }
+        
+        return MTRScheduleData(
+            UP: allUP.isEmpty ? nil : allUP,
+            DOWN: allDOWN.isEmpty ? nil : allDOWN
+        )
     }
 }
 
