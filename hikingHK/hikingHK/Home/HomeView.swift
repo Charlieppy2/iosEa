@@ -25,6 +25,7 @@ struct HomeView: View {
     @State private var isShowingJournal = false
     @State private var isShowingWeatherForecast = false
     @State private var isShowingBestHikingTime = false
+    @State private var isShowingTransport = false
     @State private var selectedSavedHike: SavedHike?
     @State private var isShowingTrailPicker = false
     @StateObject private var locationManager = LocationManager()
@@ -190,6 +191,11 @@ struct HomeView: View {
             .sheet(isPresented: $isShowingBestHikingTime) {
                 BestHikingTimeView()
                     .environmentObject(viewModel)
+                    .environmentObject(languageManager)
+                    .presentationDetents([.large])
+            }
+            .sheet(isPresented: $isShowingTransport) {
+                TransportView()
                     .environmentObject(languageManager)
                     .presentationDetents([.large])
             }
@@ -560,8 +566,11 @@ struct HomeView: View {
                     .foregroundStyle(Color.hikingDarkGreen)
             }
             
-            // Row 1: 4 items
+            // Row 1: 5 items
             HStack(spacing: 12) {
+                quickAction(icon: "car.fill", title: languageManager.localizedString(for: "home.transport"), color: Color.hikingGreen) {
+                    isShowingTransport = true
+                }
                 quickAction(icon: "exclamationmark.triangle.fill", title: languageManager.localizedString(for: "home.trail.alerts"), color: .orange) {
                     isShowingTrailAlerts = true
                 }
@@ -576,7 +585,7 @@ struct HomeView: View {
                 }
             }
             
-            // Row 2: 4 items
+            // Row 2: 5 items
             HStack(spacing: 12) {
                 quickAction(icon: "list.bullet.rectangle", title: languageManager.localizedString(for: "home.hike.records"), color: Color.hikingSky) {
                     isShowingHikeRecords = true

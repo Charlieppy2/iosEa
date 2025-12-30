@@ -11,18 +11,36 @@ import SwiftUI
 struct TrailDetailView: View {
     let trail: Trail
     @EnvironmentObject private var languageManager: LanguageManager
+    @StateObject private var mtrViewModel = MTRScheduleViewModel()
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                trailImage
                 header
                 TrailMapView(trail: trail)
                 timelineSection
                 facilitiesSection
                 highlightsSection
                 transportationSection
+                // MTR real-time schedule if available
+                if mtrViewModel.hasSchedule {
+                    mtrScheduleSection
+                }
+                if !trail.supplyPoints.isEmpty {
+                    supplyPointsSection
+                }
+                if !trail.exitRoutes.isEmpty {
+                    exitRoutesSection
+                }
+                if let notes = trail.notes, !notes.isEmpty {
+                    notesSection(notes)
+                }
             }
             .padding(20)
+        }
+        .task {
+            await mtrViewModel.loadSchedule(for: trail, languageManager: languageManager)
         }
         .background(
             ZStack {
@@ -36,6 +54,72 @@ struct TrailDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    /// Trail hero image displayed at the top of the detail view.
+    /// Supports both local asset names and remote URLs.
+    private var trailImage: some View {
+        Group {
+            if trail.imageName.hasPrefix("http://") || trail.imageName.hasPrefix("https://") {
+                // Remote URL image
+                AsyncImage(url: URL(string: trail.imageName)) { phase in
+                    switch phase {
+                    case .empty:
+                        // Placeholder while loading
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.hikingStone.opacity(0.2))
+                            .frame(height: 200)
+                            .overlay {
+                                ProgressView()
+                            }
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    case .failure:
+                        // Fallback placeholder if URL fails
+                        fallbackImage
+                    @unknown default:
+                        fallbackImage
+                    }
+                }
+            } else {
+                // Local asset image
+                Image(trail.imageName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            }
+        }
+        .frame(height: 200)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+    }
+    
+    /// Fallback image when remote image fails to load.
+    private var fallbackImage: some View {
+        RoundedRectangle(cornerRadius: 20)
+            .fill(
+                LinearGradient(
+                    colors: [Color.hikingGreen.opacity(0.3), Color.hikingDarkGreen.opacity(0.2)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .frame(height: 200)
+            .overlay {
+                VStack(spacing: 12) {
+                    Image(systemName: "photo")
+                        .font(.system(size: 48))
+                        .foregroundStyle(Color.hikingGreen.opacity(0.6))
+                    Text(languageManager.localizedString(for: "trail.image.unavailable"))
+                        .font(.caption)
+                        .foregroundStyle(Color.hikingBrown.opacity(0.7))
+                }
+            }
+    }
+    
     /// Top summary header with district, distance, elevation and duration.
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -161,11 +245,108 @@ struct TrailDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(languageManager.localizedString(for: "trail.transportation"))
                 .font(.headline)
-            Text(localizedTransportation)
-                .foregroundStyle(.secondary)
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            
+            VStack(alignment: .leading, spacing: 12) {
+                // 起點交通
+                if let startTransport = trail.startPointTransport, !startTransport.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label(languageManager.localizedString(for: "trail.start.point"), systemImage: "location.circle.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.hikingGreen)
+                        Text(localizedStartTransport)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                // 終點交通
+                if let endTransport = trail.endPointTransport, !endTransport.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label(languageManager.localizedString(for: "trail.end.point"), systemImage: "flag.circle.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.hikingGreen)
+                        Text(localizedEndTransport)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                // 如果沒有分開的起終點，使用舊的 transportation
+                if trail.startPointTransport == nil && trail.endPointTransport == nil {
+                    Text(localizedTransportation)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+    }
+    
+    /// Section listing supply points along the trail.
+    private var supplyPointsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(languageManager.localizedString(for: "trail.supply.points"))
+                .font(.headline)
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(trail.supplyPoints, id: \.self) { supply in
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "drop.fill")
+                            .foregroundStyle(Color.hikingGreen)
+                            .font(.caption)
+                        Text(localizedSupplyPoint(supply))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+    }
+    
+    /// Section listing exit routes from the trail.
+    private var exitRoutesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(languageManager.localizedString(for: "trail.exit.routes"))
+                .font(.headline)
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(trail.exitRoutes, id: \.self) { exit in
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "arrow.turn.up.right")
+                            .foregroundStyle(Color.orange)
+                            .font(.caption)
+                        Text(localizedExitRoute(exit))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+    }
+    
+    /// Section displaying important notes and warnings.
+    private func notesSection(_ notes: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(languageManager.localizedString(for: "trail.notes"))
+                .font(.headline)
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(Color.orange)
+                Text(localizedNotes(notes))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+            )
         }
     }
     
@@ -174,7 +355,132 @@ struct TrailDetailView: View {
         let localized = languageManager.localizedString(for: key)
         return localized != key ? localized : trail.transportation
     }
-
+    
+    private var localizedStartTransport: String {
+        guard let startTransport = trail.startPointTransport else { return "" }
+        let key = "trail.\(trail.id.uuidString.lowercased()).start.transport"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : startTransport
+    }
+    
+    private var localizedEndTransport: String {
+        guard let endTransport = trail.endPointTransport else { return "" }
+        let key = "trail.\(trail.id.uuidString.lowercased()).end.transport"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : endTransport
+    }
+    
+    private func localizedSupplyPoint(_ supply: String) -> String {
+        let key = "trail.\(trail.id.uuidString.lowercased()).supply.\(supply.lowercased().replacingOccurrences(of: " ", with: "."))"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : supply
+    }
+    
+    private func localizedExitRoute(_ exit: String) -> String {
+        let key = "trail.\(trail.id.uuidString.lowercased()).exit.\(exit.lowercased().replacingOccurrences(of: " ", with: "."))"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : exit
+    }
+    
+    private func localizedNotes(_ notes: String) -> String {
+        let key = "trail.\(trail.id.uuidString.lowercased()).notes"
+        let localized = languageManager.localizedString(for: key)
+        return localized != key ? localized : notes
+    }
+    
+    /// Section displaying MTR real-time train schedules
+    private var mtrScheduleSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(languageManager.localizedString(for: "mtr.real.time.schedule"))
+                    .font(.headline)
+                Spacer()
+                if mtrViewModel.isLoading {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                } else {
+                    Button {
+                        Task {
+                            await mtrViewModel.loadSchedule(for: trail, languageManager: languageManager)
+                        }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.caption)
+                            .foregroundStyle(Color.hikingGreen)
+                    }
+                }
+            }
+            
+            if let error = mtrViewModel.error {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+            }
+            
+            if let schedule = mtrViewModel.schedule {
+                VStack(alignment: .leading, spacing: 12) {
+                    // UP direction trains
+                    if let upTrains = schedule.UP, !upTrains.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label(languageManager.localizedString(for: "mtr.direction.up"), systemImage: "arrow.up")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.hikingGreen)
+                            
+                            ForEach(Array(upTrains.prefix(4))) { train in
+                                HStack {
+                                    Text(train.dest)
+                                        .font(.subheadline)
+                                    Spacer()
+                                    Text(formatTrainTime(train.time))
+                                        .font(.subheadline.weight(.medium))
+                                        .foregroundStyle(Color.hikingGreen)
+                                }
+                            }
+                        }
+                    }
+                    
+                    // DOWN direction trains
+                    if let downTrains = schedule.DOWN, !downTrains.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label(languageManager.localizedString(for: "mtr.direction.down"), systemImage: "arrow.down")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.hikingGreen)
+                            
+                            ForEach(Array(downTrains.prefix(4))) { train in
+                                HStack {
+                                    Text(train.dest)
+                                        .font(.subheadline)
+                                    Spacer()
+                                    Text(formatTrainTime(train.time))
+                                        .font(.subheadline.weight(.medium))
+                                        .foregroundStyle(Color.hikingGreen)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+    
+    /// Format train time string (e.g., "1 min" or "Arriving")
+    private func formatTrainTime(_ time: String) -> String {
+        if time.lowercased().contains("arriving") || time == "Arr" {
+            return languageManager.localizedString(for: "mtr.arriving")
+        }
+        if let minutes = Int(time.replacingOccurrences(of: "min", with: "").trimmingCharacters(in: .whitespaces)) {
+            return "\(minutes) \(languageManager.localizedString(for: "mtr.minutes"))"
+        }
+        return time
+    }
+    
     private func localizedCheckpointTitle(_ title: String) -> String {
         // Normalize the title key
         let normalizedTitle = title.lowercased()

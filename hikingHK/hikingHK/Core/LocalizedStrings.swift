@@ -236,6 +236,12 @@ struct LocalizedStrings {
         "trail.facilities": "Facilities & services",
         "trail.highlights": "Highlights",
         "trail.transportation": "Transport tips",
+        "trail.start.point": "Start Point",
+        "trail.end.point": "End Point",
+        "trail.supply.points": "Supply Points",
+        "trail.exit.routes": "Exit Routes",
+        "trail.notes": "Important Notes",
+        "trail.image.unavailable": "Image unavailable",
         
         // Map
         "map.interactive": "Interactive map",
@@ -812,7 +818,36 @@ struct LocalizedStrings {
         "anomaly.severity.low": "Low",
         "anomaly.severity.medium": "Medium",
         "anomaly.severity.high": "High",
-        "anomaly.severity.critical": "Critical"
+        "anomaly.severity.critical": "Critical",
+        
+        // MTR Real-time Schedule
+        "mtr.real.time.schedule": "MTR Real-time Train Schedule",
+        "mtr.direction.up": "Up",
+        "mtr.direction.down": "Down",
+        "mtr.arriving": "Arriving",
+        "mtr.minutes": "min",
+        "mtr.error.load.failed": "Unable to load train schedule",
+        
+        // Transport
+        "transport.title": "Transport",
+        "transport.mtr": "MTR",
+        "transport.bus": "Bus",
+        "transport.search": "Search",
+        "transport.mtr.search.title": "Search MTR Station",
+        "transport.mtr.search.placeholder": "Enter station name (e.g., Tsuen Wan)",
+        "transport.mtr.quick.stations": "Quick Select:",
+        "transport.mtr.no.schedule": "No schedule available",
+        "transport.mtr.station.not.found": "Station not found. Please try: Tsuen Wan, Shau Kei Wan, Central, Admiralty, Tung Chung, Kwun Tong",
+        "transport.bus.search.title": "Search Bus Route",
+        "transport.bus.search.placeholder": "Enter route number or station name",
+        "transport.bus.no.results": "No results found",
+        "transport.bus.results": "Search Results",
+        "transport.bus.stops": "Bus Stops",
+        "transport.bus.eta": "Estimated Arrival Time",
+        "transport.bus.error.load.failed": "Unable to load bus information",
+        
+        // Home Quick Actions
+        "home.transport": "Transport"
     ]
     
     private static let traditionalChineseStrings: [String: String] = [
@@ -1030,6 +1065,12 @@ struct LocalizedStrings {
         "trail.facilities": "設施與服務",
         "trail.highlights": "亮點",
         "trail.transportation": "交通提示",
+        "trail.start.point": "起點",
+        "trail.end.point": "終點",
+        "trail.supply.points": "補給點",
+        "trail.exit.routes": "退出路線",
+        "trail.notes": "注意事項",
+        "trail.image.unavailable": "圖片無法載入",
         
         // Map
         "map.interactive": "交互式地圖",
@@ -1606,7 +1647,36 @@ struct LocalizedStrings {
         "anomaly.severity.low": "低",
         "anomaly.severity.medium": "中",
         "anomaly.severity.high": "高",
-        "anomaly.severity.critical": "嚴重"
+        "anomaly.severity.critical": "嚴重",
+        
+        // MTR Real-time Schedule
+        "mtr.real.time.schedule": "港鐵實時列車服務",
+        "mtr.direction.up": "上行",
+        "mtr.direction.down": "下行",
+        "mtr.arriving": "即將到站",
+        "mtr.minutes": "分鐘",
+        "mtr.error.load.failed": "無法載入列車時間表",
+        
+        // Transport
+        "transport.title": "交通查詢",
+        "transport.mtr": "港鐵",
+        "transport.bus": "巴士",
+        "transport.search": "搜尋",
+        "transport.mtr.search.title": "搜尋港鐵站",
+        "transport.mtr.search.placeholder": "輸入車站名稱（例如：荃灣）",
+        "transport.mtr.quick.stations": "快速選擇：",
+        "transport.mtr.no.schedule": "暫無時間表",
+        "transport.mtr.station.not.found": "找不到車站。請嘗試：荃灣、筲箕灣、中環、金鐘、東涌、觀塘",
+        "transport.bus.search.title": "搜尋巴士路線",
+        "transport.bus.search.placeholder": "輸入路線號碼或車站名稱",
+        "transport.bus.no.results": "找不到結果",
+        "transport.bus.results": "搜尋結果",
+        "transport.bus.stops": "巴士站",
+        "transport.bus.eta": "預計到站時間",
+        "transport.bus.error.load.failed": "無法載入巴士資訊",
+        
+        // Home Quick Actions
+        "home.transport": "交通"
     ]
 }
 
