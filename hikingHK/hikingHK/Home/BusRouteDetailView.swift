@@ -230,112 +230,155 @@ struct BusRouteDetailView: View {
         }
         let isLoading = routeStops.contains(where: { $0.id == stop.id }) && stopETAs.isEmpty && !isLoading
         
-        return VStack(alignment: .leading, spacing: 12) {
-            // Stop name with icon - more prominent
-            HStack(spacing: 10) {
-                Image(systemName: "mappin.circle.fill")
-                    .foregroundStyle(.orange)
-                    .font(.title3)
-                VStack(alignment: .leading, spacing: 2) {
+        return VStack(alignment: .leading, spacing: 0) {
+            // Stop name header with icon
+            HStack(spacing: 12) {
+                // Station icon badge
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.orange, Color.orange.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40, height: 40)
+                    
+                    Image(systemName: "mappin.circle.fill")
+                        .foregroundStyle(.white)
+                        .font(.title3)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
                     Text(stop.localizedName(languageManager: languageManager))
-                        .font(.headline)
+                        .font(.headline.bold())
                         .foregroundStyle(.primary)
+                    
                     if let stopCode = stop.stop.split(separator: "(").last?.replacingOccurrences(of: ")", with: ""), !stopCode.isEmpty {
                         Text("(\(stopCode))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
+                
+                Spacer()
             }
+            .padding()
+            .background(
+                LinearGradient(
+                    colors: [Color.orange.opacity(0.1), Color.orange.opacity(0.05)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             
             if !stopETAs.isEmpty {
-                // Group ETAs by destination for clearer display
+                // Group ETAs by destination
                 let groupedETAs = Dictionary(grouping: stopETAs.prefix(2)) { eta in
                     eta.localizedDestination(languageManager: languageManager)
                 }
                 
                 ForEach(Array(groupedETAs.keys.sorted()), id: \.self) { destination in
                     if let etas = groupedETAs[destination] {
-                        VStack(alignment: .leading, spacing: 8) {
-                            // Destination with clear label
-                            HStack(spacing: 6) {
-                                Image(systemName: "arrow.right.circle.fill")
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Destination header
+                            HStack(spacing: 8) {
+                                Image(systemName: "flag.circle.fill")
                                     .foregroundStyle(.blue)
-                                    .font(.caption)
+                                    .font(.title3)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(languageManager.localizedString(for: "trail.end.point"))
-                                        .font(.caption2)
+                                        .font(.caption)
                                         .foregroundStyle(.secondary)
                                     Text(destination)
-                                        .font(.subheadline.bold())
+                                        .font(.title3.bold())
                                         .foregroundStyle(.primary)
                                 }
                             }
                             
-                            // ETA times with label
-                            VStack(alignment: .leading, spacing: 4) {
+                            // ETA times section
+                            VStack(alignment: .leading, spacing: 8) {
                                 Text(languageManager.localizedString(for: "transport.bus.eta"))
-                                    .font(.caption2)
+                                    .font(.caption.bold())
                                     .foregroundStyle(.secondary)
-                                HStack(spacing: 8) {
+                                    .textCase(.uppercase)
+                                
+                                // ETA badges in a row
+                                HStack(spacing: 10) {
                                     ForEach(etas.prefix(2)) { eta in
                                         ETABadge(time: eta.formattedETA)
                                     }
                                 }
                             }
                         }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color(.secondarySystemBackground))
-                        )
+                        .padding()
+                        .background(Color(.secondarySystemBackground))
                     }
                 }
             } else if isLoading {
-                HStack(spacing: 8) {
+                HStack(spacing: 12) {
                     ProgressView()
-                        .scaleEffect(0.8)
+                        .scaleEffect(0.9)
                     Text(languageManager.localizedString(for: "transport.bus.loading.eta"))
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
             } else {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.circle")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
+                HStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundStyle(.orange)
+                        .font(.title3)
                     Text(languageManager.localizedString(for: "transport.bus.no.eta.found"))
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
             }
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.orange.opacity(0.2), lineWidth: 1)
         )
     }
     
     private func ETABadge(time: String) -> some View {
-        Text(time)
-            .font(.caption.bold())
-            .foregroundStyle(.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(
-                        time.contains("已過") ? Color.gray :
-                        time.contains("即將到站") ? Color.green :
-                        Color.orange
-                    )
-            )
+        let backgroundColor: Color
+        let icon: String
+        
+        if time.contains("已過") {
+            backgroundColor = Color.gray.opacity(0.8)
+            icon = "clock.arrow.circlepath"
+        } else if time.contains("即將到站") {
+            backgroundColor = Color.green
+            icon = "bolt.fill"
+        } else {
+            backgroundColor = Color.orange
+            icon = "clock.fill"
+        }
+        
+        return HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption2)
+            Text(time)
+                .font(.headline)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(backgroundColor)
+                .shadow(color: backgroundColor.opacity(0.3), radius: 4, x: 0, y: 2)
+        )
     }
 }
 

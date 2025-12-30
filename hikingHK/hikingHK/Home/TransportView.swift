@@ -202,14 +202,20 @@ struct TransportView: View {
         VStack(alignment: .leading, spacing: 16) {
             if let upTrains = schedule.UP, !upTrains.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
-                    // Direction header with icon
+                    // Direction header showing destination
+                    let mainDestination = getMainDestination(from: upTrains)
                     HStack(spacing: 8) {
-                        Image(systemName: "arrow.up.circle.fill")
+                        Image(systemName: "arrow.right.circle.fill")
                             .foregroundStyle(.red)
                             .font(.title3)
-                        Text(languageManager.localizedString(for: "mtr.direction.up"))
-                            .font(.headline.bold())
-                            .foregroundStyle(.red)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(languageManager.localizedString(for: "transport.mtr.towards"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(mainDestination)
+                                .font(.headline.bold())
+                                .foregroundStyle(.red)
+                        }
                     }
                     .padding(.bottom, 4)
                     
@@ -253,14 +259,20 @@ struct TransportView: View {
             
             if let downTrains = schedule.DOWN, !downTrains.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
-                    // Direction header with icon
+                    // Direction header showing destination
+                    let mainDestination = getMainDestination(from: downTrains)
                     HStack(spacing: 8) {
-                        Image(systemName: "arrow.down.circle.fill")
+                        Image(systemName: "arrow.left.circle.fill")
                             .foregroundStyle(.red)
                             .font(.title3)
-                        Text(languageManager.localizedString(for: "mtr.direction.down"))
-                            .font(.headline.bold())
-                            .foregroundStyle(.red)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(languageManager.localizedString(for: "transport.mtr.towards"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(mainDestination)
+                                .font(.headline.bold())
+                                .foregroundStyle(.red)
+                        }
                     }
                     .padding(.bottom, 4)
                     
@@ -313,6 +325,24 @@ struct TransportView: View {
             return "\(minutes) \(languageManager.localizedString(for: "mtr.minutes"))"
         }
         return time
+    }
+    
+    /// Get the main destination from a list of trains (most common destination)
+    private func getMainDestination(from trains: [MTRTrain]) -> String {
+        // Count destinations and return the most common one
+        let destinationCounts = Dictionary(grouping: trains, by: { $0.dest })
+            .mapValues { $0.count }
+        
+        if let mostCommon = destinationCounts.max(by: { $0.value < $1.value }) {
+            return getStationName(mostCommon.key)
+        }
+        
+        // Fallback: return first destination
+        if let firstDest = trains.first?.dest {
+            return getStationName(firstDest)
+        }
+        
+        return languageManager.localizedString(for: "mtr.direction.up")
     }
     
     /// Convert MTR station code to localized name
