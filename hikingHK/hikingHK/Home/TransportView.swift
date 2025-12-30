@@ -738,7 +738,8 @@ struct TransportView: View {
                                     Text(languageManager.localizedString(for: "trail.start.point"))
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
-                                    Text(route.localizedOrigin(languageManager: languageManager))
+                                    let origin = route.localizedOrigin(languageManager: languageManager)
+                                    Text(origin.isEmpty ? (languageManager.currentLanguage == .traditionalChinese ? "" : route.orig_en) : origin)
                                         .font(.subheadline)
                                         .foregroundStyle(.primary)
                                 }
@@ -750,7 +751,8 @@ struct TransportView: View {
                                     Text(languageManager.localizedString(for: "trail.end.point"))
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
-                                    Text(route.localizedDestination(languageManager: languageManager))
+                                    let destination = route.localizedDestination(languageManager: languageManager)
+                                    Text(destination.isEmpty ? (languageManager.currentLanguage == .traditionalChinese ? "" : route.dest_en) : destination)
                                         .font(.subheadline)
                                         .foregroundStyle(.primary)
                                 }
@@ -964,11 +966,21 @@ struct TransportView: View {
         // Filter by selected station
         if let station = selectedFilterStation {
             filtered = filtered.filter { route in
-                let origin = route.localizedOrigin(languageManager: languageManager)
-                let destination = route.localizedDestination(languageManager: languageManager)
-                // Use contains for partial matching (e.g., "中環 (林士街)" matches "中環")
-                return origin.contains(station) || destination.contains(station) || 
-                       station.contains(origin) || station.contains(destination)
+                // In Traditional Chinese mode, only filter by Traditional Chinese names that contain Chinese characters
+                if languageManager.currentLanguage == .traditionalChinese {
+                    // Only use TC names if they contain Chinese characters
+                    let origin = containsChineseCharacters(route.orig_tc) ? route.orig_tc : ""
+                    let destination = containsChineseCharacters(route.dest_tc) ? route.dest_tc : ""
+                    // Use contains for partial matching (e.g., "中環 (林士街)" matches "中環")
+                    return (!origin.isEmpty && (origin.contains(station) || station.contains(origin))) ||
+                           (!destination.isEmpty && (destination.contains(station) || station.contains(destination)))
+                } else {
+                    let origin = route.localizedOrigin(languageManager: languageManager)
+                    let destination = route.localizedDestination(languageManager: languageManager)
+                    // Use contains for partial matching (e.g., "中環 (林士街)" matches "中環")
+                    return origin.contains(station) || destination.contains(station) || 
+                           station.contains(origin) || station.contains(destination)
+                }
             }
         }
         
@@ -981,12 +993,38 @@ struct TransportView: View {
         var stations = Set<String>()
         
         for route in searchResults {
-            stations.insert(route.localizedOrigin(languageManager: languageManager))
-            stations.insert(route.localizedDestination(languageManager: languageManager))
+            // In Traditional Chinese mode, only add stations that have Traditional Chinese names
+            if languageManager.currentLanguage == .traditionalChinese {
+                let origTC = route.orig_tc.trimmingCharacters(in: .whitespaces)
+                let destTC = route.dest_tc.trimmingCharacters(in: .whitespaces)
+                if !origTC.isEmpty && containsChineseCharacters(origTC) {
+                    stations.insert(origTC)
+                }
+                if !destTC.isEmpty && containsChineseCharacters(destTC) {
+                    stations.insert(destTC)
+                }
+            } else {
+                stations.insert(route.localizedOrigin(languageManager: languageManager))
+                stations.insert(route.localizedDestination(languageManager: languageManager))
+            }
         }
         
         availableStations = Array(stations).sorted()
         print("📍 Updated available stations: \(availableStations.count) unique stations")
+    }
+    
+    /// Check if a string contains Chinese characters
+    private func containsChineseCharacters(_ text: String) -> Bool {
+        // Check if the string contains any Chinese characters (CJK Unified Ideographs)
+        return text.unicodeScalars.contains { scalar in
+            // Chinese characters range: U+4E00 to U+9FFF
+            // Also include common punctuation and symbols used in Chinese
+            (0x4E00...0x9FFF).contains(scalar.value) ||
+            (0x3400...0x4DBF).contains(scalar.value) || // Extension A
+            (0x20000...0x2A6DF).contains(scalar.value) || // Extension B
+            (0x3000...0x303F).contains(scalar.value) || // CJK Symbols and Punctuation
+            (0xFF00...0xFFEF).contains(scalar.value) // Halfwidth and Fullwidth Forms
+        }
     }
     
     /// Load all routes to get all available stations for pre-search filtering
@@ -1004,8 +1042,23 @@ struct TransportView: View {
                 var stations = Set<String>()
                 
                 for route in allRoutes {
-                    stations.insert(route.localizedOrigin(languageManager: languageManager))
-                    stations.insert(route.localizedDestination(languageManager: languageManager))
+                    // In Traditional Chinese mode, only add stations that have Traditional Chinese names
+                    // to avoid English residue
+                    if languageManager.currentLanguage == .traditionalChinese {
+                        // Only add if Traditional Chinese name exists, is not empty, and contains Chinese characters
+                        let origTC = route.orig_tc.trimmingCharacters(in: .whitespaces)
+                        let destTC = route.dest_tc.trimmingCharacters(in: .whitespaces)
+                        if !origTC.isEmpty && containsChineseCharacters(origTC) {
+                            stations.insert(origTC)
+                        }
+                        if !destTC.isEmpty && containsChineseCharacters(destTC) {
+                            stations.insert(destTC)
+                        }
+                    } else {
+                        // In English mode, use localized methods
+                        stations.insert(route.localizedOrigin(languageManager: languageManager))
+                        stations.insert(route.localizedDestination(languageManager: languageManager))
+                    }
                 }
                 
                 await MainActor.run {
@@ -1024,6 +1077,20 @@ struct TransportView: View {
                     print("❌ Failed to load all stations: \(error)")
                 }
             }
+        }
+    }
+    
+    /// Get color for a district
+    private func getDistrictColor(for district: String) -> Color {
+        switch district {
+        case "港島", "Hong Kong Island":
+            return Color.blue
+        case "九龍", "Kowloon":
+            return Color.purple
+        case "新界", "New Territories":
+            return Color.green
+        default:
+            return Color.gray
         }
     }
     
@@ -1162,8 +1229,51 @@ struct TransportView: View {
             }
         }
         
-        // Default to "其他" (Others) if not found
-        return languageManager.currentLanguage == .english ? "Others" : "其他"
+        // Try to match by common patterns if not found in map
+        let stationLower = station.lowercased()
+        
+        // Check for Hong Kong Island patterns
+        if stationLower.contains("central") || stationLower.contains("admiralty") || 
+           stationLower.contains("wan chai") || stationLower.contains("causeway") ||
+           stationLower.contains("north point") || stationLower.contains("quarry bay") ||
+           stationLower.contains("chai wan") || stationLower.contains("sheung wan") ||
+           stationLower.contains("kennedy") || stationLower.contains("中環") ||
+           stationLower.contains("金鐘") || stationLower.contains("灣仔") ||
+           stationLower.contains("銅鑼灣") || stationLower.contains("北角") ||
+           stationLower.contains("鰂魚涌") || stationLower.contains("柴灣") ||
+           stationLower.contains("上環") || stationLower.contains("堅尼地城") {
+            return languageManager.currentLanguage == .english ? "Hong Kong Island" : "港島"
+        }
+        
+        // Check for Kowloon patterns
+        if stationLower.contains("tsim sha tsui") || stationLower.contains("mong kok") ||
+           stationLower.contains("kwun tong") || stationLower.contains("yau ma tei") ||
+           stationLower.contains("sham shui po") || stationLower.contains("mei foo") ||
+           stationLower.contains("wong tai sin") || stationLower.contains("kowloon") ||
+           stationLower.contains("尖沙咀") || stationLower.contains("旺角") ||
+           stationLower.contains("觀塘") || stationLower.contains("油麻地") ||
+           stationLower.contains("深水埗") || stationLower.contains("美孚") ||
+           stationLower.contains("黃大仙") || stationLower.contains("九龍") {
+            return languageManager.currentLanguage == .english ? "Kowloon" : "九龍"
+        }
+        
+        // Check for New Territories patterns
+        if stationLower.contains("sha tin") || stationLower.contains("tai po") ||
+           stationLower.contains("yuen long") || stationLower.contains("tuen mun") ||
+           stationLower.contains("tsuen wan") || stationLower.contains("tung chung") ||
+           stationLower.contains("tseung kwan o") || stationLower.contains("fanling") ||
+           stationLower.contains("sheung shui") || stationLower.contains("沙田") ||
+           stationLower.contains("大埔") || stationLower.contains("元朗") ||
+           stationLower.contains("屯門") || stationLower.contains("荃灣") ||
+           stationLower.contains("東涌") || stationLower.contains("將軍澳") ||
+           stationLower.contains("粉嶺") || stationLower.contains("上水") ||
+           stationLower.contains("新界") {
+            return languageManager.currentLanguage == .english ? "New Territories" : "新界"
+        }
+        
+        // If still not found, don't return "其他", just return empty or skip it
+        // We'll filter these out in stationsByDistrict
+        return ""
     }
     
     /// Get stations grouped by district - use allStations if available, otherwise use availableStations
@@ -1173,16 +1283,19 @@ struct TransportView: View {
         
         for station in stationsToUse {
             let district = getDistrict(for: station)
-            if grouped[district] == nil {
-                grouped[district] = []
+            // Only add stations that have a valid district (not empty)
+            if !district.isEmpty {
+                if grouped[district] == nil {
+                    grouped[district] = []
+                }
+                grouped[district]?.append(station)
             }
-            grouped[district]?.append(station)
         }
         
-        // Sort districts: 港島/Hong Kong Island, 九龍/Kowloon, 新界/New Territories, 其他/Others
+        // Sort districts: 港島/Hong Kong Island, 九龍/Kowloon, 新界/New Territories (exclude Others and empty)
         let districtOrder = languageManager.currentLanguage == .english 
-            ? ["Hong Kong Island", "Kowloon", "New Territories", "Others"]
-            : ["港島", "九龍", "新界", "其他"]
+            ? ["Hong Kong Island", "Kowloon", "New Territories"]
+            : ["港島", "九龍", "新界"]
         
         return districtOrder.compactMap { district in
             guard let stations = grouped[district], !stations.isEmpty else { return nil }
@@ -1254,7 +1367,13 @@ struct TransportView: View {
                     } else {
                         ForEach(stationsByDistrict, id: \.district) { group in
                             Section {
-                                ForEach(group.stations, id: \.self) { station in
+                                ForEach(group.stations.filter { station in
+                                    // In Traditional Chinese mode, only show stations with Chinese characters
+                                    if languageManager.currentLanguage == .traditionalChinese {
+                                        return containsChineseCharacters(station)
+                                    }
+                                    return true
+                                }, id: \.self) { station in
                                     Button {
                                         selectedFilterStation = station
                                         applyFilters()
@@ -1262,16 +1381,32 @@ struct TransportView: View {
                                         HStack {
                                             Image(systemName: "mappin.circle.fill")
                                                 .font(.caption)
+                                                .foregroundStyle(getDistrictColor(for: group.district))
                                             Text(station)
                                             if selectedFilterStation == station {
                                                 Spacer()
                                                 Image(systemName: "checkmark")
                                             }
                                         }
+                                        .padding(.vertical, 4)
+                                        .padding(.horizontal, 8)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .fill(getDistrictColor(for: group.district).opacity(0.15))
+                                        )
                                     }
                                 }
                             } header: {
-                                Text(group.district)
+                                HStack {
+                                    Text(group.district)
+                                    Spacer()
+                                }
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(getDistrictColor(for: group.district).opacity(0.25))
+                                )
                             }
                         }
                     }
@@ -1280,7 +1415,16 @@ struct TransportView: View {
                         Image(systemName: "mappin.circle.fill")
                             .foregroundStyle(.orange)
                             .font(.subheadline)
-                        Text(selectedFilterStation ?? languageManager.localizedString(for: "transport.bus.filter.all"))
+                        Text({
+                            if let station = selectedFilterStation, 
+                               languageManager.currentLanguage == .traditionalChinese,
+                               !containsChineseCharacters(station) {
+                                // If selected station doesn't contain Chinese characters in TC mode, show "全部"
+                                return languageManager.localizedString(for: "transport.bus.filter.all")
+                            } else {
+                                return selectedFilterStation ?? languageManager.localizedString(for: "transport.bus.filter.all")
+                            }
+                        }())
                             .font(.subheadline)
                             .foregroundStyle(.primary)
                         Spacer()
@@ -1307,6 +1451,7 @@ struct TransportView: View {
             loadAllStations()
         }
     }
+    
     
     private func loadRouteStopsAndETA(route: KMBRoute) {
         print("📋 Loading route stops and ETA for: \(route.route) \(route.bound) \(route.service_type)")

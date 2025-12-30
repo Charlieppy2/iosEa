@@ -37,7 +37,10 @@ struct KMBRoute: Codable, Identifiable, Hashable {
         case .english:
             return orig_en
         case .traditionalChinese:
-            return orig_tc
+            // In Traditional Chinese mode, only return TC if it exists and is not empty
+            // Don't fallback to English to avoid English residue
+            let tc = orig_tc.trimmingCharacters(in: .whitespaces)
+            return tc.isEmpty ? "" : tc
         }
     }
     
@@ -46,7 +49,10 @@ struct KMBRoute: Codable, Identifiable, Hashable {
         case .english:
             return dest_en
         case .traditionalChinese:
-            return dest_tc
+            // In Traditional Chinese mode, only return TC if it exists and is not empty
+            // Don't fallback to English to avoid English residue
+            let tc = dest_tc.trimmingCharacters(in: .whitespaces)
+            return tc.isEmpty ? "" : tc
         }
     }
 }
@@ -89,7 +95,8 @@ struct KMBStop: Codable, Identifiable, Hashable {
         case .english:
             return name_en
         case .traditionalChinese:
-            return name_tc
+            // If Traditional Chinese is empty, try to use English as fallback, but prefer TC
+            return name_tc.isEmpty ? name_en : name_tc
         }
     }
 }
@@ -245,11 +252,13 @@ struct KMBService: KMBServiceProtocol {
     
     init(session: URLSession? = nil, decoder: JSONDecoder? = nil) {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 5.0 // Reduced from 10.0 for faster response
-        configuration.timeoutIntervalForResource = 8.0 // Reduced from 15.0 for faster response
-        configuration.waitsForConnectivity = false
-        configuration.httpMaximumConnectionsPerHost = 10 // Allow more concurrent connections
+        configuration.timeoutIntervalForRequest = 3.0 // Further reduced for faster response
+        configuration.timeoutIntervalForResource = 5.0 // Further reduced for faster response
+        configuration.waitsForConnectivity = false // Don't wait for connectivity, fail fast
+        configuration.httpMaximumConnectionsPerHost = 20 // Increased for more concurrent connections
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData // Always fetch fresh data
+        configuration.allowsCellularAccess = true
+        configuration.allowsConstrainedNetworkAccess = true
         
         self.session = session ?? URLSession(configuration: configuration)
         
@@ -455,7 +464,14 @@ struct KMBService: KMBServiceProtocol {
             throw KMBServiceError.invalidURL
         }
         
-        let (data, response) = try await session.data(from: url)
+        // Create request with optimized settings for speed
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.timeoutInterval = 3.0 // Fast timeout
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await session.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KMBServiceError.invalidResponse

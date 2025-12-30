@@ -26,11 +26,13 @@ struct BusRouteDetailView: View {
                 // Route header with improved design
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .center, spacing: 12) {
-                        // Route number badge - fixed width for 5 characters
+                        // Route number badge - fixed width for 5 characters (digits/letters)
                         Text(route.route)
-                            .font(.system(size: 28, weight: .bold))
+                            .font(.system(size: 24, weight: .bold)) // Reduced font size to ensure 5 characters fit
                             .foregroundStyle(.white)
-                            .frame(width: 70, height: 60)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7) // Allow text to scale down if needed
+                            .frame(width: 70, height: 60, alignment: .center) // Fixed width for 5 characters
                             .background(
                                 LinearGradient(
                                     colors: [Color.orange, Color.orange.opacity(0.8)],
@@ -154,14 +156,14 @@ struct BusRouteDetailView: View {
                     print("✅ Loaded \(self.routeStops.count) stops for route \(route.route)")
                 }
                 
-                // Load ETA for first 5 stops initially for faster display, then load more
+                // Load ETA for first 10 stops initially for faster display, then load more
                 if !stops.isEmpty {
-                    let initialStopsToLoad = Array(stops.prefix(5))
+                    let initialStopsToLoad = Array(stops.prefix(10))
                     await loadETAsForStopsParallel(stops: initialStopsToLoad)
                     
                     // Load remaining stops in background immediately (don't wait)
-                    if stops.count > 5 {
-                        let remainingStops = Array(stops.dropFirst(5))
+                    if stops.count > 10 {
+                        let remainingStops = Array(stops.dropFirst(10))
                         Task.detached(priority: .userInitiated) {
                             await loadETAsForStopsParallel(stops: remainingStops)
                         }
@@ -200,12 +202,13 @@ struct BusRouteDetailView: View {
             
             var allETAs: [KMBETA] = []
             var processedCount = 0
+            // Process results as they come in for faster UI updates
             for await result in group {
                 if let etas = result.etas {
                     allETAs.append(contentsOf: etas)
                     processedCount += 1
-                    // Update UI incrementally for better perceived performance
-                    if processedCount <= 5 {
+                    // Update UI incrementally for better perceived performance - increased to 10
+                    if processedCount <= 10 {
                         await MainActor.run {
                             self.busETAs.append(contentsOf: etas)
                         }
