@@ -344,6 +344,8 @@ struct LocalizedStrings {
         "trail.district.kowloon": "Kowloon",
         "trail.district.lantau": "Lantau",
         "trail.district.tai.po": "Tai Po",
+        "trail.district.new.territories.central": "New Territories Central",
+        "trail.district.new.territories.northwest": "New Territories Northwest",
         
         // Trail Names and Summaries (MacLehose Section 4)
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.name": "MacLehose Section 4",
@@ -381,9 +383,21 @@ struct LocalizedStrings {
         "trail.d4e5f6a7-b8c9-0123-def0-456789012345.name": "MacLehose Section 5",
         "trail.d4e5f6a7-b8c9-0123-def0-456789012345.summary": "From Tate's Cairn to Tai Po Road via Lion Rock and Beacon Hill.",
         
+        // MacLehose Section 6
+        "trail.e4f5a6b7-c8d9-0123-ef01-456789012345.name": "MacLehose Section 6",
+        "trail.e4f5a6b7-c8d9-0123-ef01-456789012345.summary": "From Tai Po Road to Shing Mun Reservoir.",
+        
+        // MacLehose Section 7
+        "trail.f2a3b4c5-d6e7-8901-bcde-f23456789012.name": "MacLehose Section 7",
+        "trail.f2a3b4c5-d6e7-8901-bcde-f23456789012.summary": "From Shing Mun Reservoir, steep climb up Needle Hill and Grassy Hill, then descend to Lead Mine Pass.",
+        
         // MacLehose Section 8
         "trail.e5f6a7b8-c9d0-1234-ef01-567890123456.name": "MacLehose Section 8",
         "trail.e5f6a7b8-c9d0-1234-ef01-567890123456.summary": "Climb to Hong Kong's highest peak Tai Mo Shan from Lead Mine Pass.",
+        
+        // MacLehose Section 9
+        "trail.f3a4b5c6-d7e8-9012-cdef-345678901234.name": "MacLehose Section 9",
+        "trail.f3a4b5c6-d7e8-9012-cdef-345678901234.summary": "From Route Twisk, enter the plantation area of Tai Lam Country Park, heading towards Tin Fu Tsai.",
         
         // Wilson Trail Section 1
         "trail.f6a7b8c9-d0e1-2345-f012-678901234567.name": "Wilson Trail Section 1",
@@ -842,8 +856,14 @@ struct LocalizedStrings {
         "transport.bus.search.placeholder": "Enter route number or station name",
         "transport.bus.no.results": "No results found",
         "transport.bus.results": "Search Results",
+        "transport.bus.routes.found": "routes found",
+        "transport.bus.showing.first.20": "Showing first 20 results",
         "transport.bus.stops": "Bus Stops",
         "transport.bus.eta": "Estimated Arrival Time",
+        "transport.bus.real.time.eta": "Real-time Arrival",
+        "transport.bus.loading.eta": "Loading...",
+        "transport.bus.outbound": "Outbound",
+        "transport.bus.inbound": "Inbound",
         "transport.bus.error.load.failed": "Unable to load bus information",
         
         // Home Quick Actions
@@ -1173,6 +1193,8 @@ struct LocalizedStrings {
         "trail.district.kowloon": "九龍",
         "trail.district.lantau": "大嶼山",
         "trail.district.tai.po": "大埔",
+        "trail.district.new.territories.central": "新界中部",
+        "trail.district.new.territories.northwest": "新界西北",
         
         // Trail Names and Summaries (MacLehose Section 4)
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.name": "麥理浩徑第四段",
@@ -1210,9 +1232,21 @@ struct LocalizedStrings {
         "trail.d4e5f6a7-b8c9-0123-def0-456789012345.name": "麥理浩徑第五段",
         "trail.d4e5f6a7-b8c9-0123-def0-456789012345.summary": "從基維爾營到大埔公路，途經獅子山和筆架山。",
         
+        // MacLehose Section 6
+        "trail.e4f5a6b7-c8d9-0123-ef01-456789012345.name": "麥理浩徑第六段",
+        "trail.e4f5a6b7-c8d9-0123-ef01-456789012345.summary": "從大埔公路到城門水塘。",
+        
+        // MacLehose Section 7
+        "trail.f2a3b4c5-d6e7-8901-bcde-f23456789012.name": "麥理浩徑第七段",
+        "trail.f2a3b4c5-d6e7-8901-bcde-f23456789012.summary": "從城門水塘出發，急攀針山與草山後，下降至鉛礦坳。",
+        
         // MacLehose Section 8
         "trail.e5f6a7b8-c9d0-1234-ef01-567890123456.name": "麥理浩徑第八段",
         "trail.e5f6a7b8-c9d0-1234-ef01-567890123456.summary": "從鉛礦坳攀登至香港最高峰大帽山。",
+        
+        // MacLehose Section 9
+        "trail.f3a4b5c6-d7e8-9012-cdef-345678901234.name": "麥理浩徑第九段",
+        "trail.f3a4b5c6-d7e8-9012-cdef-345678901234.summary": "從荃錦公路出發，進入大欖郊野公園的植林區，往田夫仔進發。",
         
         // Wilson Trail Section 1
         "trail.f6a7b8c9-d0e1-2345-f012-678901234567.name": "衛奕信徑第一段",
@@ -1671,8 +1705,14 @@ struct LocalizedStrings {
         "transport.bus.search.placeholder": "輸入路線號碼或車站名稱",
         "transport.bus.no.results": "找不到結果",
         "transport.bus.results": "搜尋結果",
+        "transport.bus.routes.found": "條路線",
+        "transport.bus.showing.first.20": "顯示首 20 個結果",
         "transport.bus.stops": "巴士站",
         "transport.bus.eta": "預計到站時間",
+        "transport.bus.real.time.eta": "實時到站",
+        "transport.bus.loading.eta": "載入中...",
+        "transport.bus.outbound": "往",
+        "transport.bus.inbound": "返",
         "transport.bus.error.load.failed": "無法載入巴士資訊",
         
         // Home Quick Actions

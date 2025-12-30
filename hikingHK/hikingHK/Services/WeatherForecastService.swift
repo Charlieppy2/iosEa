@@ -73,7 +73,7 @@ struct WeatherForecastService: WeatherForecastServiceProtocol {
             print("❌ WeatherForecastService: Unknown error - \(error.localizedDescription)")
             // Fallback to mock data if API fails
             print("⚠️ WeatherForecastService: Falling back to mock data")
-            return generateMockForecast(for: trail)
+        return generateMockForecast(for: trail)
         }
     }
     

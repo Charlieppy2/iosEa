@@ -40,8 +40,8 @@ struct CSDIGeoportalService: CSDIGeoportalServiceProtocol {
         let endpoint = endpointURL(datasetId: datasetId, language: language)
         
         do {
-            let (data, response) = try await session.data(from: endpoint)
-            
+        let (data, response) = try await session.data(from: endpoint)
+        
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw CSDIGeoportalServiceError.invalidResponse("Invalid response type")
             }
@@ -62,9 +62,9 @@ struct CSDIGeoportalService: CSDIGeoportalServiceProtocol {
                dataString.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("<!DOCTYPE") ||
                dataString.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("<html") {
                 throw CSDIGeoportalServiceError.invalidResponse("API returned HTML instead of JSON. The endpoint may have changed or requires authentication.")
-            }
-            
-            return data
+        }
+        
+        return data
         } catch let error as CSDIGeoportalServiceError {
             // Re-throw our custom errors
             throw error

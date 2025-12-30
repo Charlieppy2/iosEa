@@ -108,7 +108,7 @@ struct KMBETA: Codable, Identifiable, Hashable {
     let dir: String
     let service_type: String
     let seq: String
-    let stop: String
+    let stop: String? // Note: API may not return this field, we'll set it from stopId
     let dest_tc: String?
     let dest_en: String?
     let dest_sc: String?
@@ -120,7 +120,55 @@ struct KMBETA: Codable, Identifiable, Hashable {
     let data_timestamp: String
     
     var id: String {
-        "\(route)-\(dir)-\(service_type)-\(stop)-\(seq)"
+        // Include eta_seq to ensure uniqueness when multiple buses arrive at same stop
+        let etaSeq = eta_seq ?? "0"
+        return "\(route)-\(dir)-\(service_type)-\(stop ?? "unknown")-\(seq)-\(etaSeq)"
+    }
+    
+    // Custom decoding to handle both String and Int for service_type and seq
+    enum CodingKeys: String, CodingKey {
+        case co, route, dir, service_type, seq, stop
+        case dest_tc, dest_en, dest_sc, eta_seq, eta
+        case rmk_tc, rmk_en, rmk_sc, data_timestamp
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        co = try container.decodeIfPresent(String.self, forKey: .co)
+        route = try container.decode(String.self, forKey: .route)
+        dir = try container.decode(String.self, forKey: .dir)
+        
+        // Handle service_type as either String or Int
+        if let intValue = try? container.decode(Int.self, forKey: .service_type) {
+            service_type = String(intValue)
+        } else {
+            service_type = try container.decode(String.self, forKey: .service_type)
+        }
+        
+        // Handle seq as either String or Int
+        if let intValue = try? container.decode(Int.self, forKey: .seq) {
+            seq = String(intValue)
+        } else {
+            seq = try container.decode(String.self, forKey: .seq)
+        }
+        
+        stop = try container.decodeIfPresent(String.self, forKey: .stop)
+        dest_tc = try container.decodeIfPresent(String.self, forKey: .dest_tc)
+        dest_en = try container.decodeIfPresent(String.self, forKey: .dest_en)
+        dest_sc = try container.decodeIfPresent(String.self, forKey: .dest_sc)
+        
+        // Handle eta_seq as either String or Int
+        if let intValue = try? container.decode(Int.self, forKey: .eta_seq) {
+            eta_seq = String(intValue)
+        } else {
+            eta_seq = try container.decodeIfPresent(String.self, forKey: .eta_seq)
+        }
+        
+        eta = try container.decodeIfPresent(String.self, forKey: .eta)
+        rmk_tc = try container.decodeIfPresent(String.self, forKey: .rmk_tc)
+        rmk_en = try container.decodeIfPresent(String.self, forKey: .rmk_en)
+        rmk_sc = try container.decodeIfPresent(String.self, forKey: .rmk_sc)
+        data_timestamp = try container.decode(String.self, forKey: .data_timestamp)
     }
     
     func localizedDestination(languageManager: LanguageManager) -> String {
@@ -185,6 +233,7 @@ struct KMBETA: Codable, Identifiable, Hashable {
 protocol KMBServiceProtocol {
     func fetchRouteList() async throws -> [KMBRoute]
     func fetchRouteDetail(route: String, direction: String, serviceType: String) async throws -> KMBRouteDetail?
+    func fetchRouteStops(route: String, direction: String, serviceType: String) async throws -> [KMBStop]
     func fetchETA(stopId: String, route: String, serviceType: String) async throws -> [KMBETA]
     func searchRoutes(keyword: String) async throws -> [KMBRoute]
 }
@@ -198,7 +247,8 @@ struct KMBService: KMBServiceProtocol {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 10.0
         configuration.timeoutIntervalForResource = 15.0
-        configuration.waitsForConnectivity = true
+        // Note: waitsForConnectivity may cause warnings in simulator, but doesn't affect functionality
+        configuration.waitsForConnectivity = false
         
         self.session = session ?? URLSession(configuration: configuration)
         
@@ -246,9 +296,24 @@ struct KMBService: KMBServiceProtocol {
         }
     }
     
+    /// Convert direction from "O"/"I" to "outbound"/"inbound"
+    private func convertDirection(_ direction: String) -> String {
+        if direction.uppercased() == "O" {
+            return "outbound"
+        } else if direction.uppercased() == "I" {
+            return "inbound"
+        } else {
+            return direction // Use as-is if already in correct format
+        }
+    }
+    
     /// Fetch route detail with stops
     func fetchRouteDetail(route: String, direction: String, serviceType: String) async throws -> KMBRouteDetail? {
-        guard let url = URL(string: "\(baseEndpoint)/route/\(route)/\(direction)/\(serviceType)") else {
+        let apiDirection = convertDirection(direction)
+        let urlString = "\(baseEndpoint)/route/\(route)/\(apiDirection)/\(serviceType)"
+        print("🌐 Fetching route detail from: \(urlString)")
+        
+        guard let url = URL(string: urlString) else {
             throw KMBServiceError.invalidURL
         }
         
@@ -259,16 +324,133 @@ struct KMBService: KMBServiceProtocol {
         }
         
         guard (200..<300).contains(httpResponse.statusCode) else {
+            // Try to parse error message from response
+            if let errorData = String(data: data, encoding: .utf8) {
+                print("❌ API Error Response: \(errorData)")
+            }
             throw KMBServiceError.httpError(httpResponse.statusCode)
         }
         
-        let decoded = try decoder.decode(KMBRouteDetailResponse.self, from: data)
-        return decoded.data
+        // Check if response is HTML (API error)
+        if let responseString = String(data: data, encoding: .utf8),
+           responseString.contains("<!DOCTYPE") || responseString.contains("<html") {
+            print("❌ API returned HTML instead of JSON")
+            throw KMBServiceError.invalidResponse
+        }
+        
+        do {
+            let decoded = try decoder.decode(KMBRouteDetailResponse.self, from: data)
+            var routeDetail = decoded.data
+            
+            // Fetch stops separately using route-stop endpoint
+            if let stops = try? await fetchRouteStops(route: route, direction: direction, serviceType: serviceType) {
+                // Note: KMBRouteDetail doesn't have a mutable stops property, so we need to create a new one
+                // For now, we'll fetch stops separately in the view model
+            }
+            
+            return routeDetail
+        } catch {
+            print("❌ JSON decode error: \(error)")
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("❌ Response preview: \(String(jsonString.prefix(500)))")
+            }
+            throw KMBServiceError.apiError("Failed to decode route detail: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Fetch route stops using route-stop endpoint
+    func fetchRouteStops(route: String, direction: String, serviceType: String) async throws -> [KMBStop] {
+        let apiDirection = convertDirection(direction)
+        let urlString = "\(baseEndpoint)/route-stop/\(route)/\(apiDirection)/\(serviceType)"
+        print("🌐 Fetching route stops from: \(urlString)")
+        
+        guard let url = URL(string: urlString) else {
+            throw KMBServiceError.invalidURL
+        }
+        
+        let (data, response) = try await session.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw KMBServiceError.invalidResponse
+        }
+        
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            if let errorData = String(data: data, encoding: .utf8) {
+                print("❌ API Error Response: \(errorData)")
+            }
+            throw KMBServiceError.httpError(httpResponse.statusCode)
+        }
+        
+        // Parse route-stop response
+        struct RouteStopResponse: Codable {
+            let type: String
+            let version: String
+            let generated_timestamp: String
+            let data: [RouteStopItem]
+        }
+        
+        struct RouteStopItem: Codable {
+            let route: String
+            let bound: String
+            let service_type: String
+            let seq: String
+            let stop: String
+        }
+        
+        let routeStopResponse = try decoder.decode(RouteStopResponse.self, from: data)
+        
+        // Fetch stop details for each stop ID
+        var stops: [KMBStop] = []
+        for stopItem in routeStopResponse.data {
+            if let stopDetail = try? await fetchStopDetail(stopId: stopItem.stop) {
+                stops.append(stopDetail)
+            }
+        }
+        
+        // Sort by sequence
+        let sortedStops = stops.sorted { stop1, stop2 in
+            if let seq1 = routeStopResponse.data.firstIndex(where: { $0.stop == stop1.stop }),
+               let seq2 = routeStopResponse.data.firstIndex(where: { $0.stop == stop2.stop }) {
+                return seq1 < seq2
+            }
+            return false
+        }
+        
+        print("✅ Fetched \(sortedStops.count) stops for route \(route)")
+        return sortedStops
+    }
+    
+    /// Fetch stop detail by stop ID
+    private func fetchStopDetail(stopId: String) async throws -> KMBStop {
+        let urlString = "\(baseEndpoint)/stop/\(stopId)"
+        guard let url = URL(string: urlString) else {
+            throw KMBServiceError.invalidURL
+        }
+        
+        let (data, response) = try await session.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200..<300).contains(httpResponse.statusCode) else {
+            throw KMBServiceError.invalidResponse
+        }
+        
+        struct StopDetailResponse: Codable {
+            let type: String
+            let version: String
+            let generated_timestamp: String
+            let data: KMBStop
+        }
+        
+        let stopResponse = try decoder.decode(StopDetailResponse.self, from: data)
+        return stopResponse.data
     }
     
     /// Fetch ETA for a specific stop and route
     func fetchETA(stopId: String, route: String, serviceType: String) async throws -> [KMBETA] {
-        guard let url = URL(string: "\(baseEndpoint)/eta/\(stopId)/\(route)/\(serviceType)") else {
+        let urlString = "\(baseEndpoint)/eta/\(stopId)/\(route)/\(serviceType)"
+        print("🌐 Fetching ETA from: \(urlString)")
+        
+        guard let url = URL(string: urlString) else {
             throw KMBServiceError.invalidURL
         }
         
@@ -279,11 +461,48 @@ struct KMBService: KMBServiceProtocol {
         }
         
         guard (200..<300).contains(httpResponse.statusCode) else {
+            // Try to parse error message from response
+            if let errorData = String(data: data, encoding: .utf8) {
+                print("❌ API Error Response: \(errorData)")
+            }
             throw KMBServiceError.httpError(httpResponse.statusCode)
         }
         
-        let decoded = try decoder.decode(KMBETAResponse.self, from: data)
-        return decoded.data ?? []
+        // Check if response is HTML (API error)
+        if let responseString = String(data: data, encoding: .utf8),
+           responseString.contains("<!DOCTYPE") || responseString.contains("<html") {
+            print("❌ API returned HTML instead of JSON")
+            throw KMBServiceError.invalidResponse
+        }
+        
+        do {
+            // API doesn't return 'stop' field, so we need to add it manually
+            if var jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+               var dataArray = jsonObject["data"] as? [[String: Any]] {
+                // Add stop ID to each ETA item
+                for i in 0..<dataArray.count {
+                    dataArray[i]["stop"] = stopId
+                }
+                jsonObject["data"] = dataArray
+                let modifiedData = try JSONSerialization.data(withJSONObject: jsonObject)
+                let decoded = try decoder.decode(KMBETAResponse.self, from: modifiedData)
+                let etas = decoded.data ?? []
+                print("✅ Successfully decoded \(etas.count) ETAs with stop ID \(stopId)")
+                return etas
+            } else {
+                // Fallback: try decoding without stop field
+                let decoded = try decoder.decode(KMBETAResponse.self, from: data)
+                let etas = decoded.data ?? []
+                print("✅ Successfully decoded \(etas.count) ETAs (no stop field)")
+                return etas
+            }
+        } catch {
+            print("❌ JSON decode error: \(error)")
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("❌ Response preview: \(String(jsonString.prefix(500)))")
+            }
+            throw KMBServiceError.apiError("Failed to decode ETA: \(error.localizedDescription)")
+        }
     }
     
     /// Search routes by keyword (route number or station name)

@@ -95,8 +95,8 @@ struct HomeView: View {
                                     .foregroundStyle(.red)
                                     .fontWeight(.bold)
                                 Text(languageManager.localizedString(for: "home.sos.button"))
-                                    .foregroundStyle(.red)
-                                    .fontWeight(.bold)
+                            .foregroundStyle(.red)
+                            .fontWeight(.bold)
                             }
                         }
                     }
@@ -205,7 +205,7 @@ struct HomeView: View {
                     selectedIndex: $weatherIndex
                 )
                 .environmentObject(languageManager)
-                .presentationDetents([.large])
+                    .presentationDetents([.large])
             }
             .sheet(item: $selectedSavedHike) { hike in
                 SavedHikeDetailSheet(
@@ -289,9 +289,9 @@ struct HomeView: View {
                     isShowingLocationPicker = true
                 } label: {
                     HStack(spacing: 6) {
-                        Label(localizedLocation(snapshot.location), systemImage: "location.fill")
+                Label(localizedLocation(snapshot.location), systemImage: "location.fill")
                             .font(.subheadline.weight(.medium))
-                            .foregroundStyle(Color.hikingDarkGreen)
+                    .foregroundStyle(Color.hikingDarkGreen)
                         Image(systemName: "chevron.down")
                             .font(.caption)
                             .foregroundStyle(Color.hikingDarkGreen)
@@ -311,34 +311,34 @@ struct HomeView: View {
             } else {
                 HStack(alignment: .top, spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("\(String(format: "%.1f", snapshot.temperature))°C")
+                    Text("\(String(format: "%.1f", snapshot.temperature))°C")
                             .font(.system(size: 52, weight: .bold))
-                            .foregroundStyle(Color.hikingDarkGreen)
-                    }
-                    Spacer()
-                    VStack(alignment: .trailing, spacing: 8) {
-                        label(value: "\(snapshot.humidity)%", caption: languageManager.localizedString(for: "weather.humidity"))
-                        label(value: "\(snapshot.uvIndex)", caption: languageManager.localizedString(for: "weather.uv.index"))
-                    }
+                        .foregroundStyle(Color.hikingDarkGreen)
                 }
-                Divider()
-                    .background(Color.hikingBrown.opacity(0.2))
+                Spacer()
+                    VStack(alignment: .trailing, spacing: 8) {
+                    label(value: "\(snapshot.humidity)%", caption: languageManager.localizedString(for: "weather.humidity"))
+                    label(value: "\(snapshot.uvIndex)", caption: languageManager.localizedString(for: "weather.uv.index"))
+                }
+            }
+            Divider()
+                .background(Color.hikingBrown.opacity(0.2))
                     .padding(.vertical, 6)
                 // 顯示警告或建議（不重複顯示）
-                if let warning = snapshot.warningMessage, !warning.isEmpty {
-                    Label(warning, systemImage: "exclamationmark.triangle.fill")
+            if let warning = snapshot.warningMessage, !warning.isEmpty {
+                Label(warning, systemImage: "exclamationmark.triangle.fill")
                         .font(.body.weight(.medium))
-                        .foregroundStyle(.orange)
+                    .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
-                } else if let error = viewModel.weatherError {
+            } else if let error = viewModel.weatherError {
                     Label(localizedWeatherError(error), systemImage: "wifi.slash")
                         .font(.body)
-                        .foregroundStyle(Color.hikingStone)
+                    .foregroundStyle(Color.hikingStone)
                         .fixedSize(horizontal: false, vertical: true)
-                } else if !snapshot.suggestion.isEmpty {
-                    Text(localizedWeatherSuggestion(snapshot.suggestion))
+            } else if !snapshot.suggestion.isEmpty {
+                Text(localizedWeatherSuggestion(snapshot.suggestion))
                         .font(.body)
-                        .foregroundStyle(Color.hikingBrown)
+                    .foregroundStyle(Color.hikingBrown)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 
@@ -455,7 +455,7 @@ struct HomeView: View {
                     Button {
                         if trail.isFavorite {
                             // 已经是收藏，直接取消收藏，不弹窗
-                            viewModel.markFavorite(trail)
+                        viewModel.markFavorite(trail)
                         } else {
                             // 首次点亮时先弹出确认对话框
                             trailPendingPlan = trail
@@ -475,18 +475,18 @@ struct HomeView: View {
                 }
                 
                 if !trail.highlights.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(trail.highlights, id: \.self) { highlight in
-                                Text(localizedHighlight(highlight, for: trail))
-                                    .font(.caption.weight(.medium))
-                                    .padding(.vertical, 6)
-                                    .padding(.horizontal, 12)
-                                    .hikingBadge(color: Color.hikingGreen)
-                            }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(trail.highlights, id: \.self) { highlight in
+                            Text(localizedHighlight(highlight, for: trail))
+                                .font(.caption.weight(.medium))
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .hikingBadge(color: Color.hikingGreen)
                         }
-                        .padding(.horizontal, 4)
                     }
+                        .padding(.horizontal, 4)
+                }
                     .frame(height: 36)
                 }
                 
@@ -1209,7 +1209,7 @@ struct TrailAlertsView: View {
                         isShowingWarningHistory = true
                     } label: {
                         Image(systemName: "clock.arrow.circlepath")
-                    }
+                }
                 }
             }
             .sheet(isPresented: $isShowingWarningHistory) {
@@ -1265,9 +1265,9 @@ struct TrailAlertsView: View {
                             Image(systemName: "clock.fill")
                                 .font(.caption2)
                             Text(formatIssueTime(alert.issuedAt, languageManager: languageManager))
-                                .font(.caption)
+                            .font(.caption)
                         }
-                        .foregroundStyle(.secondary)
+                            .foregroundStyle(.secondary)
                         // 如果有更新時間，顯示更新時間
                         if let updatedAt = alert.updatedAt {
                             Text("•")

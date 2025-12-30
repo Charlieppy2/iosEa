@@ -119,7 +119,7 @@ struct TrailDetailView: View {
                 }
             }
     }
-    
+
     /// Top summary header with district, distance, elevation and duration.
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -273,14 +273,14 @@ struct TrailDetailView: View {
                 
                 // 如果沒有分開的起終點，使用舊的 transportation
                 if trail.startPointTransport == nil && trail.endPointTransport == nil {
-                    Text(localizedTransportation)
+            Text(localizedTransportation)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                .foregroundStyle(.secondary)
                 }
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
     
@@ -480,7 +480,7 @@ struct TrailDetailView: View {
         }
         return time
     }
-    
+
     private func localizedCheckpointTitle(_ title: String) -> String {
         // Normalize the title key
         let normalizedTitle = title.lowercased()

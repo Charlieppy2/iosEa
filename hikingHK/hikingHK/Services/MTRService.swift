@@ -75,7 +75,8 @@ struct MTRService: MTRServiceProtocol {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 5.0
         configuration.timeoutIntervalForResource = 10.0
-        configuration.waitsForConnectivity = true
+        // Note: waitsForConnectivity may cause warnings in simulator, but doesn't affect functionality
+        configuration.waitsForConnectivity = false
         
         self.session = session ?? URLSession(configuration: configuration)
         
