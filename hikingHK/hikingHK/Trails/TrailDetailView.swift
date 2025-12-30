@@ -23,10 +23,8 @@ struct TrailDetailView: View {
                 facilitiesSection
                 highlightsSection
                 transportationSection
-                // MTR real-time schedule if available
-                if mtrViewModel.hasSchedule {
-                    mtrScheduleSection
-                }
+                // MTR real-time schedule - always show, even if no schedule found
+                mtrScheduleSection
                 if !trail.supplyPoints.isEmpty {
                     supplyPointsSection
                 }
@@ -464,6 +462,16 @@ struct TrailDetailView: View {
                         }
                     }
                 }
+            } else if !mtrViewModel.isLoading && mtrViewModel.error == nil {
+                // Show message when no station found but no error occurred
+                HStack {
+                    Image(systemName: "info.circle")
+                        .foregroundStyle(.secondary)
+                    Text(languageManager.localizedString(for: "mtr.no.station.found"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
             }
         }
         .padding()

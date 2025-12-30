@@ -15,10 +15,22 @@ struct TrailListView: View {
     
     private var filteredTrails: [Trail] {
         let base = viewModel.trails(for: selectedDifficulty)
-        guard !searchText.isEmpty else { return base }
-        return base.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            $0.district.localizedCaseInsensitiveContains(searchText)
+        let filtered: [Trail]
+        
+        if searchText.isEmpty {
+            filtered = base
+        } else {
+            filtered = base.filter {
+                $0.name.localizedCaseInsensitiveContains(searchText) ||
+                $0.district.localizedCaseInsensitiveContains(searchText) ||
+                $0.localizedName(languageManager: languageManager).localizedCaseInsensitiveContains(searchText) ||
+                $0.localizedDistrict(languageManager: languageManager).localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        // Sort by localized name
+        return filtered.sorted { trail1, trail2 in
+            trail1.localizedName(languageManager: languageManager) < trail2.localizedName(languageManager: languageManager)
         }
     }
     

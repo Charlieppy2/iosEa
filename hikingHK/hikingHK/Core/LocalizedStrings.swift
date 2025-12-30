@@ -343,9 +343,11 @@ struct LocalizedStrings {
         "trail.district.tai.mo.shan": "Tai Mo Shan",
         "trail.district.kowloon": "Kowloon",
         "trail.district.lantau": "Lantau",
+        "trail.district.lantau.island": "Lantau Island",
         "trail.district.tai.po": "Tai Po",
         "trail.district.new.territories.central": "New Territories Central",
         "trail.district.new.territories.northwest": "New Territories Northwest",
+        "trail.district.tuen.mun": "Tuen Mun",
         
         // Trail Names and Summaries (MacLehose Section 4)
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.name": "MacLehose Section 4",
@@ -384,8 +386,8 @@ struct LocalizedStrings {
         "trail.d4e5f6a7-b8c9-0123-def0-456789012345.summary": "From Tate's Cairn to Tai Po Road via Lion Rock and Beacon Hill.",
         
         // MacLehose Section 6
-        "trail.e4f5a6b7-c8d9-0123-ef01-456789012345.name": "MacLehose Section 6",
-        "trail.e4f5a6b7-c8d9-0123-ef01-456789012345.summary": "From Tai Po Road to Shing Mun Reservoir.",
+        "trail.f1a2b3c4-d5e6-7890-abcd-ef1234567890.name": "MacLehose Section 6",
+        "trail.f1a2b3c4-d5e6-7890-abcd-ef1234567890.summary": "From Tai Po Road to Shing Mun Reservoir.",
         
         // MacLehose Section 7
         "trail.f2a3b4c5-d6e7-8901-bcde-f23456789012.name": "MacLehose Section 7",
@@ -399,6 +401,10 @@ struct LocalizedStrings {
         "trail.f3a4b5c6-d7e8-9012-cdef-345678901234.name": "MacLehose Section 9",
         "trail.f3a4b5c6-d7e8-9012-cdef-345678901234.summary": "From Route Twisk, enter the plantation area of Tai Lam Country Park, heading towards Tin Fu Tsai.",
         
+        // MacLehose Section 10
+        "trail.f4a5b6c7-d8e9-0123-def0-456789012345.name": "MacLehose Section 10",
+        "trail.f4a5b6c7-d8e9-0123-def0-456789012345.summary": "From Tin Fu Tsai, traverse the relatively barren western New Territories, ending at Tuen Mun.",
+        
         // Wilson Trail Section 1
         "trail.f6a7b8c9-d0e1-2345-f012-678901234567.name": "Wilson Trail Section 1",
         "trail.f6a7b8c9-d0e1-2345-f012-678901234567.summary": "From Stanley Gap Road to Tsz Lo Lan Shan via Violet Hill and The Twins.",
@@ -406,6 +412,34 @@ struct LocalizedStrings {
         // Wilson Trail Section 2
         "trail.a7b8c9d0-e1f2-3456-0123-789012345678.name": "Wilson Trail Section 2",
         "trail.a7b8c9d0-e1f2-3456-0123-789012345678.summary": "From Tsz Lo Lan to Quarry Bay via Mount Butler and Jardine's Lookout.",
+        
+        // Wilson Trail Section 3
+        "trail.b9c0d1e2-f3a4-4567-2345-901234567890.name": "Wilson Trail Section 3",
+        "trail.b9c0d1e2-f3a4-4567-2345-901234567890.summary": "From Quarry Bay to Sha Tin Pass via Beacon Hill and Lion Rock.",
+        
+        // Wilson Trail Section 4
+        "trail.c0d1e2f3-a4b5-5678-3456-012345678901.name": "Wilson Trail Section 4",
+        "trail.c0d1e2f3-a4b5-5678-3456-012345678901.summary": "From Sha Tin Pass to Gilwell Camp via Fei Ngo Shan.",
+        
+        // Wilson Trail Section 5
+        "trail.d1e2f3a4-b5c6-6789-4567-123456789012.name": "Wilson Trail Section 5",
+        "trail.d1e2f3a4-b5c6-6789-4567-123456789012.summary": "From Gilwell Camp to Sha Tin Pass via Tate's Cairn.",
+        
+        // Wilson Trail Section 6
+        "trail.e2f3a4b5-c6d7-7890-5678-234567890123.name": "Wilson Trail Section 6",
+        "trail.e2f3a4b5-c6d7-7890-5678-234567890123.summary": "From Sha Tin Pass to Shing Mun Reservoir via Needle Hill.",
+        
+        // Wilson Trail Section 7
+        "trail.f3a4b5c6-d7e8-8901-6789-345678901234.name": "Wilson Trail Section 7",
+        "trail.f3a4b5c6-d7e8-8901-6789-345678901234.summary": "From Shing Mun Reservoir to Yuen Tun Ha via Grassy Hill and Lead Mine Pass.",
+        
+        // Wilson Trail Section 8
+        "trail.a4b5c6d7-e8f9-9012-7890-456789012345.name": "Wilson Trail Section 8",
+        "trail.a4b5c6d7-e8f9-9012-7890-456789012345.summary": "From Yuen Tun Ha to Nam Chung via Pat Sin Leng.",
+        
+        // Lantau Trail Section 1
+        "trail.a8b9c0d1-e2f3-4567-0123-789012345678.name": "Lantau Trail Section 1",
+        "trail.a8b9c0d1-e2f3-4567-0123-789012345678.summary": "From Mui Wo to Nam Shan via Silvermine Bay.",
         
         // Lantau Trail Section 2
         "trail.b8c9d0e1-f2a3-4567-1234-890123456789.name": "Lantau Trail Section 2",
@@ -415,13 +449,73 @@ struct LocalizedStrings {
         "trail.c9d0e1f2-a3b4-5678-2345-901234567890.name": "Lantau Trail Section 3",
         "trail.c9d0e1f2-a3b4-5678-2345-901234567890.summary": "From Pak Kung Au to Ngong Ping via Lantau Peak, Hong Kong's second highest peak.",
         
+        // Lantau Trail Section 4
+        "trail.d0e1f2a3-b4c5-6789-4567-123456789012.name": "Lantau Trail Section 4",
+        "trail.d0e1f2a3-b4c5-6789-4567-123456789012.summary": "From Ngong Ping to Sham Wat Road via Wisdom Path.",
+        
+        // Lantau Trail Section 5
+        "trail.e1f2a3b4-c5d6-7890-5678-234567890123.name": "Lantau Trail Section 5",
+        "trail.e1f2a3b4-c5d6-7890-5678-234567890123.summary": "From Sham Wat Road to Keung Shan via Keung Shan Road.",
+        
+        // Lantau Trail Section 6
+        "trail.f2a3b4c5-d6e7-8901-6789-345678901234.name": "Lantau Trail Section 6",
+        "trail.f2a3b4c5-d6e7-8901-6789-345678901234.summary": "From Keung Shan to Man Cheung Po via Ling Wui Shan.",
+        
+        // Lantau Trail Section 7
+        "trail.a3b4c5d6-e7f8-9012-7890-456789012345.name": "Lantau Trail Section 7",
+        "trail.a3b4c5d6-e7f8-9012-7890-456789012345.summary": "From Man Cheung Po to Tai O via Yi O.",
+        
+        // Lantau Trail Section 8
+        "trail.b4c5d6e7-f8a9-0123-8901-567890123456.name": "Lantau Trail Section 8",
+        "trail.b4c5d6e7-f8a9-0123-8901-567890123456.summary": "From Tai O to Ng Yat Kok via Tai O Road.",
+        
+        // Lantau Trail Section 9
+        "trail.c5d6e7f8-a9b0-1234-9012-678901234567.name": "Lantau Trail Section 9",
+        "trail.c5d6e7f8-a9b0-1234-9012-678901234567.summary": "From Ng Yat Kok to Shui Hau via Fan Lau.",
+        
+        // Lantau Trail Section 10
+        "trail.d6e7f8a9-b0c1-2345-0123-789012345678.name": "Lantau Trail Section 10",
+        "trail.d6e7f8a9-b0c1-2345-0123-789012345678.summary": "From Shui Hau to Shek Pik via Kau Ling Chung.",
+        
+        // Lantau Trail Section 11
+        "trail.e7f8a9b0-c1d2-3456-1234-890123456789.name": "Lantau Trail Section 11",
+        "trail.e7f8a9b0-c1d2-3456-1234-890123456789.summary": "From Shek Pik to Shui Hau via Shek Pik Reservoir.",
+        
+        // Lantau Trail Section 12
+        "trail.f8a9b0c1-d2e3-4567-2345-901234567890.name": "Lantau Trail Section 12",
+        "trail.f8a9b0c1-d2e3-4567-2345-901234567890.summary": "From Shui Hau to Mui Wo via Pui O and Chi Ma Wan, completing the Lantau Trail.",
+        
         // Hong Kong Trail Section 1
         "trail.d0e1f2a3-b4c5-6789-3456-012345678901.name": "Hong Kong Trail Section 1",
         "trail.d0e1f2a3-b4c5-6789-3456-012345678901.summary": "From The Peak to Pok Fu Lam Reservoir via Lugard Road and Harlech Road.",
         
+        // Hong Kong Trail Section 2
+        "trail.f4a5b6c7-d8e9-0123-def0-456789012346.name": "Hong Kong Trail Section 2",
+        "trail.f4a5b6c7-d8e9-0123-def0-456789012346.summary": "From Pok Fu Lam Reservoir to Peel Rise via Lady Clementi's Ride.",
+        
+        // Hong Kong Trail Section 3
+        "trail.a5b6c7d8-e9f0-1234-ef01-567890123456.name": "Hong Kong Trail Section 3",
+        "trail.a5b6c7d8-e9f0-1234-ef01-567890123456.summary": "From Peel Rise to Wan Chai Gap via Middle Gap and Black's Link.",
+        
         // Hong Kong Trail Section 4
         "trail.e1f2a3b4-c5d6-7890-4567-123456789012.name": "Hong Kong Trail Section 4",
         "trail.e1f2a3b4-c5d6-7890-4567-123456789012.summary": "From Wan Chai Gap to Wong Nai Chung Gap via Black's Link and Jardine's Lookout.",
+        
+        // Hong Kong Trail Section 5
+        "trail.b6c7d8e9-f0a1-2345-f012-678901234567.name": "Hong Kong Trail Section 5",
+        "trail.b6c7d8e9-f0a1-2345-f012-678901234567.summary": "From Wong Nai Chung Gap to Mount Parker Road via Tai Tam Reservoir.",
+        
+        // Hong Kong Trail Section 6
+        "trail.c7d8e9f0-a1b2-3456-0123-789012345678.name": "Hong Kong Trail Section 6",
+        "trail.c7d8e9f0-a1b2-3456-0123-789012345678.summary": "From Mount Parker Road to Tai Tam Road via Tai Fung Au.",
+        
+        // Hong Kong Trail Section 7
+        "trail.d8e9f0a1-b2c3-4567-1234-890123456789.name": "Hong Kong Trail Section 7",
+        "trail.d8e9f0a1-b2c3-4567-1234-890123456789.summary": "From Tai Tam Road to To Tei Wan via Tai Tam Reservoir and Dragon's Back start.",
+        
+        // Hong Kong Trail Section 8
+        "trail.e9f0a1b2-c3d4-5678-2345-901234567890.name": "Hong Kong Trail Section 8",
+        "trail.e9f0a1b2-c3d4-5678-2345-901234567890.summary": "From To Tei Wan to Big Wave Bay via Dragon's Back and Shek O Peak, completing the Hong Kong Trail.",
         
         // Lion Rock
         "trail.f2a3b4c5-d6e7-8901-5678-234567890123.name": "Lion Rock",
@@ -841,6 +935,7 @@ struct LocalizedStrings {
         "mtr.arriving": "Arriving",
         "mtr.minutes": "min",
         "mtr.error.load.failed": "Unable to load train schedule",
+        "mtr.no.station.found": "Unable to identify MTR station from transportation information",
         
         // Transport
         "transport.title": "Transport",
@@ -1197,9 +1292,11 @@ struct LocalizedStrings {
         "trail.district.tai.mo.shan": "大帽山",
         "trail.district.kowloon": "九龍",
         "trail.district.lantau": "大嶼山",
+        "trail.district.lantau.island": "大嶼山",
         "trail.district.tai.po": "大埔",
         "trail.district.new.territories.central": "新界中部",
         "trail.district.new.territories.northwest": "新界西北",
+        "trail.district.tuen.mun": "屯門",
         
         // Trail Names and Summaries (MacLehose Section 4)
         "trail.0c8c0a67-9b84-4d4e-8f1c-2b7b4e3eb7a0.name": "麥理浩徑第四段",
@@ -1238,8 +1335,8 @@ struct LocalizedStrings {
         "trail.d4e5f6a7-b8c9-0123-def0-456789012345.summary": "從基維爾營到大埔公路，途經獅子山和筆架山。",
         
         // MacLehose Section 6
-        "trail.e4f5a6b7-c8d9-0123-ef01-456789012345.name": "麥理浩徑第六段",
-        "trail.e4f5a6b7-c8d9-0123-ef01-456789012345.summary": "從大埔公路到城門水塘。",
+        "trail.f1a2b3c4-d5e6-7890-abcd-ef1234567890.name": "麥理浩徑第六段",
+        "trail.f1a2b3c4-d5e6-7890-abcd-ef1234567890.summary": "從大埔公路到城門水塘。",
         
         // MacLehose Section 7
         "trail.f2a3b4c5-d6e7-8901-bcde-f23456789012.name": "麥理浩徑第七段",
@@ -1253,6 +1350,10 @@ struct LocalizedStrings {
         "trail.f3a4b5c6-d7e8-9012-cdef-345678901234.name": "麥理浩徑第九段",
         "trail.f3a4b5c6-d7e8-9012-cdef-345678901234.summary": "從荃錦公路出發，進入大欖郊野公園的植林區，往田夫仔進發。",
         
+        // MacLehose Section 10
+        "trail.f4a5b6c7-d8e9-0123-def0-456789012345.name": "麥理浩徑第十段",
+        "trail.f4a5b6c7-d8e9-0123-def0-456789012345.summary": "從田夫仔出發，穿越土地較貧瘠的新界西部，以屯門為終站。",
+        
         // Wilson Trail Section 1
         "trail.f6a7b8c9-d0e1-2345-f012-678901234567.name": "衛奕信徑第一段",
         "trail.f6a7b8c9-d0e1-2345-f012-678901234567.summary": "從黃泥涌峽道到紫羅蘭山，途經紫崗橋和孖崗山。",
@@ -1260,6 +1361,34 @@ struct LocalizedStrings {
         // Wilson Trail Section 2
         "trail.a7b8c9d0-e1f2-3456-0123-789012345678.name": "衛奕信徑第二段",
         "trail.a7b8c9d0-e1f2-3456-0123-789012345678.summary": "從紫羅蘭山到鰂魚涌，途經畢拿山和渣甸山。",
+        
+        // Wilson Trail Section 3
+        "trail.b9c0d1e2-f3a4-4567-2345-901234567890.name": "衛奕信徑第三段",
+        "trail.b9c0d1e2-f3a4-4567-2345-901234567890.summary": "從鰂魚涌到沙田坳，途經畢架山和獅子山。",
+        
+        // Wilson Trail Section 4
+        "trail.c0d1e2f3-a4b5-5678-3456-012345678901.name": "衛奕信徑第四段",
+        "trail.c0d1e2f3-a4b5-5678-3456-012345678901.summary": "從沙田坳到基維爾營，途經飛鵝山。",
+        
+        // Wilson Trail Section 5
+        "trail.d1e2f3a4-b5c6-6789-4567-123456789012.name": "衛奕信徑第五段",
+        "trail.d1e2f3a4-b5c6-6789-4567-123456789012.summary": "從基維爾營到沙田坳，途經大老山。",
+        
+        // Wilson Trail Section 6
+        "trail.e2f3a4b5-c6d7-7890-5678-234567890123.name": "衛奕信徑第六段",
+        "trail.e2f3a4b5-c6d7-7890-5678-234567890123.summary": "從沙田坳到城門水塘，途經針山。",
+        
+        // Wilson Trail Section 7
+        "trail.f3a4b5c6-d7e8-8901-6789-345678901234.name": "衛奕信徑第七段",
+        "trail.f3a4b5c6-d7e8-8901-6789-345678901234.summary": "從城門水塘到元墩下，途經草山和鉛礦坳。",
+        
+        // Wilson Trail Section 8
+        "trail.a4b5c6d7-e8f9-9012-7890-456789012345.name": "衛奕信徑第八段",
+        "trail.a4b5c6d7-e8f9-9012-7890-456789012345.summary": "從元墩下到南涌，途經八仙嶺。",
+        
+        // Lantau Trail Section 1
+        "trail.a8b9c0d1-e2f3-4567-0123-789012345678.name": "鳳凰徑第一段",
+        "trail.a8b9c0d1-e2f3-4567-0123-789012345678.summary": "從梅窩到南山，途經銀礦灣。",
         
         // Lantau Trail Section 2
         "trail.b8c9d0e1-f2a3-4567-1234-890123456789.name": "鳳凰徑第二段",
@@ -1269,13 +1398,73 @@ struct LocalizedStrings {
         "trail.c9d0e1f2-a3b4-5678-2345-901234567890.name": "鳳凰徑第三段",
         "trail.c9d0e1f2-a3b4-5678-2345-901234567890.summary": "從伯公坳到昂坪，途經香港第二高峰大東山。",
         
+        // Lantau Trail Section 4
+        "trail.d0e1f2a3-b4c5-6789-4567-123456789012.name": "鳳凰徑第四段",
+        "trail.d0e1f2a3-b4c5-6789-4567-123456789012.summary": "從昂坪到深屈道，途經心經簡林。",
+        
+        // Lantau Trail Section 5
+        "trail.e1f2a3b4-c5d6-7890-5678-234567890123.name": "鳳凰徑第五段",
+        "trail.e1f2a3b4-c5d6-7890-5678-234567890123.summary": "從深屈道到羗山，途經羗山道。",
+        
+        // Lantau Trail Section 6
+        "trail.f2a3b4c5-d6e7-8901-6789-345678901234.name": "鳳凰徑第六段",
+        "trail.f2a3b4c5-d6e7-8901-6789-345678901234.summary": "從羗山到萬丈布，途經靈會山。",
+        
+        // Lantau Trail Section 7
+        "trail.a3b4c5d6-e7f8-9012-7890-456789012345.name": "鳳凰徑第七段",
+        "trail.a3b4c5d6-e7f8-9012-7890-456789012345.summary": "從萬丈布到大澳，途經二澳。",
+        
+        // Lantau Trail Section 8
+        "trail.b4c5d6e7-f8a9-0123-8901-567890123456.name": "鳳凰徑第八段",
+        "trail.b4c5d6e7-f8a9-0123-8901-567890123456.summary": "從大澳到牙鷹角，途經大澳道。",
+        
+        // Lantau Trail Section 9
+        "trail.c5d6e7f8-a9b0-1234-9012-678901234567.name": "鳳凰徑第九段",
+        "trail.c5d6e7f8-a9b0-1234-9012-678901234567.summary": "從牙鷹角到水口，途經分流。",
+        
+        // Lantau Trail Section 10
+        "trail.d6e7f8a9-b0c1-2345-0123-789012345678.name": "鳳凰徑第十段",
+        "trail.d6e7f8a9-b0c1-2345-0123-789012345678.summary": "從水口到石壁，途經狗嶺涌。",
+        
+        // Lantau Trail Section 11
+        "trail.e7f8a9b0-c1d2-3456-1234-890123456789.name": "鳳凰徑第十一段",
+        "trail.e7f8a9b0-c1d2-3456-1234-890123456789.summary": "從石壁到水口，途經石壁水塘。",
+        
+        // Lantau Trail Section 12
+        "trail.f8a9b0c1-d2e3-4567-2345-901234567890.name": "鳳凰徑第十二段",
+        "trail.f8a9b0c1-d2e3-4567-2345-901234567890.summary": "從水口到梅窩，途經貝澳和芝麻灣，完成鳳凰徑。",
+        
         // Hong Kong Trail Section 1
         "trail.d0e1f2a3-b4c5-6789-3456-012345678901.name": "港島徑第一段",
         "trail.d0e1f2a3-b4c5-6789-3456-012345678901.summary": "從山頂到薄扶林水塘，途經盧吉道和夏力道。",
         
+        // Hong Kong Trail Section 2
+        "trail.f4a5b6c7-d8e9-0123-def0-456789012346.name": "港島徑第二段",
+        "trail.f4a5b6c7-d8e9-0123-def0-456789012346.summary": "從薄扶林水塘到貝璐道，途經金夫人徑。",
+        
+        // Hong Kong Trail Section 3
+        "trail.a5b6c7d8-e9f0-1234-ef01-567890123456.name": "港島徑第三段",
+        "trail.a5b6c7d8-e9f0-1234-ef01-567890123456.summary": "從貝璐道到灣仔峽，途經中峽和布力徑。",
+        
         // Hong Kong Trail Section 4
         "trail.e1f2a3b4-c5d6-7890-4567-123456789012.name": "港島徑第四段",
         "trail.e1f2a3b4-c5d6-7890-4567-123456789012.summary": "從灣仔峽到黃泥涌峽，途經布力徑和渣甸山。",
+        
+        // Hong Kong Trail Section 5
+        "trail.b6c7d8e9-f0a1-2345-f012-678901234567.name": "港島徑第五段",
+        "trail.b6c7d8e9-f0a1-2345-f012-678901234567.summary": "從黃泥涌峽到柏架山道，途經大潭水塘。",
+        
+        // Hong Kong Trail Section 6
+        "trail.c7d8e9f0-a1b2-3456-0123-789012345678.name": "港島徑第六段",
+        "trail.c7d8e9f0-a1b2-3456-0123-789012345678.summary": "從柏架山道到大潭道，途經大風坳。",
+        
+        // Hong Kong Trail Section 7
+        "trail.d8e9f0a1-b2c3-4567-1234-890123456789.name": "港島徑第七段",
+        "trail.d8e9f0a1-b2c3-4567-1234-890123456789.summary": "從大潭道到土地灣，途經大潭水塘和龍脊起點。",
+        
+        // Hong Kong Trail Section 8
+        "trail.e9f0a1b2-c3d4-5678-2345-901234567890.name": "港島徑第八段",
+        "trail.e9f0a1b2-c3d4-5678-2345-901234567890.summary": "從土地灣到大浪灣，途經龍脊和打爛埕頂山，完成港島徑。",
         
         // Lion Rock
         "trail.f2a3b4c5-d6e7-8901-5678-234567890123.name": "獅子山",
@@ -1695,6 +1884,7 @@ struct LocalizedStrings {
         "mtr.arriving": "即將到站",
         "mtr.minutes": "分鐘",
         "mtr.error.load.failed": "無法載入列車時間表",
+        "mtr.no.station.found": "未能從交通信息中識別港鐵站點",
         
         // Transport
         "transport.title": "交通查詢",

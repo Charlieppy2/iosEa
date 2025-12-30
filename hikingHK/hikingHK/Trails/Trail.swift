@@ -158,6 +158,10 @@ extension Trail {
     func localizedName(languageManager: LanguageManager) -> String {
         let key = "trail.\(id.uuidString.lowercased()).name"
         let localized = languageManager.localizedString(for: key)
+        // Debug: Print if localization fails
+        if localized == key {
+            print("⚠️ Trail localization failed for key: \(key), trail name: \(name)")
+        }
         // If no localization found, return original name
         return localized != key ? localized : name
     }
@@ -682,7 +686,233 @@ extension Trail {
             mapCenter: CLLocationCoordinate2D(latitude: 22.280, longitude: 114.220),
             mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
         ),
+        Trail(
+            id: UUID(uuidString: "B9C0D1E2-F3A4-4567-2345-901234567890")!,
+            name: "Wilson Trail Section 3",
+            district: "Kowloon",
+            difficulty: .moderate,
+            lengthKm: 9.3,
+            elevationGain: 500,
+            estimatedDurationMinutes: 240,
+            summary: "從鰂魚涌到沙田坳，途經畢架山和獅子山。",
+            highlights: ["畢架山", "獅子山", "九龍景觀"],
+            facilities: [.init(name: "涼亭", systemImage: "house"), .init(name: "洗手間", systemImage: "toilet")],
+            transportation: "從鰂魚涌乘港鐵；從沙田坳乘巴士 1/7M",
+            startPointTransport: "從鰂魚涌乘港鐵",
+            endPointTransport: "從沙田坳乘巴士 1/7M 返回",
+            supplyPoints: [
+                "沿途無補給，需自備食水",
+                "沙田坳有補給點"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "沙田坳可乘巴士離開"
+            ],
+            notes: "此路段需攀越畢架山和獅子山，較為費力。可欣賞九龍的城市景觀。部分路段較為暴露，需注意防曬。建議帶備充足食水和體力。",
+            imageName: "wilson3",
+            checkpoints: [
+                .init(title: "鰂魚涌", subtitle: "起點", distanceKm: 0, altitude: 50),
+                .init(title: "畢架山", subtitle: "山峰", distanceKm: 4.5, altitude: 457),
+                .init(title: "獅子山", subtitle: "山峰", distanceKm: 7.0, altitude: 495),
+                .init(title: "沙田坳", subtitle: "終點", distanceKm: 9.3, altitude: 200)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.320, longitude: 114.200),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        ),
+        Trail(
+            id: UUID(uuidString: "C0D1E2F3-A4B5-5678-3456-012345678901")!,
+            name: "Wilson Trail Section 4",
+            district: "Sai Kung",
+            difficulty: .challenging,
+            lengthKm: 8.0,
+            elevationGain: 600,
+            estimatedDurationMinutes: 240,
+            summary: "從沙田坳到基維爾營，途經飛鵝山。",
+            highlights: ["飛鵝山", "基維爾營", "西貢景觀"],
+            facilities: [.init(name: "營地", systemImage: "tent")],
+            transportation: "從沙田坳乘巴士 1/7M；從基維爾營需步行或乘車",
+            startPointTransport: "從沙田坳乘巴士 1/7M",
+            endPointTransport: "從基維爾營需步行或乘車離開",
+            supplyPoints: [
+                "沿途無補給，需自備食水",
+                "基維爾營有補給點"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "基維爾營可繼續第五段或離開"
+            ],
+            notes: "此路段需攀越飛鵝山，較為困難。部分路段較為陡峭，需注意安全。建議帶備充足食水和體力。基維爾營為營地，可在此休息。",
+            imageName: "wilson4",
+            checkpoints: [
+                .init(title: "沙田坳", subtitle: "起點", distanceKm: 0, altitude: 200),
+                .init(title: "飛鵝山", subtitle: "山峰", distanceKm: 4.0, altitude: 602),
+                .init(title: "基維爾營", subtitle: "終點", distanceKm: 8.0, altitude: 400)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.330, longitude: 114.230),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        ),
+        Trail(
+            id: UUID(uuidString: "D1E2F3A4-B5C6-6789-4567-123456789012")!,
+            name: "Wilson Trail Section 5",
+            district: "Sai Kung",
+            difficulty: .moderate,
+            lengthKm: 7.4,
+            elevationGain: 400,
+            estimatedDurationMinutes: 210,
+            summary: "從基維爾營到沙田坳，途經大老山。",
+            highlights: ["大老山", "沙田坳", "新界景觀"],
+            facilities: [.init(name: "涼亭", systemImage: "house")],
+            transportation: "從基維爾營需步行或乘車；從沙田坳乘巴士 1/7M",
+            startPointTransport: "從基維爾營開始（需從第四段終點繼續）",
+            endPointTransport: "從沙田坳乘巴士 1/7M 返回",
+            supplyPoints: [
+                "沿途無補給，需自備食水",
+                "沙田坳有補給點"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "沙田坳可乘巴士離開"
+            ],
+            notes: "此路段需攀越大老山，較為費力。可欣賞新界的景觀。部分路段較為暴露，需注意防曬。建議帶備充足食水。",
+            imageName: "wilson5",
+            checkpoints: [
+                .init(title: "基維爾營", subtitle: "起點", distanceKm: 0, altitude: 400),
+                .init(title: "大老山", subtitle: "山峰", distanceKm: 3.5, altitude: 583),
+                .init(title: "沙田坳", subtitle: "終點", distanceKm: 7.4, altitude: 200)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.350, longitude: 114.200),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        ),
+        Trail(
+            id: UUID(uuidString: "E2F3A4B5-C6D7-7890-5678-234567890123")!,
+            name: "Wilson Trail Section 6",
+            district: "Sai Kung",
+            difficulty: .challenging,
+            lengthKm: 5.3,
+            elevationGain: 550,
+            estimatedDurationMinutes: 180,
+            summary: "從沙田坳到城門水塘，途經針山。",
+            highlights: ["針山", "城門水塘", "水塘景觀"],
+            facilities: [.init(name: "洗手間", systemImage: "toilet"), .init(name: "燒烤場", systemImage: "flame")],
+            transportation: "從沙田坳乘巴士 1/7M；從城門水塘乘巴士",
+            startPointTransport: "從沙田坳乘巴士 1/7M",
+            endPointTransport: "從城門水塘乘巴士返回",
+            supplyPoints: [
+                "沿途無補給，需自備食水",
+                "城門水塘有補給點"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "城門水塘可乘巴士離開"
+            ],
+            notes: "此路段需急攀針山，較為困難。部分路段較為陡峭，需注意安全。建議帶備充足食水和體力。城門水塘有燒烤場和洗手間。",
+            imageName: "wilson6",
+            checkpoints: [
+                .init(title: "沙田坳", subtitle: "起點", distanceKm: 0, altitude: 200),
+                .init(title: "針山", subtitle: "山峰", distanceKm: 2.5, altitude: 532),
+                .init(title: "城門水塘", subtitle: "終點", distanceKm: 5.3, altitude: 200)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.380, longitude: 114.150),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+        ),
+        Trail(
+            id: UUID(uuidString: "F3A4B5C6-D7E8-8901-6789-345678901234")!,
+            name: "Wilson Trail Section 7",
+            district: "New Territories Central",
+            difficulty: .moderate,
+            lengthKm: 10.2,
+            elevationGain: 450,
+            estimatedDurationMinutes: 270,
+            summary: "從城門水塘到元墩下，途經草山和鉛礦坳。",
+            highlights: ["草山", "鉛礦坳", "新界中部"],
+            facilities: [.init(name: "涼亭", systemImage: "house")],
+            transportation: "從城門水塘乘巴士；從元墩下乘巴士 64K",
+            startPointTransport: "從城門水塘乘巴士",
+            endPointTransport: "從元墩下乘巴士 64K 返回",
+            supplyPoints: [
+                "沿途無補給，需自備食水",
+                "元墩下有補給點"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "元墩下可乘巴士離開"
+            ],
+            notes: "此路段需攀越草山，較為費力。可欣賞新界中部的景觀。部分路段較為暴露，需注意防曬。建議帶備充足食水。沿途有涼亭可休息。",
+            imageName: "wilson7",
+            checkpoints: [
+                .init(title: "城門水塘", subtitle: "起點", distanceKm: 0, altitude: 200),
+                .init(title: "草山", subtitle: "山峰", distanceKm: 4.0, altitude: 647),
+                .init(title: "鉛礦坳", subtitle: "中途點", distanceKm: 6.5, altitude: 400),
+                .init(title: "元墩下", subtitle: "終點", distanceKm: 10.2, altitude: 150)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.400, longitude: 114.130),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.12)
+        ),
+        Trail(
+            id: UUID(uuidString: "A4B5C6D7-E8F9-9012-7890-456789012345")!,
+            name: "Wilson Trail Section 8",
+            district: "New Territories Northeast",
+            difficulty: .moderate,
+            lengthKm: 9.0,
+            elevationGain: 400,
+            estimatedDurationMinutes: 240,
+            summary: "從元墩下到南涌，途經八仙嶺。",
+            highlights: ["八仙嶺", "南涌", "新界東北"],
+            facilities: [.init(name: "涼亭", systemImage: "house")],
+            transportation: "從元墩下乘巴士 64K；從南涌乘巴士 78K",
+            startPointTransport: "從元墩下乘巴士 64K",
+            endPointTransport: "從南涌乘巴士 78K 返回",
+            supplyPoints: [
+                "沿途無補給，需自備食水",
+                "南涌有補給點"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "南涌可乘巴士離開"
+            ],
+            notes: "此路段需攀越八仙嶺，較為費力。可欣賞新界東北的景觀。部分路段較為暴露，需注意防曬。建議帶備充足食水。南涌為衛奕信徑終點。",
+            imageName: "wilson8",
+            checkpoints: [
+                .init(title: "元墩下", subtitle: "起點", distanceKm: 0, altitude: 150),
+                .init(title: "八仙嶺", subtitle: "山峰", distanceKm: 4.5, altitude: 550),
+                .init(title: "南涌", subtitle: "終點", distanceKm: 9.0, altitude: 50)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.480, longitude: 114.250),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.12)
+        ),
         // Lantau Trail sections
+        Trail(
+            id: UUID(uuidString: "A8B9C0D1-E2F3-4567-0123-789012345678")!,
+            name: "Lantau Trail Section 1",
+            district: "Lantau Island",
+            difficulty: .easy,
+            lengthKm: 2.5,
+            elevationGain: 100,
+            estimatedDurationMinutes: 60,
+            summary: "從梅窩到南山，途經銀礦灣。",
+            highlights: ["梅窩", "銀礦灣", "鳳凰徑起點"],
+            facilities: [.init(name: "洗手間", systemImage: "toilet")],
+            transportation: "從中環乘渡輪到梅窩；從南山乘巴士 3M/11",
+            startPointTransport: "從中環乘渡輪到梅窩",
+            endPointTransport: "從南山乘巴士 3M/11 返回",
+            supplyPoints: [
+                "梅窩有補給點和餐廳",
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "南山可乘巴士離開"
+            ],
+            notes: "此路段為鳳凰徑第一段，較為輕鬆。可欣賞梅窩和銀礦灣的景色。適合家庭遊覽。梅窩有補給點和餐廳。",
+            imageName: "lantau1",
+            checkpoints: [
+                .init(title: "梅窩", subtitle: "起點", distanceKm: 0, altitude: 10),
+                .init(title: "銀礦灣", subtitle: "中途點", distanceKm: 1.2, altitude: 5),
+                .init(title: "南山", subtitle: "終點", distanceKm: 2.5, altitude: 200)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.265, longitude: 113.985),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.06, longitudeDelta: 0.06)
+        ),
         Trail(
             id: UUID(uuidString: "B8C9D0E1-F2A3-4567-1234-890123456789")!,
             name: "Lantau Trail Section 2",
@@ -747,6 +977,289 @@ extension Trail {
             mapCenter: CLLocationCoordinate2D(latitude: 22.270, longitude: 113.900),
             mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
         ),
+        Trail(
+            id: UUID(uuidString: "D0E1F2A3-B4C5-6789-4567-123456789012")!,
+            name: "Lantau Trail Section 4",
+            district: "Lantau Island",
+            difficulty: .moderate,
+            lengthKm: 4.0,
+            elevationGain: 300,
+            estimatedDurationMinutes: 150,
+            summary: "從昂坪到深屈道，途經心經簡林。",
+            highlights: ["心經簡林", "深屈道", "大佛景色"],
+            facilities: [.init(name: "昂坪村", systemImage: "building")],
+            transportation: "從昂坪乘纜車或巴士；從深屈道乘巴士 1/2",
+            startPointTransport: "從昂坪乘纜車或巴士",
+            endPointTransport: "從深屈道乘巴士 1/2 返回",
+            supplyPoints: [
+                "昂坪有補給點和餐廳",
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "深屈道可乘巴士離開"
+            ],
+            notes: "此路段較為輕鬆，主要沿山徑行走。可欣賞心經簡林和大佛的景色。適合家庭遊覽。昂坪有補給點和餐廳。",
+            imageName: "lantau4",
+            checkpoints: [
+                .init(title: "昂坪", subtitle: "起點", distanceKm: 0, altitude: 460),
+                .init(title: "心經簡林", subtitle: "中途點", distanceKm: 1.5, altitude: 400),
+                .init(title: "深屈道", subtitle: "終點", distanceKm: 4.0, altitude: 200)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.260, longitude: 113.900),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.06, longitudeDelta: 0.06)
+        ),
+        Trail(
+            id: UUID(uuidString: "E1F2A3B4-C5D6-7890-5678-234567890123")!,
+            name: "Lantau Trail Section 5",
+            district: "Lantau Island",
+            difficulty: .moderate,
+            lengthKm: 7.5,
+            elevationGain: 400,
+            estimatedDurationMinutes: 240,
+            summary: "從深屈道到羗山，途經羗山道。",
+            highlights: ["羗山道", "羗山", "大嶼山景觀"],
+            facilities: [.init(name: "涼亭", systemImage: "house")],
+            transportation: "從深屈道乘巴士 1/2；從羗山需步行或乘車",
+            startPointTransport: "從深屈道乘巴士 1/2",
+            endPointTransport: "從羗山需步行或乘車離開",
+            supplyPoints: [
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "羗山可繼續第六段或離開"
+            ],
+            notes: "此路段需攀越羗山，較為費力。可欣賞大嶼山的景觀。部分路段較為暴露，需注意防曬。建議帶備充足食水。沿途有涼亭可休息。",
+            imageName: "lantau5",
+            checkpoints: [
+                .init(title: "深屈道", subtitle: "起點", distanceKm: 0, altitude: 200),
+                .init(title: "羗山", subtitle: "終點", distanceKm: 7.5, altitude: 459)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.250, longitude: 113.920),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        ),
+        Trail(
+            id: UUID(uuidString: "F2A3B4C5-D6E7-8901-6789-345678901234")!,
+            name: "Lantau Trail Section 6",
+            district: "Lantau Island",
+            difficulty: .moderate,
+            lengthKm: 4.5,
+            elevationGain: 300,
+            estimatedDurationMinutes: 150,
+            summary: "從羗山到萬丈布，途經靈會山。",
+            highlights: ["靈會山", "萬丈布", "大嶼山景觀"],
+            facilities: [.init(name: "涼亭", systemImage: "house")],
+            transportation: "從羗山需步行或乘車；從萬丈布需步行或乘車",
+            startPointTransport: "從羗山開始（需從第五段終點繼續）",
+            endPointTransport: "從萬丈布需步行或乘車離開",
+            supplyPoints: [
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "萬丈布可繼續第七段或離開"
+            ],
+            notes: "此路段需攀越靈會山，較為費力。可欣賞大嶼山的景觀。部分路段較為暴露，需注意防曬。建議帶備充足食水。沿途有涼亭可休息。",
+            imageName: "lantau6",
+            checkpoints: [
+                .init(title: "羗山", subtitle: "起點", distanceKm: 0, altitude: 459),
+                .init(title: "靈會山", subtitle: "山峰", distanceKm: 2.0, altitude: 490),
+                .init(title: "萬丈布", subtitle: "終點", distanceKm: 4.5, altitude: 300)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.240, longitude: 113.940),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+        ),
+        Trail(
+            id: UUID(uuidString: "A3B4C5D6-E7F8-9012-7890-456789012345")!,
+            name: "Lantau Trail Section 7",
+            district: "Lantau Island",
+            difficulty: .moderate,
+            lengthKm: 6.5,
+            elevationGain: 350,
+            estimatedDurationMinutes: 210,
+            summary: "從萬丈布到大澳，途經二澳。",
+            highlights: ["二澳", "大澳", "漁村景色"],
+            facilities: [.init(name: "大澳村", systemImage: "building")],
+            transportation: "從萬丈布需步行或乘車；從大澳乘巴士 11",
+            startPointTransport: "從萬丈布開始（需從第六段終點繼續）",
+            endPointTransport: "從大澳乘巴士 11 返回",
+            supplyPoints: [
+                "大澳有補給點和餐廳",
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "大澳可乘巴士離開"
+            ],
+            notes: "此路段較為輕鬆，主要沿山徑行走。可欣賞二澳和大澳漁村的景色。適合家庭遊覽。大澳有補給點和餐廳。",
+            imageName: "lantau7",
+            checkpoints: [
+                .init(title: "萬丈布", subtitle: "起點", distanceKm: 0, altitude: 300),
+                .init(title: "二澳", subtitle: "中途點", distanceKm: 3.0, altitude: 100),
+                .init(title: "大澳", subtitle: "終點", distanceKm: 6.5, altitude: 5)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.250, longitude: 113.860),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        ),
+        Trail(
+            id: UUID(uuidString: "B4C5D6E7-F8A9-0123-8901-567890123456")!,
+            name: "Lantau Trail Section 8",
+            district: "Lantau Island",
+            difficulty: .easy,
+            lengthKm: 1.0,
+            elevationGain: 50,
+            estimatedDurationMinutes: 30,
+            summary: "從大澳到牙鷹角，途經大澳道。",
+            highlights: ["大澳", "牙鷹角", "海岸景色"],
+            facilities: [.init(name: "大澳村", systemImage: "building")],
+            transportation: "從大澳乘巴士 11；從牙鷹角需步行或乘車",
+            startPointTransport: "從大澳乘巴士 11",
+            endPointTransport: "從牙鷹角需步行或乘車離開",
+            supplyPoints: [
+                "大澳有補給點和餐廳"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "牙鷹角可繼續第九段或離開"
+            ],
+            notes: "此路段為鳳凰徑最短的一段，較為輕鬆。可欣賞大澳漁村和海岸的景色。適合家庭遊覽。大澳有補給點和餐廳。",
+            imageName: "lantau8",
+            checkpoints: [
+                .init(title: "大澳", subtitle: "起點", distanceKm: 0, altitude: 5),
+                .init(title: "牙鷹角", subtitle: "終點", distanceKm: 1.0, altitude: 10)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.250, longitude: 113.850),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.04, longitudeDelta: 0.04)
+        ),
+        Trail(
+            id: UUID(uuidString: "C5D6E7F8-A9B0-1234-9012-678901234567")!,
+            name: "Lantau Trail Section 9",
+            district: "Lantau Island",
+            difficulty: .moderate,
+            lengthKm: 6.5,
+            elevationGain: 400,
+            estimatedDurationMinutes: 210,
+            summary: "從牙鷹角到水口，途經分流。",
+            highlights: ["分流", "水口", "海岸景色"],
+            facilities: [.init(name: "涼亭", systemImage: "house")],
+            transportation: "從牙鷹角需步行或乘車；從水口需步行或乘車",
+            startPointTransport: "從牙鷹角開始（需從第八段終點繼續）",
+            endPointTransport: "從水口需步行或乘車離開",
+            supplyPoints: [
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "水口可繼續第十段或離開"
+            ],
+            notes: "此路段需攀越分流，較為費力。可欣賞大嶼山南部的海岸景色。部分路段較為暴露，需注意防曬。建議帶備充足食水。沿途有涼亭可休息。",
+            imageName: "lantau9",
+            checkpoints: [
+                .init(title: "牙鷹角", subtitle: "起點", distanceKm: 0, altitude: 10),
+                .init(title: "分流", subtitle: "中途點", distanceKm: 3.0, altitude: 200),
+                .init(title: "水口", subtitle: "終點", distanceKm: 6.5, altitude: 50)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.220, longitude: 113.850),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        ),
+        Trail(
+            id: UUID(uuidString: "D6E7F8A9-B0C1-2345-0123-789012345678")!,
+            name: "Lantau Trail Section 10",
+            district: "Lantau Island",
+            difficulty: .moderate,
+            lengthKm: 6.5,
+            elevationGain: 350,
+            estimatedDurationMinutes: 210,
+            summary: "從水口到石壁，途經狗嶺涌。",
+            highlights: ["狗嶺涌", "石壁", "水塘景色"],
+            facilities: [.init(name: "洗手間", systemImage: "toilet")],
+            transportation: "從水口需步行或乘車；從石壁乘巴士 1/2/11",
+            startPointTransport: "從水口開始（需從第九段終點繼續）",
+            endPointTransport: "從石壁乘巴士 1/2/11 返回",
+            supplyPoints: [
+                "石壁有補給點",
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "石壁可乘巴士離開"
+            ],
+            notes: "此路段較為輕鬆，主要沿山徑行走。可欣賞狗嶺涌和石壁水塘的景色。適合家庭遊覽。石壁有補給點。",
+            imageName: "lantau10",
+            checkpoints: [
+                .init(title: "水口", subtitle: "起點", distanceKm: 0, altitude: 50),
+                .init(title: "狗嶺涌", subtitle: "中途點", distanceKm: 3.0, altitude: 150),
+                .init(title: "石壁", subtitle: "終點", distanceKm: 6.5, altitude: 100)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.230, longitude: 113.880),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        ),
+        Trail(
+            id: UUID(uuidString: "E7F8A9B0-C1D2-3456-1234-890123456789")!,
+            name: "Lantau Trail Section 11",
+            district: "Lantau Island",
+            difficulty: .moderate,
+            lengthKm: 4.5,
+            elevationGain: 300,
+            estimatedDurationMinutes: 150,
+            summary: "從石壁到水口，途經石壁水塘。",
+            highlights: ["石壁水塘", "水口", "水塘景色"],
+            facilities: [.init(name: "洗手間", systemImage: "toilet")],
+            transportation: "從石壁乘巴士 1/2/11；從水口需步行或乘車",
+            startPointTransport: "從石壁乘巴士 1/2/11",
+            endPointTransport: "從水口需步行或乘車離開",
+            supplyPoints: [
+                "石壁有補給點",
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "水口可繼續第十二段或離開"
+            ],
+            notes: "此路段較為輕鬆，主要沿水塘行走。可欣賞石壁水塘的景色。適合家庭遊覽。石壁有補給點。沿途有洗手間。",
+            imageName: "lantau11",
+            checkpoints: [
+                .init(title: "石壁", subtitle: "起點", distanceKm: 0, altitude: 100),
+                .init(title: "石壁水塘", subtitle: "水塘", distanceKm: 2.0, altitude: 80),
+                .init(title: "水口", subtitle: "終點", distanceKm: 4.5, altitude: 50)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.230, longitude: 113.900),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+        ),
+        Trail(
+            id: UUID(uuidString: "F8A9B0C1-D2E3-4567-2345-901234567890")!,
+            name: "Lantau Trail Section 12",
+            district: "Lantau Island",
+            difficulty: .easy,
+            lengthKm: 9.0,
+            elevationGain: 200,
+            estimatedDurationMinutes: 240,
+            summary: "從水口到梅窩，途經貝澳和芝麻灣，完成鳳凰徑。",
+            highlights: ["貝澳", "芝麻灣", "梅窩", "鳳凰徑終點"],
+            facilities: [.init(name: "洗手間", systemImage: "toilet")],
+            transportation: "從水口需步行或乘車；從梅窩乘渡輪返回中環",
+            startPointTransport: "從水口開始（需從第十一段終點繼續）",
+            endPointTransport: "從梅窩乘渡輪返回中環",
+            supplyPoints: [
+                "貝澳有補給點",
+                "梅窩有補給點和餐廳"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "梅窩可乘渡輪離開"
+            ],
+            notes: "此路段為鳳凰徑最後一段，較為輕鬆。可欣賞貝澳、芝麻灣和梅窩的景色。適合家庭遊覽。梅窩為鳳凰徑終點，有補給點和餐廳，可在此慶祝完成整條鳳凰徑。",
+            imageName: "lantau12",
+            checkpoints: [
+                .init(title: "水口", subtitle: "起點", distanceKm: 0, altitude: 50),
+                .init(title: "貝澳", subtitle: "中途點", distanceKm: 3.0, altitude: 10),
+                .init(title: "芝麻灣", subtitle: "中途點", distanceKm: 6.0, altitude: 5),
+                .init(title: "梅窩", subtitle: "終點", distanceKm: 9.0, altitude: 10)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.265, longitude: 113.985),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15)
+        ),
         // Hong Kong Trail sections
         Trail(
             id: UUID(uuidString: "D0E1F2A3-B4C5-6789-3456-012345678901")!,
@@ -780,6 +1293,68 @@ extension Trail {
             mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
         ),
         Trail(
+            id: UUID(uuidString: "F4A5B6C7-D8E9-0123-DEF0-456789012346")!,
+            name: "Hong Kong Trail Section 2",
+            district: "Hong Kong Island",
+            difficulty: .easy,
+            lengthKm: 4.5,
+            elevationGain: 150,
+            estimatedDurationMinutes: 120,
+            summary: "從薄扶林水塘到貝璐道，途經金夫人徑。",
+            highlights: ["薄扶林水塘", "金夫人徑", "輕鬆步行"],
+            facilities: [.init(name: "洗手間", systemImage: "toilet")],
+            transportation: "從薄扶林乘巴士 7/71；從貝璐道乘巴士 7/71",
+            startPointTransport: "從薄扶林水塘乘巴士 7/71",
+            endPointTransport: "從貝璐道乘巴士 7/71 返回",
+            supplyPoints: [
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "貝璐道可乘巴士離開"
+            ],
+            notes: "此路段較為輕鬆，主要沿水塘和山徑行走。可欣賞香港島的景色。適合家庭遊覽。",
+            imageName: "hktrail2",
+            checkpoints: [
+                .init(title: "薄扶林水塘", subtitle: "起點", distanceKm: 0, altitude: 200),
+                .init(title: "貝璐道", subtitle: "終點", distanceKm: 4.5, altitude: 150)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.260, longitude: 114.140),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.06, longitudeDelta: 0.06)
+        ),
+        Trail(
+            id: UUID(uuidString: "A5B6C7D8-E9F0-1234-EF01-567890123456")!,
+            name: "Hong Kong Trail Section 3",
+            district: "Hong Kong Island",
+            difficulty: .moderate,
+            lengthKm: 6.5,
+            elevationGain: 300,
+            estimatedDurationMinutes: 180,
+            summary: "從貝璐道到灣仔峽，途經中峽和布力徑。",
+            highlights: ["中峽", "布力徑", "城市景色"],
+            facilities: [.init(name: "涼亭", systemImage: "house")],
+            transportation: "從貝璐道乘巴士 7/71；從灣仔峽乘巴士 15",
+            startPointTransport: "從貝璐道乘巴士 7/71",
+            endPointTransport: "從灣仔峽乘巴士 15 返回",
+            supplyPoints: [
+                "沿途無補給，需自備食水",
+                "灣仔峽有補給點"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "灣仔峽可乘巴士離開"
+            ],
+            notes: "此路段需攀越中峽，較為費力。可欣賞香港島的城市景觀。部分路段較為暴露，需注意防曬。沿途有涼亭可休息。",
+            imageName: "hktrail3",
+            checkpoints: [
+                .init(title: "貝璐道", subtitle: "起點", distanceKm: 0, altitude: 150),
+                .init(title: "中峽", subtitle: "中途點", distanceKm: 3.0, altitude: 250),
+                .init(title: "灣仔峽", subtitle: "終點", distanceKm: 6.5, altitude: 200)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.260, longitude: 114.180),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+        ),
+        Trail(
             id: UUID(uuidString: "E1F2A3B4-C5D6-7890-4567-123456789012")!,
             name: "Hong Kong Trail Section 4",
             district: "Hong Kong Island",
@@ -809,6 +1384,133 @@ extension Trail {
                 .init(title: "黃泥涌峽", subtitle: "終點", distanceKm: 7.5, altitude: 150)
             ],
             mapCenter: CLLocationCoordinate2D(latitude: 22.260, longitude: 114.200),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+        ),
+        Trail(
+            id: UUID(uuidString: "B6C7D8E9-F0A1-2345-F012-678901234567")!,
+            name: "Hong Kong Trail Section 5",
+            district: "Hong Kong Island",
+            difficulty: .moderate,
+            lengthKm: 4.0,
+            elevationGain: 250,
+            estimatedDurationMinutes: 120,
+            summary: "從黃泥涌峽到柏架山道，途經大潭水塘。",
+            highlights: ["大潭水塘", "柏架山道", "水塘景色"],
+            facilities: [.init(name: "洗手間", systemImage: "toilet")],
+            transportation: "從黃泥涌峽乘巴士 6/41A；從柏架山道乘巴士 2A/77",
+            startPointTransport: "從黃泥涌峽乘巴士 6/41A",
+            endPointTransport: "從柏架山道乘巴士 2A/77 返回",
+            supplyPoints: [
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "柏架山道可乘巴士離開"
+            ],
+            notes: "此路段較為輕鬆，主要沿水塘行走。可欣賞大潭水塘的景色。適合家庭遊覽。沿途有洗手間。",
+            imageName: "hktrail5",
+            checkpoints: [
+                .init(title: "黃泥涌峽", subtitle: "起點", distanceKm: 0, altitude: 150),
+                .init(title: "大潭水塘", subtitle: "水塘", distanceKm: 2.0, altitude: 100),
+                .init(title: "柏架山道", subtitle: "終點", distanceKm: 4.0, altitude: 200)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.250, longitude: 114.220),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.06, longitudeDelta: 0.06)
+        ),
+        Trail(
+            id: UUID(uuidString: "C7D8E9F0-A1B2-3456-0123-789012345678")!,
+            name: "Hong Kong Trail Section 6",
+            district: "Hong Kong Island",
+            difficulty: .moderate,
+            lengthKm: 4.5,
+            elevationGain: 300,
+            estimatedDurationMinutes: 150,
+            summary: "從柏架山道到大潭道，途經大風坳。",
+            highlights: ["大風坳", "大潭道", "山徑景色"],
+            facilities: [.init(name: "涼亭", systemImage: "house")],
+            transportation: "從柏架山道乘巴士 2A/77；從大潭道乘巴士 14",
+            startPointTransport: "從柏架山道乘巴士 2A/77",
+            endPointTransport: "從大潭道乘巴士 14 返回",
+            supplyPoints: [
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "大潭道可乘巴士離開"
+            ],
+            notes: "此路段需攀越大風坳，較為費力。可欣賞香港島的景色。部分路段較為暴露，需注意防曬。沿途有涼亭可休息。",
+            imageName: "hktrail6",
+            checkpoints: [
+                .init(title: "柏架山道", subtitle: "起點", distanceKm: 0, altitude: 200),
+                .init(title: "大風坳", subtitle: "中途點", distanceKm: 2.0, altitude: 350),
+                .init(title: "大潭道", subtitle: "終點", distanceKm: 4.5, altitude: 100)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.250, longitude: 114.240),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.06, longitudeDelta: 0.06)
+        ),
+        Trail(
+            id: UUID(uuidString: "D8E9F0A1-B2C3-4567-1234-890123456789")!,
+            name: "Hong Kong Trail Section 7",
+            district: "Hong Kong Island",
+            difficulty: .easy,
+            lengthKm: 7.5,
+            elevationGain: 200,
+            estimatedDurationMinutes: 180,
+            summary: "從大潭道到土地灣，途經大潭水塘和龍脊起點。",
+            highlights: ["大潭水塘", "土地灣", "龍脊起點"],
+            facilities: [.init(name: "洗手間", systemImage: "toilet")],
+            transportation: "從大潭道乘巴士 14；從土地灣乘巴士 9",
+            startPointTransport: "從大潭道乘巴士 14",
+            endPointTransport: "從土地灣乘巴士 9 返回",
+            supplyPoints: [
+                "土地灣有士多",
+                "沿途無補給，需自備食水"
+            ],
+            exitRoutes: [
+                "可在中途退出，但較為困難",
+                "土地灣可乘巴士離開"
+            ],
+            notes: "此路段較為輕鬆，主要沿水塘和山徑行走。可欣賞大潭水塘和土地灣的景色。適合家庭遊覽。土地灣為龍脊起點。",
+            imageName: "hktrail7",
+            checkpoints: [
+                .init(title: "大潭道", subtitle: "起點", distanceKm: 0, altitude: 100),
+                .init(title: "大潭水塘", subtitle: "水塘", distanceKm: 3.5, altitude: 80),
+                .init(title: "土地灣", subtitle: "終點", distanceKm: 7.5, altitude: 105)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.245, longitude: 114.240),
+            mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+        ),
+        Trail(
+            id: UUID(uuidString: "E9F0A1B2-C3D4-5678-2345-901234567890")!,
+            name: "Hong Kong Trail Section 8",
+            district: "Hong Kong Island",
+            difficulty: .moderate,
+            lengthKm: 8.5,
+            elevationGain: 400,
+            estimatedDurationMinutes: 240,
+            summary: "從土地灣到大浪灣，途經龍脊和打爛埕頂山。",
+            highlights: ["龍脊", "打爛埕頂山", "大浪灣", "港島徑終點"],
+            facilities: [.init(name: "大浪灣淋浴設施", systemImage: "shower.handheld")],
+            transportation: "從土地灣乘巴士 9；從大浪灣乘巴士/小巴",
+            startPointTransport: "從土地灣乘巴士 9",
+            endPointTransport: "從大浪灣乘巴士/小巴返回",
+            supplyPoints: [
+                "土地灣有士多",
+                "大浪灣有商店和餐廳"
+            ],
+            exitRoutes: [
+                "可在龍脊中途退出，返回土地灣",
+                "大浪灣可乘車離開"
+            ],
+            notes: "此路段為港島徑最後一段，需攀越龍脊和打爛埕頂山，較為費力。可欣賞石澳、大浪灣和南中國海的景色。部分路段較為暴露，需注意防曬。大浪灣為港島徑終點，有商店和餐廳。",
+            imageName: "hktrail8",
+            checkpoints: [
+                .init(title: "土地灣", subtitle: "起點", distanceKm: 0, altitude: 105),
+                .init(title: "龍脊", subtitle: "拍照點", distanceKm: 2.6, altitude: 284),
+                .init(title: "打爛埕頂山", subtitle: "山峰", distanceKm: 5.0, altitude: 284),
+                .init(title: "大浪灣", subtitle: "終點", distanceKm: 8.5, altitude: 15)
+            ],
+            mapCenter: CLLocationCoordinate2D(latitude: 22.2477, longitude: 114.2401),
             mapSpan: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
         ),
         // Other iconic routes around Hong Kong

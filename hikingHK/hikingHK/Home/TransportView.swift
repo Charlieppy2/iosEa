@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Transport query view for MTR and Bus services
 struct TransportView: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager
     @State private var selectedTab: TransportTab = .mtr
     @State private var searchText = ""
@@ -17,6 +18,11 @@ struct TransportView: View {
     @State private var mtrSchedule: MTRScheduleData?
     @State private var isLoadingMTR = false
     @State private var mtrError: String?
+    
+    // MTR filter states
+    @State private var selectedMTRFilterStation: String? = nil // Selected station name for filtering
+    @State private var allMTRStations: [String] = [] // All MTR stations
+    @State private var cachedMTRStationsByDistrict: [(district: String, stations: [String])] = [] // Cached stations by district
     
     // Bus states
     @State private var busRoutes: [KMBRoute] = []
@@ -84,7 +90,7 @@ struct TransportView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(languageManager.localizedString(for: "done")) {
-                        // Dismiss handled by parent sheet
+                        dismiss()
                     }
                 }
             }
@@ -103,6 +109,9 @@ struct TransportView: View {
                         .padding(.horizontal)
                     
                     VStack(spacing: 12) {
+                        // Filter section - moved above search bar
+                        mtrFilterSection
+                        
                         HStack(spacing: 12) {
                             Image(systemName: "magnifyingglass")
                                 .foregroundStyle(.secondary)
@@ -151,26 +160,6 @@ struct TransportView: View {
                         .disabled(searchText.isEmpty || isLoadingMTR)
                     }
                     .padding(.horizontal)
-                    
-                    // Quick station buttons with improved design
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(languageManager.localizedString(for: "transport.mtr.quick.stations"))
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.primary)
-                            .padding(.horizontal)
-                        
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 10) {
-                                quickStationButton("荃灣")
-                                quickStationButton("筲箕灣")
-                                quickStationButton("中環")
-                                quickStationButton("金鐘")
-                                quickStationButton("東涌")
-                                quickStationButton("觀塘")
-                            }
-                            .padding(.horizontal)
-                        }
-                    }
                 }
                 .padding(.vertical)
                 
@@ -474,35 +463,6 @@ struct TransportView: View {
         return code
     }
     
-    private func quickStationButton(_ stationName: String) -> some View {
-        Button {
-            searchText = stationName
-            Task {
-                await searchMTRStation()
-            }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "tram.fill")
-                    .font(.caption)
-                Text(stationName)
-                    .font(.subheadline.bold())
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.red, Color.red.opacity(0.8)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            )
-            .foregroundStyle(.white)
-            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
-        }
-    }
     
     private func searchMTRStation() async {
         guard !searchText.isEmpty else { return }
@@ -1483,6 +1443,393 @@ struct TransportView: View {
         .task {
             // Load all stations when filter section appears (for pre-search filtering)
             loadAllStations()
+        }
+    }
+    
+    // MARK: - MTR Filter Section
+    
+    private var mtrFilterSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "line.3.horizontal.decrease.circle")
+                    .foregroundStyle(.red)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "transport.bus.filter"))
+                    .font(.headline)
+                
+                Spacer()
+                
+                if selectedMTRFilterStation != nil {
+                    Button {
+                        selectedMTRFilterStation = nil
+                        applyMTRFilters()
+                    } label: {
+                        Text(languageManager.localizedString(for: "transport.bus.filter.clear"))
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            
+            // Station filter - Dropdown style with district grouping
+            VStack(alignment: .leading, spacing: 8) {
+                Text(languageManager.localizedString(for: "transport.bus.filter.station"))
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+                
+                Menu {
+                    // All option
+                    Button {
+                        selectedMTRFilterStation = nil
+                        applyMTRFilters()
+                    } label: {
+                        HStack {
+                            Text(languageManager.localizedString(for: "transport.bus.filter.all"))
+                            if selectedMTRFilterStation == nil {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    // Stations grouped by district
+                    if mtrStationsByDistrict.isEmpty {
+                        Text("暫無車站選項")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding()
+                    } else {
+                        ForEach(mtrStationsByDistrict, id: \.district) { group in
+                            Section {
+                                ForEach(group.stations, id: \.self) { station in
+                                    Button {
+                                        selectedMTRFilterStation = station
+                                        applyMTRFilters()
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "mappin.circle.fill")
+                                                .font(.caption)
+                                                .foregroundStyle(getDistrictColor(for: group.district))
+                                            Text(station)
+                                            if selectedMTRFilterStation == station {
+                                                Spacer()
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                        .padding(.vertical, 4)
+                                        .padding(.horizontal, 8)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .fill(getDistrictColor(for: group.district).opacity(0.15))
+                                        )
+                                    }
+                                }
+                            } header: {
+                                HStack {
+                                    Text(group.district)
+                                    Spacer()
+                                }
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(getDistrictColor(for: group.district).opacity(0.25))
+                                )
+                            }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "mappin.circle.fill")
+                            .foregroundStyle(.red)
+                            .font(.subheadline)
+                        Text({
+                            if let station = selectedMTRFilterStation, 
+                               languageManager.currentLanguage == .traditionalChinese,
+                               !containsChineseCharacters(station) {
+                                return languageManager.localizedString(for: "transport.bus.filter.all")
+                            } else {
+                                return selectedMTRFilterStation ?? languageManager.localizedString(for: "transport.bus.filter.all")
+                            }
+                        }())
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(.secondarySystemBackground))
+                    )
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.secondarySystemBackground))
+        )
+        .task {
+            // Load all MTR stations when filter section appears
+            loadAllMTRStations()
+        }
+    }
+    
+    /// Get MTR stations grouped by district
+    private var mtrStationsByDistrict: [(district: String, stations: [String])] {
+        // Use cached version if available and not empty
+        if !cachedMTRStationsByDistrict.isEmpty {
+            return cachedMTRStationsByDistrict
+        }
+        
+        var grouped: [String: [String]] = [:]
+        
+        for station in allMTRStations {
+            let district = getDistrict(for: station)
+            if !district.isEmpty {
+                if grouped[district] == nil {
+                    grouped[district] = []
+                }
+                grouped[district]?.append(station)
+            }
+        }
+        
+        let districtOrder = languageManager.currentLanguage == .english 
+            ? ["Hong Kong Island", "Kowloon", "New Territories"]
+            : ["港島", "九龍", "新界"]
+        
+        let result: [(district: String, stations: [String])] = districtOrder.compactMap { district in
+            guard let stations = grouped[district], !stations.isEmpty else { return nil }
+            return (district: district, stations: stations.sorted())
+        }
+        
+        cachedMTRStationsByDistrict = result
+        return result
+    }
+    
+    /// Load all MTR stations from stationNames dictionary
+    private func loadAllMTRStations() {
+        guard allMTRStations.isEmpty else { 
+            print("⏭️ Skipping loadAllMTRStations - already loaded")
+            return 
+        }
+        
+        print("🔄 Loading all MTR stations...")
+        
+        let stationNames: [String: (tc: String, en: String)] = [
+            // Island Line
+            "CEN": (tc: "中環", en: "Central"),
+            "ADM": (tc: "金鐘", en: "Admiralty"),
+            "WAC": (tc: "灣仔", en: "Wan Chai"),
+            "CAB": (tc: "銅鑼灣", en: "Causeway Bay"),
+            "TIH": (tc: "天后", en: "Tin Hau"),
+            "FOH": (tc: "炮台山", en: "Fortress Hill"),
+            "NOP": (tc: "北角", en: "North Point"),
+            "QUB": (tc: "鰂魚涌", en: "Quarry Bay"),
+            "TAK": (tc: "太古城", en: "Tai Koo"),
+            "SWH": (tc: "西灣河", en: "Sai Wan Ho"),
+            "SKW": (tc: "筲箕灣", en: "Shau Kei Wan"),
+            "HFC": (tc: "杏花邨", en: "Heng Fa Chuen"),
+            "CHW": (tc: "柴灣", en: "Chai Wan"),
+            
+            // Tsuen Wan Line
+            "TSW": (tc: "荃灣", en: "Tsuen Wan"),
+            "TWS": (tc: "荃灣西", en: "Tsuen Wan West"),
+            "TWW": (tc: "大窩口", en: "Tai Wo Hau"),
+            "KWF": (tc: "葵興", en: "Kwai Hing"),
+            "KWH": (tc: "葵芳", en: "Kwai Fong"),
+            "LAK": (tc: "荔景", en: "Lai King"),
+            "MEF": (tc: "美孚", en: "Mei Foo"),
+            "PRE": (tc: "荔枝角", en: "Lai Chi Kok"),
+            "CSW": (tc: "長沙灣", en: "Cheung Sha Wan"),
+            "SHM": (tc: "深水埗", en: "Sham Shui Po"),
+            "MOK": (tc: "旺角", en: "Mong Kok"),
+            "YMT": (tc: "油麻地", en: "Yau Ma Tei"),
+            "JOR": (tc: "佐敦", en: "Jordan"),
+            "TST": (tc: "尖沙咀", en: "Tsim Sha Tsui"),
+            
+            // Kwun Tong Line
+            "WHC": (tc: "黃大仙", en: "Wong Tai Sin"),
+            "DIH": (tc: "鑽石山", en: "Diamond Hill"),
+            "CHH": (tc: "彩虹", en: "Choi Hung"),
+            "KOB": (tc: "九龍灣", en: "Kowloon Bay"),
+            "NTK": (tc: "牛頭角", en: "Ngau Tau Kok"),
+            "KWT": (tc: "觀塘", en: "Kwun Tong"),
+            "LAT": (tc: "藍田", en: "Lam Tin"),
+            "YAT": (tc: "油塘", en: "Yau Tong"),
+            "TIK": (tc: "調景嶺", en: "Tiu Keng Leng"),
+            
+            // Tseung Kwan O Line
+            "TKO": (tc: "將軍澳", en: "Tseung Kwan O"),
+            "HAH": (tc: "坑口", en: "Hang Hau"),
+            "POA": (tc: "寶琳", en: "Po Lam"),
+            "LHP": (tc: "康城", en: "LOHAS Park"),
+            
+            // Tung Chung Line
+            "TUC": (tc: "東涌", en: "Tung Chung"),
+            "SUN": (tc: "欣澳", en: "Sunny Bay"),
+            "TSY": (tc: "青衣", en: "Tsing Yi"),
+            "AWE": (tc: "機場", en: "Airport"),
+            "AEL": (tc: "博覽館", en: "AsiaWorld-Expo"),
+            
+            // East Rail Line
+            "HUH": (tc: "紅磡", en: "Hung Hom"),
+            "ETS": (tc: "尖東", en: "East Tsim Sha Tsui"),
+            "MKK": (tc: "旺角東", en: "Mong Kok East"),
+            "KOT": (tc: "九龍塘", en: "Kowloon Tong"),
+            "TAW": (tc: "大圍", en: "Tai Wai"),
+            "SHT": (tc: "沙田", en: "Sha Tin"),
+            "FOT": (tc: "火炭", en: "Fo Tan"),
+            "RAC": (tc: "馬場", en: "Racecourse"),
+            "UNI": (tc: "大學", en: "University"),
+            "TAP": (tc: "大埔墟", en: "Tai Po Market"),
+            "TWO": (tc: "太和", en: "Tai Wo"),
+            "FAN": (tc: "粉嶺", en: "Fanling"),
+            "SHS": (tc: "上水", en: "Sheung Shui"),
+            "LOW": (tc: "羅湖", en: "Lo Wu"),
+            "LMC": (tc: "落馬洲", en: "Lok Ma Chau"),
+            
+            // Tuen Ma Line
+            "TUM": (tc: "屯門", en: "Tuen Mun"),
+            "SIH": (tc: "兆康", en: "Siu Hong"),
+            "TIS": (tc: "天水圍", en: "Tin Shui Wai"),
+            "YUL": (tc: "元朗", en: "Yuen Long"),
+            "KSR": (tc: "錦上路", en: "Kam Sheung Road"),
+            "LOP": (tc: "朗屏", en: "Long Ping"),
+            "WKS": (tc: "烏溪沙", en: "Wu Kai Sha"),
+            "MOS": (tc: "馬鞍山", en: "Ma On Shan"),
+            "HEO": (tc: "恆安", en: "Heng On"),
+            "AFC": (tc: "大水坑", en: "Tai Shui Hang"),
+            "WHA": (tc: "沙田圍", en: "Sha Tin Wai"),
+            "CIO": (tc: "車公廟", en: "Che Kung Temple"),
+            "STW": (tc: "石門", en: "Shek Mun"),
+            "FIR": (tc: "第一城", en: "City One"),
+            "SHO": (tc: "沙田圍", en: "Sha Tin Wai"),
+            "HIK": (tc: "顯徑", en: "Hin Keng"),
+            "HOM": (tc: "何文田", en: "Ho Man Tin"),
+            "HOK": (tc: "香港", en: "Hong Kong"),
+            "KOW": (tc: "九龍", en: "Kowloon"),
+            "AUS": (tc: "柯士甸", en: "Austin"),
+            "EXC": (tc: "會展", en: "Exhibition Centre"),
+            "NAC": (tc: "南昌", en: "Nam Cheong"),
+            
+            // South Island Line
+            "OCP": (tc: "海洋公園", en: "Ocean Park"),
+            "WCH": (tc: "黃竹坑", en: "Wong Chuk Hang"),
+            "LET": (tc: "利東", en: "Lei Tung"),
+            "SOH": (tc: "海怡半島", en: "South Horizons"),
+            
+            // Disneyland Resort Line
+            "DIS": (tc: "迪士尼", en: "Disneyland Resort"),
+            
+            // Airport Express
+            "AIR": (tc: "機場", en: "Airport"),
+            
+            // Other common stations
+            "KET": (tc: "堅尼地城", en: "Kennedy Town"),
+        ]
+        
+        var stations = Set<String>()
+        for (_, names) in stationNames {
+            if languageManager.currentLanguage == .traditionalChinese {
+                if !names.tc.isEmpty && containsChineseCharacters(names.tc) {
+                    stations.insert(names.tc)
+                }
+            } else {
+                stations.insert(names.en)
+            }
+        }
+        
+        let sortedStations = Array(stations).sorted()
+        
+        // Update cached stations by district
+        var grouped: [String: [String]] = [:]
+        for station in sortedStations {
+            let district = getDistrict(for: station)
+            if !district.isEmpty {
+                if grouped[district] == nil {
+                    grouped[district] = []
+                }
+                grouped[district]?.append(station)
+            }
+        }
+        
+        let districtOrder = languageManager.currentLanguage == .english 
+            ? ["Hong Kong Island", "Kowloon", "New Territories"]
+            : ["港島", "九龍", "新界"]
+        
+        let cachedStations: [(district: String, stations: [String])] = districtOrder.compactMap { district in
+            guard let stations = grouped[district], !stations.isEmpty else { return nil }
+            return (district: district, stations: stations.sorted())
+        }
+        
+        // Update state on main thread
+        Task { @MainActor in
+            self.allMTRStations = sortedStations
+            self.cachedMTRStationsByDistrict = cachedStations
+            print("✅ Loaded \(self.allMTRStations.count) MTR stations")
+            print("📊 MTR Stations by district: \(self.cachedMTRStationsByDistrict.count) districts")
+        }
+    }
+    
+    /// Apply MTR filters
+    private func applyMTRFilters() {
+        if let station = selectedMTRFilterStation {
+            // Directly search for the selected station without updating search text
+            Task {
+                await searchMTRStationDirectly(stationName: station)
+            }
+        } else {
+            // Clear schedule if filter is cleared
+            mtrSchedule = nil
+            mtrError = nil
+        }
+    }
+    
+    /// Search MTR station directly without updating search text
+    private func searchMTRStationDirectly(stationName: String) async {
+        guard !stationName.isEmpty else { return }
+        
+        await MainActor.run {
+            isLoadingMTR = true
+            mtrError = nil
+            mtrSchedule = nil
+        }
+        
+        print("🔍 Searching MTR station: \(stationName)")
+        
+        if let stationInfo = MTRStationMapper.mapStation(stationName) {
+            print("✅ Mapped station: \(stationName) -> Line: \(stationInfo.line), Station: \(stationInfo.station)")
+            do {
+                let schedule = try await mtrService.fetchSchedule(
+                    line: stationInfo.line,
+                    station: stationInfo.station
+                )
+                await MainActor.run {
+                    self.mtrSchedule = schedule
+                    self.isLoadingMTR = false
+                    self.mtrError = nil
+                    print("✅ Successfully loaded MTR schedule for \(stationName)")
+                }
+            } catch {
+                await MainActor.run {
+                    self.mtrError = languageManager.localizedString(for: "mtr.error.load.failed")
+                    self.isLoadingMTR = false
+                    print("❌ MTR Service Error for \(stationName): \(error.localizedDescription)")
+                }
+            }
+        } else {
+            await MainActor.run {
+                self.mtrError = languageManager.localizedString(for: "transport.mtr.station.not.found")
+                self.isLoadingMTR = false
+                print("❌ Station not found in mapper: \(stationName)")
+            }
         }
     }
     

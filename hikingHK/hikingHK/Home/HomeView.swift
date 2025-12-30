@@ -712,7 +712,7 @@ struct SavedHikeRow: View {
                     }
                 }
                 HStack(spacing: 8) {
-                    Text(hike.scheduledDate, style: .date)
+                    Text(formattedDate(hike.scheduledDate))
                         .font(.subheadline)
                         .foregroundStyle(Color.hikingBrown)
                     if !hike.note.isEmpty {
@@ -740,6 +740,14 @@ struct SavedHikeRow: View {
                 )
                 .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
         )
+    }
+    
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US")
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
 }
 
