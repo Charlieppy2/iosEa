@@ -365,50 +365,98 @@ API 響應格式：
 
 7.2 頁面分工
 
-| 頁面名稱 | 負責人 | 工作內容 |
-|---------|--------|---------|
-| AuthView (登入/註冊) | [LXJ] | 用戶認證界面、登入註冊邏輯、Session管理 |
-| HomeView (首頁) | [HPY] | 主頁布局、天氣卡片、精選路線輪播、快捷操作 |
-| TrailListView (路線列表) | [HPY] | 路線列表顯示、搜索功能、分類篩選 |
-| TrailDetailView (路線詳情) | [HPY] | 路線詳細資訊、檢查點、設施、地圖顯示、實時交通 |
-| PlannerView (計劃頁面) | [LXJ] | 行程列表、新增/編輯行程、日期選擇 |
-| ProfileView (個人資料) | [LXJ] | 帳戶資訊、行山統計、成就顯示、設定選項 |
-| WeatherForecastView (天氣預報) | [HPY] | 9天天氣預報顯示、最佳行山時間計算 |
-| TransportView (交通查詢) | [HPY] | MTR/巴士查詢界面、實時到站顯示、路線詳情 |
-| TrailRecommendationView (智能推薦) | [HPY] | 推薦算法實現、推薦結果顯示、偏好設置 |
-| LocationSharingView (位置分享) | [HPY] | 位置分享功能、實時位置更新、分享會話管理 |
-| HikeTrackingView (GPS追蹤) | [HPY] | GPS追蹤界面、路線記錄、數據保存 |
-| HikeRecordsListView (記錄列表) | [LXJ] | 遠足記錄列表、記錄詳情、回放功能 |
-| JournalListView (日記列表) | [LXJ] | 日記列表顯示、日記詳情、照片管理 |
-| CreateJournalView (創建日記) | [LXJ] | 日記創建界面、照片上傳、內容編輯 |
-| AchievementView (成就頁面) | [LXJ] | 成就列表、成就詳情、解鎖動畫 |
+**7.2.1 [HPY] 負責頁面**
+
+| 頁面名稱 | 工作內容 |
+|---------|---------|
+| HomeView (首頁) | 主頁布局、天氣卡片、精選路線輪播、快捷操作 |
+| TrailListView (路線列表) | 路線列表顯示、搜索功能、分類篩選 |
+| TrailDetailView (路線詳情) | 路線詳細資訊、檢查點、設施、地圖顯示、實時交通 |
+| WeatherForecastView (天氣預報) | 9天天氣預報顯示、最佳行山時間計算 |
+| TransportView (交通查詢) | MTR/巴士查詢界面、實時到站顯示、路線詳情 |
+| TrailRecommendationView (智能推薦) | 推薦算法實現、推薦結果顯示、偏好設置 |
+| LocationSharingView (位置分享) | 位置分享功能、實時位置更新、分享會話管理 |
+| HikeTrackingView (GPS追蹤) | GPS追蹤界面、路線記錄、數據保存 |
+| BusRouteDetailView (巴士路線詳情) | 巴士路線所有站點、實時到站時間、ETA顏色標記 |
+| GearChecklistView (裝備檢查清單) | 根據路線和天氣生成裝備建議、智能推薦 |
+| BestHikingTimeView (最佳行山時間) | 基於天氣預報計算最佳行山時段、路線選擇 |
+| WeatherLocationPickerView (天氣位置選擇) | 天氣預報位置選擇、地區搜索 |
+| SafetyChecklistView (安全檢查清單) | 安全檢查項目列表、完成狀態管理 |
+| AddSafetyChecklistItemView (添加安全項目) | 自定義安全檢查項目、項目管理 |
+| TrailAlertsView (路線警告) | 路線相關天氣警告、警告詳情顯示 |
+| OfflineMapsView (離線地圖) | 離線地圖區域管理、下載進度、存儲空間顯示 |
+| QuickAddTrailPickerView (快速添加路線) | 快速選擇路線添加到計劃、路線搜索與排序 |
+| PreferenceSettingsView (偏好設置) | 推薦系統偏好設置、評分權重調整 |
+
+**7.2.2 [LXJ] 負責頁面**
+
+| 頁面名稱 | 工作內容 |
+|---------|---------|
+| AuthView (登入/註冊) | 用戶認證界面、登入註冊邏輯、Session管理 |
+| PlannerView (計劃頁面) | 行程列表、新增/編輯行程、日期選擇 |
+| PlannerViewWithTrail (帶路線計劃) | 從推薦頁面預選路線的計劃創建界面 |
+| ProfileView (個人資料) | 帳戶資訊、行山統計、成就顯示、設定選項 |
+| HikeRecordsListView (記錄列表) | 遠足記錄列表、記錄詳情、回放功能 |
+| HikeRecordDetailView (記錄詳情) | 遠足記錄詳細資訊、統計數據、地圖顯示、刪除功能 |
+| HikePlaybackView (記錄回放) | GPS路線回放、播放控制、速度調整、3D地圖視角 |
+| JournalListView (日記列表) | 日記列表顯示、日記詳情、照片管理 |
+| JournalDetailView (日記詳情) | 日記詳細內容、照片展示、編輯/刪除功能 |
+| CreateJournalView (創建日記) | 日記創建界面、照片上傳、內容編輯 |
+| EditJournalView (編輯日記) | 日記編輯界面、照片管理、內容更新 |
+| AchievementView (成就頁面) | 成就列表、成就詳情、解鎖動畫 |
+| WeatherWarningHistoryView (天氣警告歷史) | 天氣警告歷史記錄、篩選功能、發布/取消追蹤 |
+| TrailPickerView (路線選擇器) | 日記/追蹤時選擇路線、路線搜索與排序 |
 
 7.3 服務層分工
 
-| 服務模組 | 技術複雜度 | 負責人 | 工作內容 |
-|---------|-----------|--------|---------|
-| **TrailRecommendationService** | ⭐⭐⭐⭐⭐ | [HPY] | 智能推薦算法核心實現、6個評分函數、本地化原因生成、歷史學習邏輯 |
-| **KMBService** | ⭐⭐⭐⭐ | [HPY] | 巴士API整合、並發請求優化、實時到站時間計算、錯誤處理與重試 |
-| **LocationSharingService** | ⭐⭐⭐⭐ | [HPY] | 位置分享邏輯、異常檢測服務、SOS功能、會話管理 |
-| **HikeTrackingService** | ⭐⭐⭐ | [HPY] | GPS追蹤邏輯、路線記錄、統計計算（距離、時間、海拔）、數據持久化 |
-| **WeatherService** | ⭐⭐⭐ | [HPY] | 多個天氣API整合（rhrread、fnd、warnsum、uvindex）、數據解析、錯誤處理 |
-| **MTRService** | ⭐⭐⭐ | [HPY] | MTR API整合、列車時間表解析、車站名稱映射、實時數據處理 |
-| **LocationManager** | ⭐⭐⭐ | [HPY] | CoreLocation封裝、權限管理、高精度位置更新、距離計算 |
-| **OfflineMapsDownloadService** | ⭐⭐ | [HPY] | 離線地圖下載、進度追蹤、文件管理、存儲空間計算 |
-| **SessionManager** | ⭐⭐⭐ | [LXJ] | 用戶認證與會話管理、登入註冊邏輯、Session持久化、帳戶管理 |
-| **LanguageManager** | ⭐⭐⭐ | [LXJ] | 多語言切換管理、本地化字符串提供、語言偏好持久化 |
-| **WeatherWarningService** | ⭐⭐⭐ | [LXJ] | 天氣警告API整合、警告數據解析、警告狀態管理 |
-| **WeatherWarningHistoryService** | ⭐⭐⭐ | [LXJ] | 天氣警告歷史記錄、警告發布/取消追蹤、歷史數據持久化 |
-| **TrailAlertsService** | ⭐⭐⭐ | [LXJ] | 路線警告服務、天氣警告與路線關聯、推送通知觸發 |
-| **AchievementTrackingService** | ⭐⭐ | [LXJ] | 成就進度追蹤、成就解鎖邏輯、距離/山峰/連續記錄統計 |
-| **AccountStore** | ⭐⭐⭐ | [HPY] | SwiftData 帳戶數據存儲、用戶憑證管理、帳戶CRUD操作 |
-| **TrailDataStore** | ⭐⭐⭐ | [HPY] | SwiftData 路線數據存儲、收藏路線管理、保存行程管理 |
-| **HikeRecordStore** | ⭐⭐⭐ | [HPY] | SwiftData 遠足記錄存儲、追蹤點數據管理、記錄查詢與統計 |
-| **JournalStore** | ⭐⭐ | [HPY] | SwiftData 日記數據持久化、日記照片管理、日記CRUD操作 |
-| **LocationSharingStore** | ⭐⭐ | [HPY] | SwiftData 位置分享會話存儲、會話數據管理 |
-| **RecommendationStore** | ⭐⭐ | [HPY] | SwiftData 推薦記錄存儲、用戶偏好數據管理 |
-| **AchievementStore** | ⭐⭐ | [HPY] | SwiftData 成就數據存儲、成就狀態管理 |
-| **OfflineMapsStore** | ⭐⭐ | [HPY] | SwiftData 離線地圖區域存儲、下載狀態管理、自動添加缺失區域 |
+**7.3.1 [HPY] 負責服務**
+
+| 服務模組 | 技術複雜度 | 工作內容 |
+|---------|-----------|---------|
+| **TrailRecommendationService** | ⭐⭐⭐⭐⭐ | 智能推薦算法核心實現、6個評分函數、本地化原因生成、歷史學習邏輯 |
+| **KMBService** | ⭐⭐⭐⭐ | 巴士API整合、並發請求優化、實時到站時間計算、錯誤處理與重試 |
+| **LocationSharingService** | ⭐⭐⭐⭐ | 位置分享邏輯、異常檢測服務、SOS功能、會話管理 |
+| **WeatherAlertManager** | ⭐⭐⭐⭐ | 智能天氣預警系統、自動推送通知、出發前天氣檢查、實時天氣監控、通知權限管理 |
+| **HikeTrackingService** | ⭐⭐⭐ | GPS追蹤邏輯、路線記錄、統計計算（距離、時間、海拔）、數據持久化 |
+| **WeatherService** | ⭐⭐⭐ | 多個天氣API整合（rhrread、fnd、warnsum、uvindex）、數據解析、錯誤處理 |
+| **MTRService** | ⭐⭐⭐ | MTR API整合、列車時間表解析、車站名稱映射、實時數據處理 |
+| **WeatherForecastService** | ⭐⭐⭐ | 9天天氣預報API整合、天氣數據解析、路線天氣預測 |
+| **MapboxRouteService** | ⭐⭐⭐ | Mapbox路線規劃API整合、步行路線計算、路線數據解析 |
+| **SmartGearService** | ⭐⭐⭐ | 智能裝備推薦算法、根據路線難度和天氣生成裝備清單 |
+| **AccountStore** | ⭐⭐⭐ | SwiftData 帳戶數據存儲、用戶憑證管理、帳戶CRUD操作 |
+| **TrailDataStore** | ⭐⭐⭐ | SwiftData 路線數據存儲、收藏路線管理、保存行程管理 |
+| **HikeRecordStore** | ⭐⭐⭐ | SwiftData 遠足記錄存儲、追蹤點數據管理、記錄查詢與統計 |
+| **APIConnectionChecker** | ⭐⭐ | 集中式API連接狀態檢查、天氣/交通/地圖API健康監控、連接狀態實時更新 |
+| **JournalStore** | ⭐⭐ | SwiftData 日記數據持久化、日記照片管理、日記CRUD操作 |
+| **LocationSharingStore** | ⭐⭐ | SwiftData 位置分享會話存儲、會話數據管理 |
+| **RecommendationStore** | ⭐⭐ | SwiftData 推薦記錄存儲、用戶偏好數據管理 |
+| **AchievementStore** | ⭐⭐ | SwiftData 成就數據存儲、成就狀態管理 |
+| **OfflineMapsStore** | ⭐⭐ | SwiftData 離線地圖區域存儲、下載狀態管理、自動添加缺失區域 |
+| **EmergencyContactFileStore** | ⭐⭐ | JSON文件存儲緊急聯絡人、用戶數據隔離、CRUD操作、BaseFileStore架構 |
+| **UserPreferenceFileStore** | ⭐⭐ | JSON文件存儲用戶偏好設置、推薦系統偏好管理、BaseFileStore架構 |
+| **RecommendationRecordFileStore** | ⭐⭐ | JSON文件存儲推薦記錄、用戶數據隔離、BaseFileStore架構 |
+| **OfflineMapsFileStore** | ⭐⭐ | JSON文件存儲離線地圖區域、用戶數據隔離、BaseFileStore架構 |
+
+**7.3.2 [LXJ] 負責服務**
+
+| 服務模組 | 技術複雜度 | 工作內容 |
+|---------|-----------|---------|
+| **LocationManager** | ⭐⭐⭐ | CoreLocation封裝、權限管理、高精度位置更新、距離計算 |
+| **SessionManager** | ⭐⭐⭐ | 用戶認證與會話管理、登入註冊邏輯、帳戶管理 |
+| **LanguageManager** | ⭐⭐⭐ | 多語言切換管理、本地化字符串提供、語言偏好持久化 |
+| **WeatherWarningService** | ⭐⭐⭐ | 天氣警告API整合、警告數據解析、警告狀態管理 |
+| **WeatherWarningHistoryService** | ⭐⭐⭐ | 天氣警告歷史記錄、警告發布/取消追蹤 |
+| **TrailAlertsService** | ⭐⭐⭐ | 路線警告服務、天氣警告與路線關聯、推送通知觸發 |
+| **OfflineMapsDownloadService** | ⭐⭐ | 離線地圖下載、進度追蹤、文件管理、存儲空間計算 |
+| **AchievementTrackingService** | ⭐⭐ | 成就進度追蹤、成就解鎖邏輯、距離/山峰/連續記錄統計 |
+| **JournalFileStore** | ⭐⭐ | JSON文件存儲日記數據、用戶數據隔離、BaseFileStore架構 |
+| **AchievementFileStore** | ⭐⭐ | JSON文件存儲成就數據、用戶數據隔離、BaseFileStore架構 |
+| **HikeRecordFileStore** | ⭐⭐ | JSON文件存儲遠足記錄、用戶數據隔離、BaseFileStore架構 |
+| **LocationShareSessionFileStore** | ⭐⭐ | JSON文件存儲位置分享會話、用戶數據隔離、BaseFileStore架構 |
+| **SafetyChecklistStore** | ⭐⭐ | SwiftData 安全檢查清單存儲、默認項目種子、用戶數據隔離 |
+| **GearChecklistStore** | ⭐⭐ | SwiftData 裝備檢查清單存儲、裝備項目管理 |
+| **SafetyChecklistItemFileStore** | ⭐⭐ | JSON文件存儲安全檢查項目、用戶數據隔離、BaseFileStore架構 |
+| **GearItemFileStore** | ⭐⭐ | JSON文件存儲裝備項目、用戶數據隔離、BaseFileStore架構 |
 
 **分工說明：**
 - **[HPY]** 主要負責：Database（數據庫）、Connection with Web services（Web服務連接）、Location Based Services（位置服務）、Web Communications（網絡通信）

@@ -71,7 +71,7 @@ struct TrailRecommendationView: View {
                     .font(.subheadline)
                     .foregroundStyle(Color.hikingBrown)
                 
-                Slider(value: $availableHours, in: 1...8, step: 0.5) { editing in
+                Slider(value: $availableHours, in: 1...6.5, step: 0.5) { editing in
                     if !editing {
                         guard let accountId = sessionManager.currentUser?.id else { return }
                         Task {

@@ -17,7 +17,8 @@ protocol TrailRecommendationServiceProtocol {
         weatherSnapshot: WeatherSnapshot?,
         currentTime: Date,
         availableTime: TimeInterval?,
-        userHistory: [HikeRecord]
+        userHistory: [HikeRecord],
+        recommendationHistory: [RecommendationRecord]?
     ) -> [TrailRecommendation]
 }
 
@@ -39,6 +40,20 @@ struct TrailRecommendation: Identifiable {
 }
 
 final class TrailRecommendationService: TrailRecommendationServiceProtocol {
+    
+    /// Machine learning weights for different scoring factors
+    /// These weights are learned from user behavior feedback
+    private struct ScoringWeights {
+        var preferenceWeight: Double = 1.0      // User preference matching
+        var weatherWeight: Double = 1.0         // Weather suitability
+        var timeWeight: Double = 1.0            // Time of day
+        var availableTimeWeight: Double = 1.0   // Available time matching
+        var historyWeight: Double = 1.0         // Historical patterns
+        var diversityWeight: Double = 1.0       // Diversity bonus
+        
+        /// Default weights (equal importance)
+        static let `default` = ScoringWeights()
+    }
     
     /// Mapping of recommendation reason keys to Traditional Chinese strings
     /// so that we never fall back to English text in the Traditional Chinese UI.
@@ -80,31 +95,38 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
         weatherSnapshot: WeatherSnapshot?,
         currentTime: Date,
         availableTime: TimeInterval?,
-        userHistory: [HikeRecord]
+        userHistory: [HikeRecord],
+        recommendationHistory: [RecommendationRecord]? = nil
     ) -> [TrailRecommendation] {
         var recommendations: [TrailRecommendation] = []
+        
+        // Learn weights from user behavior (machine learning)
+        let weights = learnWeightsFromHistory(recommendationHistory: recommendationHistory)
         
         for trail in trails {
             var score: Double = 0.5 // Base score
             var reasons: [String] = []
             
-            // 1. Score based on explicit user hiking preferences
+            // 1. Score based on explicit user hiking preferences (with learned weight)
             if let preference = userPreference {
-                score += scoreBasedOnPreference(trail: trail, preference: preference, reasons: &reasons)
+                let preferenceScore = scoreBasedOnPreference(trail: trail, preference: preference, reasons: &reasons)
+                score += preferenceScore * weights.preferenceWeight
             }
             
-            // 2. Score based on current / recent weather snapshot
+            // 2. Score based on current / recent weather snapshot (with learned weight)
             if let weather = weatherSnapshot {
-                score += scoreBasedOnWeather(trail: trail, weather: weather, reasons: &reasons)
+                let weatherScore = scoreBasedOnWeather(trail: trail, weather: weather, reasons: &reasons)
+                score += weatherScore * weights.weatherWeight
             }
             
-            // 3. Score based on current time of day (sunrise / sunset, etc.)
-            score += scoreBasedOnTime(trail: trail, currentTime: currentTime, reasons: &reasons)
+            // 3. Score based on current time of day (with learned weight)
+            let timeScore = scoreBasedOnTime(trail: trail, currentTime: currentTime, reasons: &reasons)
+            score += timeScore * weights.timeWeight
             
-            // 4. Score based on how much time the user has available
+            // 4. Score based on how much time the user has available (with learned weight)
             if let time = availableTime {
-                let timeScore = scoreBasedOnAvailableTime(trail: trail, availableTime: time, reasons: &reasons)
-                score += timeScore
+                let availableTimeScore = scoreBasedOnAvailableTime(trail: trail, availableTime: time, reasons: &reasons)
+                score += availableTimeScore * weights.availableTimeWeight
                 
                 // If the trail clearly exceeds available time, significantly penalize it
                 let trailDuration = TimeInterval(trail.estimatedDurationMinutes * 60)
@@ -113,11 +135,13 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
                 }
             }
             
-            // 5. Score based on past hiking history (learning user habits)
-            score += scoreBasedOnHistory(trail: trail, history: userHistory, reasons: &reasons)
+            // 5. Score based on past hiking history (with learned weight)
+            let historyScore = scoreBasedOnHistory(trail: trail, history: userHistory, reasons: &reasons)
+            score += historyScore * weights.historyWeight
             
-            // 6. Score for diversity so we don't always recommend the same trail
-            score += scoreBasedOnDiversity(trail: trail, history: userHistory, reasons: &reasons)
+            // 6. Score for diversity (with learned weight)
+            let diversityScore = scoreBasedOnDiversity(trail: trail, history: userHistory, reasons: &reasons)
+            score += diversityScore * weights.diversityWeight
             
             // Clamp score into 0–1 range
             score = min(max(score, 0), 1)
@@ -141,18 +165,60 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
             }
         }
         
-        // Sort by difficulty first (easy -> moderate -> challenging), then by score (highest first)
-        return recommendations.sorted { lhs, rhs in
-            let lhsDifficultyOrder = difficultyOrder(lhs.trail.difficulty)
-            let rhsDifficultyOrder = difficultyOrder(rhs.trail.difficulty)
-            
-            // If same difficulty, sort by score (higher score first)
-            if lhsDifficultyOrder == rhsDifficultyOrder {
+        // Sort by time proximity first (if availableTime is provided), then by score
+        let sortedRecommendations: [TrailRecommendation]
+        
+        if let availableTime = availableTime {
+            // Sort by how close the trail duration is to available time
+            // Trails closer to available time come first
+            sortedRecommendations = recommendations.sorted { lhs, rhs in
+                let lhsDuration = TimeInterval(lhs.trail.estimatedDurationMinutes * 60)
+                let rhsDuration = TimeInterval(rhs.trail.estimatedDurationMinutes * 60)
+                
+                // Calculate time difference from available time (absolute value)
+                let lhsTimeDiff = abs(lhsDuration - availableTime)
+                let rhsTimeDiff = abs(rhsDuration - availableTime)
+                
+                // If time differences are similar (within 10%), sort by score
+                if abs(lhsTimeDiff - rhsTimeDiff) < availableTime * 0.1 {
+                    return lhs.score > rhs.score
+                }
+                
+                // Otherwise, sort by time proximity (closer = better)
+                return lhsTimeDiff < rhsTimeDiff
+            }
+        } else {
+            // No available time specified, sort by score
+            sortedRecommendations = recommendations.sorted { lhs, rhs in
                 return lhs.score > rhs.score
             }
+        }
+        
+        // Normalize scores to relative percentages (highest score = 100%, others relative to it)
+        // This ensures we have a better distribution of match percentages instead of all showing 100%
+        guard let maxScore = sortedRecommendations.first?.score, maxScore > 0 else {
+            return sortedRecommendations
+        }
+        
+        // If all scores are very close (within 5%), don't normalize to avoid all showing similar percentages
+        let minScore = sortedRecommendations.last?.score ?? maxScore
+        if maxScore - minScore < 0.05 {
+            // Scores are too close, use original scores
+            return sortedRecommendations
+        }
+        
+        // Normalize: scale all scores so the highest becomes 1.0, others proportionally
+        // This creates a relative ranking where the best match is 100% and others are relative to it
+        return sortedRecommendations.map { recommendation in
+            let normalizedScore = recommendation.score / maxScore
+            // Clamp to ensure it's between 0 and 1
+            let clampedScore = min(max(normalizedScore, 0), 1)
             
-            // Otherwise, sort by difficulty order (easy first)
-            return lhsDifficultyOrder < rhsDifficultyOrder
+            return TrailRecommendation(
+                trail: recommendation.trail,
+                score: clampedScore,
+                reasons: recommendation.reasons
+            )
         }
     }
     
@@ -466,6 +532,106 @@ final class TrailRecommendationService: TrailRecommendationServiceProtocol {
         
         guard let keywordsList = keywords[scenery] else { return false }
         return keywordsList.contains { trailText.contains($0) }
+    }
+    
+    // MARK: - Machine Learning: Weight Learning from User Behavior
+    
+    /// Learns scoring weights from user behavior feedback (machine learning approach)
+    /// Analyzes recommendation history to determine which factors are most important to the user
+    private func learnWeightsFromHistory(recommendationHistory: [RecommendationRecord]?) -> ScoringWeights {
+        guard let history = recommendationHistory, !history.isEmpty else {
+            // No history available, return default weights
+            return ScoringWeights.default
+        }
+        
+        // Separate accepted vs rejected recommendations
+        let accepted = history.filter { record in
+            record.userAction == .planned || record.userAction == .completed
+        }
+        let rejected = history.filter { record in
+            record.userAction == .dismissed
+        }
+        
+        // Need at least some feedback to learn from
+        guard accepted.count + rejected.count >= 3 else {
+            return ScoringWeights.default
+        }
+        
+        var weights = ScoringWeights.default
+        
+        // Analyze which factors correlate with user acceptance
+        // Extract features from recommendation reasons (split by separator)
+        let acceptedReasons = accepted.flatMap { record in
+            record.reason.components(separatedBy: "；").map { $0.trimmingCharacters(in: .whitespaces) }
+        }
+        let rejectedReasons = rejected.flatMap { record in
+            record.reason.components(separatedBy: "；").map { $0.trimmingCharacters(in: .whitespaces) }
+        }
+        
+        // Count feature occurrences
+        func countFeature(_ keyword: String, in reasons: [String]) -> Int {
+            reasons.filter { $0.contains(keyword) || $0.lowercased().contains(keyword.lowercased()) }.count
+        }
+        
+        // Learn preference weight
+        let preferenceKeywords = ["難度", "體能", "距離", "時間", "風景", "difficulty", "fitness", "distance", "duration", "scenery"]
+        let preferenceInAccepted = preferenceKeywords.map { countFeature($0, in: acceptedReasons) }.reduce(0, +)
+        let preferenceInRejected = preferenceKeywords.map { countFeature($0, in: rejectedReasons) }.reduce(0, +)
+        if preferenceInAccepted + preferenceInRejected > 0 {
+            let acceptanceRate = Double(preferenceInAccepted) / Double(preferenceInAccepted + preferenceInRejected)
+            // If preference factors appear more in accepted recommendations, increase weight
+            weights.preferenceWeight = 0.5 + (acceptanceRate * 1.0) // Range: 0.5 to 1.5
+        }
+        
+        // Learn weather weight
+        let weatherKeywords = ["氣溫", "天氣", "溫度", "temperature", "weather", "uv", "紫外線"]
+        let weatherInAccepted = weatherKeywords.map { countFeature($0, in: acceptedReasons) }.reduce(0, +)
+        let weatherInRejected = weatherKeywords.map { countFeature($0, in: rejectedReasons) }.reduce(0, +)
+        if weatherInAccepted + weatherInRejected > 0 {
+            let acceptanceRate = Double(weatherInAccepted) / Double(weatherInAccepted + weatherInRejected)
+            weights.weatherWeight = 0.5 + (acceptanceRate * 1.0)
+        }
+        
+        // Learn time weight
+        let timeKeywords = ["時間", "足夠", "緊湊", "time", "enough", "tight", "sunrise", "sunset", "日出", "日落"]
+        let timeInAccepted = timeKeywords.map { countFeature($0, in: acceptedReasons) }.reduce(0, +)
+        let timeInRejected = timeKeywords.map { countFeature($0, in: rejectedReasons) }.reduce(0, +)
+        if timeInAccepted + timeInRejected > 0 {
+            let acceptanceRate = Double(timeInAccepted) / Double(timeInAccepted + timeInRejected)
+            weights.timeWeight = 0.5 + (acceptanceRate * 1.0)
+            weights.availableTimeWeight = 0.5 + (acceptanceRate * 1.0)
+        }
+        
+        // Learn history weight
+        let historyKeywords = ["未試過", "經常", "相似", "haven't", "often", "similar", "history"]
+        let historyInAccepted = historyKeywords.map { countFeature($0, in: acceptedReasons) }.reduce(0, +)
+        let historyInRejected = historyKeywords.map { countFeature($0, in: rejectedReasons) }.reduce(0, +)
+        if historyInAccepted + historyInRejected > 0 {
+            let acceptanceRate = Double(historyInAccepted) / Double(historyInAccepted + historyInRejected)
+            weights.historyWeight = 0.5 + (acceptanceRate * 1.0)
+        }
+        
+        // Diversity weight: if user often accepts new trails, increase diversity weight
+        let newTrailCount = accepted.filter { $0.reason.contains("未試過") || $0.reason.contains("haven't") }.count
+        if accepted.count > 0 {
+            let newTrailRate = Double(newTrailCount) / Double(accepted.count)
+            weights.diversityWeight = 0.5 + (newTrailRate * 1.0)
+        }
+        
+        // Normalize weights to prevent extreme values
+        let maxWeight = max(weights.preferenceWeight, weights.weatherWeight, weights.timeWeight, 
+                           weights.availableTimeWeight, weights.historyWeight, weights.diversityWeight)
+        if maxWeight > 2.0 {
+            let scale = 2.0 / maxWeight
+            weights.preferenceWeight *= scale
+            weights.weatherWeight *= scale
+            weights.timeWeight *= scale
+            weights.availableTimeWeight *= scale
+            weights.historyWeight *= scale
+            weights.diversityWeight *= scale
+        }
+        
+        return weights
     }
 }
 

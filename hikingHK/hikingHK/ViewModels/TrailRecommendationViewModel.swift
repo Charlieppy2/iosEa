@@ -83,14 +83,24 @@ final class TrailRecommendationViewModel: ObservableObject {
             history = []
         }
         
+        // Load recommendation history for machine learning
+        let recommendationHistory: [RecommendationRecord]?
+        do {
+            recommendationHistory = try store.loadRecommendationHistory(accountId: accountId)
+        } catch {
+            recommendationHistory = nil
+        }
+        
         // Ask the recommendation service to produce a ranked list of trails.
+        // Pass recommendation history for machine learning weight adjustment
         let newRecommendations = recommendationService.recommendTrails(
             from: appViewModel.trails,
             userPreference: userPreference,
             weatherSnapshot: appViewModel.weatherSnapshot,
             currentTime: Date(),
             availableTime: availableTime,
-            userHistory: history
+            userHistory: history,
+            recommendationHistory: recommendationHistory
         )
         
         recommendations = newRecommendations
