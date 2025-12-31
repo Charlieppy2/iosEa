@@ -13,6 +13,7 @@ import CoreLocation
 struct HikePlaybackView: View {
     let record: HikeRecord
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var languageManager: LanguageManager
     @State private var playbackProgress: Double = 0
     @State private var isPlaying: Bool = false
     @State private var playbackSpeed: Double = 1.0 // Playback speed multiplier
@@ -84,6 +85,7 @@ struct HikePlaybackView: View {
                         }
                     }
                     .mapStyle(.standard(elevation: .realistic))
+                    .mapLanguage(languageManager)
                     .ignoresSafeArea()
                 } else {
                     Color.hikingBackgroundGradient

@@ -18,6 +18,9 @@ struct PlannerView: View {
     @State private var note = ""
     @State private var showSaveSuccess = false
     @State private var isShowingGearChecklist = false
+    @StateObject private var weatherAlertManager = WeatherAlertManager()
+    @State private var isCheckingWeather = false
+    @State private var weatherCheckResult: (isSafe: Bool, message: String)?
 
     var body: some View {
         NavigationStack {
@@ -60,6 +63,44 @@ struct PlannerView: View {
                     } else {
                         Text(languageManager.localizedString(for: "planner.select.trail"))
                             .foregroundStyle(.secondary)
+                    }
+                }
+                
+                // Weather check section
+                if selectedTrail != nil {
+                    Section {
+                        Button {
+                            Task {
+                                await checkWeatherBeforeHike()
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "cloud.sun.fill")
+                                    .foregroundStyle(Color.hikingGreen)
+                                Text(languageManager.localizedString(for: "weather.alert.pre.hike.check"))
+                                    .foregroundStyle(Color.hikingDarkGreen)
+                                Spacer()
+                                if isCheckingWeather {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                } else {
+                                    Image(systemName: "chevron.right")
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .disabled(isCheckingWeather)
+                        
+                        if let result = weatherCheckResult {
+                            HStack(alignment: .top, spacing: 8) {
+                                Image(systemName: result.isSafe ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                                    .foregroundStyle(result.isSafe ? Color.green : Color.orange)
+                                Text(result.message)
+                                    .font(.caption)
+                                    .foregroundStyle(result.isSafe ? Color.primary : Color.orange)
+                            }
+                            .padding(.vertical, 4)
+                        }
                     }
                 }
                 
@@ -135,6 +176,18 @@ struct PlannerView: View {
         formatter.timeStyle = .none
         return formatter.string(from: date)
     }
+    
+    /// Checks weather before the planned hike
+    private func checkWeatherBeforeHike() async {
+        isCheckingWeather = true
+        let language = languageManager.currentLanguage.rawValue
+        let result = await weatherAlertManager.checkWeatherBeforeHike(
+            scheduledDate: plannedDate,
+            language: language
+        )
+        weatherCheckResult = result
+        isCheckingWeather = false
+    }
 }
 
 /// Planner view with a pre-selected trail (used from recommendations)
@@ -148,6 +201,9 @@ struct PlannerViewWithTrail: View {
     @State private var note = ""
     @State private var showSaveSuccess = false
     @State private var isShowingGearChecklist = false
+    @StateObject private var weatherAlertManager = WeatherAlertManager()
+    @State private var isCheckingWeather = false
+    @State private var weatherCheckResult: (isSafe: Bool, message: String)?
 
     var body: some View {
         Form {
@@ -178,6 +234,42 @@ struct PlannerViewWithTrail: View {
                     .datePickerStyle(.compact)
                     .environment(\.locale, Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US"))
                 TextField(languageManager.localizedString(for: "planner.note"), text: $note)
+            }
+            
+            // Weather check section
+            Section {
+                Button {
+                    Task {
+                        await checkWeatherBeforeHike()
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "cloud.sun.fill")
+                            .foregroundStyle(Color.hikingGreen)
+                        Text(languageManager.localizedString(for: "weather.alert.pre.hike.check"))
+                            .foregroundStyle(Color.hikingDarkGreen)
+                        Spacer()
+                        if isCheckingWeather {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .disabled(isCheckingWeather)
+                
+                if let result = weatherCheckResult {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: result.isSafe ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                            .foregroundStyle(result.isSafe ? Color.green : Color.orange)
+                        Text(result.message)
+                            .font(.caption)
+                            .foregroundStyle(result.isSafe ? Color.primary : Color.orange)
+                    }
+                    .padding(.vertical, 4)
+                }
             }
             
             // Gear checklist entry point
@@ -245,6 +337,18 @@ struct PlannerViewWithTrail: View {
         formatter.dateStyle = .long
         formatter.timeStyle = .none
         return formatter.string(from: date)
+    }
+    
+    /// Checks weather before the planned hike
+    private func checkWeatherBeforeHike() async {
+        isCheckingWeather = true
+        let language = languageManager.currentLanguage.rawValue
+        let result = await weatherAlertManager.checkWeatherBeforeHike(
+            scheduledDate: plannedDate,
+            language: language
+        )
+        weatherCheckResult = result
+        isCheckingWeather = false
     }
 }
 

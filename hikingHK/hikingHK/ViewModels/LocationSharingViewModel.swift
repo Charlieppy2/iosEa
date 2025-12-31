@@ -44,7 +44,7 @@ final class LocationSharingViewModel: ObservableObject {
     
     /// Lazily configures the underlying stores and loads contacts/session.
     /// Emergency contacts are now loaded from FileManager + JSON (like journals).
-    func configureIfNeeded(context: ModelContext) {
+    func configureIfNeeded(context: ModelContext, accountId: UUID? = nil) {
         guard store == nil else { return }
         let newStore = LocationSharingStore(context: context)
         store = newStore
@@ -52,16 +52,29 @@ final class LocationSharingViewModel: ObservableObject {
         do {
             // Load emergency contacts from FileStore (like journals)
             // BaseFileStore will automatically recover from corrupted files by returning empty array
-            emergencyContacts = try emergencyContactFileStore.loadAll()
-            print("✅ LocationSharingViewModel: Loaded \(emergencyContacts.count) emergency contacts from JSON store")
+            let allContacts = try emergencyContactFileStore.loadAll()
             
-            // Load session from SwiftData (can be migrated later)
-            // Note: accountId should be passed from the caller
-            // For now, we'll need to update this when we have accountId available
-            // shareSession = try newStore.loadActiveSession(accountId: accountId)
-            // Temporarily using a workaround - this needs to be fixed with proper accountId
-            shareSession = nil // Will be set when accountId is available
-            isSharing = false
+            // Filter by accountId if provided
+            if let accountId = accountId {
+                emergencyContacts = allContacts.filter { $0.accountId == accountId }
+            } else {
+                emergencyContacts = allContacts
+            }
+            
+            print("✅ LocationSharingViewModel: Loaded \(emergencyContacts.count) emergency contacts from JSON store (accountId: \(accountId?.uuidString ?? "nil"))")
+            
+            // Load session from SwiftData
+            if let accountId = accountId {
+                shareSession = try? newStore.loadActiveSession(accountId: accountId)
+                if shareSession == nil {
+                    // Create a new session if none exists
+                    shareSession = LocationShareSession(accountId: accountId)
+                }
+            } else {
+                shareSession = nil
+            }
+            
+            isSharing = shareSession?.isActive ?? false
             
             if isSharing {
                 startLocationSharing()
@@ -79,11 +92,19 @@ final class LocationSharingViewModel: ObservableObject {
     }
     
     /// Refreshes emergency contacts from the JSON file store.
-    func refreshEmergencyContacts() {
+    func refreshEmergencyContacts(accountId: UUID? = nil) {
         do {
             // BaseFileStore will automatically recover from corrupted files by returning empty array
-            emergencyContacts = try emergencyContactFileStore.loadAll()
-            print("✅ LocationSharingViewModel: Refreshed \(emergencyContacts.count) emergency contacts")
+            let allContacts = try emergencyContactFileStore.loadAll()
+            
+            // Filter by accountId if provided
+            if let accountId = accountId {
+                emergencyContacts = allContacts.filter { $0.accountId == accountId }
+            } else {
+                emergencyContacts = allContacts
+            }
+            
+            print("✅ LocationSharingViewModel: Refreshed \(emergencyContacts.count) emergency contacts (accountId: \(accountId?.uuidString ?? "nil"))")
         } catch let err {
             // If loading failed, just log it and continue with empty contacts
             print("⚠️ LocationSharingViewModel: Failed to refresh emergency contacts: \(err)")
@@ -112,16 +133,14 @@ final class LocationSharingViewModel: ObservableObject {
         isSharing = true
         
         // Create or update the active sharing session metadata.
-        // Note: accountId should be passed from the caller
-        // For now, we'll need to update this when we have accountId available
-        // let session = shareSession ?? LocationShareSession(accountId: accountId)
-        // Temporarily using existing session or creating a placeholder
-        if shareSession == nil {
-            // This needs to be fixed with proper accountId
-            print("⚠️ LocationSharingViewModel: Cannot create session without accountId")
+        // If no session exists, we need accountId to create one
+        // For now, if shareSession is nil, we can't start sharing
+        guard let session = shareSession else {
+            print("⚠️ LocationSharingViewModel: Cannot start sharing without a session. Please configure with accountId first.")
+            error = "Cannot start sharing without a session"
+            isSharing = false
             return
         }
-        let session = shareSession!
         session.isActive = true
         session.startedAt = Date()
         session.expiresAt = Date().addingTimeInterval(24 * 60 * 60) // Expires after 24 hours
@@ -263,7 +282,9 @@ final class LocationSharingViewModel: ObservableObject {
     func addEmergencyContact(_ contact: EmergencyContact) {
         do {
             try emergencyContactFileStore.saveOrUpdate(contact)
-            emergencyContacts = try emergencyContactFileStore.loadAll()
+            // Reload all contacts and filter by accountId
+            let allContacts = try emergencyContactFileStore.loadAll()
+            emergencyContacts = allContacts.filter { $0.accountId == contact.accountId }
             print("✅ LocationSharingViewModel: Added emergency contact '\(contact.name)' to JSON store")
         } catch let addError {
             self.error = "Failed to add emergency contact: \(addError.localizedDescription)"
@@ -274,8 +295,11 @@ final class LocationSharingViewModel: ObservableObject {
     /// Removes an emergency contact and deletes it from the JSON file store.
     func removeEmergencyContact(_ contact: EmergencyContact) {
         do {
+            let accountId = contact.accountId
             try emergencyContactFileStore.delete(contact)
-            emergencyContacts = try emergencyContactFileStore.loadAll()
+            // Reload all contacts and filter by accountId
+            let allContacts = try emergencyContactFileStore.loadAll()
+            emergencyContacts = allContacts.filter { $0.accountId == accountId }
             print("✅ LocationSharingViewModel: Deleted emergency contact '\(contact.name)' from JSON store")
         } catch let deleteError {
             self.error = "Failed to delete emergency contact: \(deleteError.localizedDescription)"

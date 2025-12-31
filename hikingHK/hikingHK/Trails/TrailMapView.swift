@@ -109,6 +109,7 @@ struct TrailMapView: View {
                         }
                     }
                 }
+                .mapLanguage(languageManager)
                 .frame(height: 220)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 

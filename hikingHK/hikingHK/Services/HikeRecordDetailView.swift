@@ -108,6 +108,7 @@ struct HikeRecordDetailView: View {
                     }
                 }
                 .mapStyle(.standard(elevation: .realistic))
+                .mapLanguage(languageManager)
                 .frame(height: 300)
                 .cornerRadius(16)
             } else {
@@ -127,6 +128,7 @@ struct HikeRecordDetailView: View {
                     }
                 }
                 .mapStyle(.standard(elevation: .realistic))
+                .mapLanguage(languageManager)
                 .frame(height: 300)
                 .cornerRadius(16)
             }

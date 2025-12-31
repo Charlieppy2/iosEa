@@ -19,7 +19,6 @@ struct LocationSharingView: View {
     @State private var newContactName = ""
     @State private var newContactPhone = ""
     @State private var newContactEmail = ""
-    @State private var isShowingSOSConfirmation = false
     
     init(locationManager: LocationManager) {
         _viewModel = StateObject(wrappedValue: LocationSharingViewModel(locationManager: locationManager))
@@ -84,17 +83,8 @@ struct LocationSharingView: View {
             }
             .onAppear {
                 // Configure and load emergency contacts from JSON file store
-                viewModel.configureIfNeeded(context: modelContext)
-            }
-            .alert(languageManager.localizedString(for: "location.share.confirm.sos"), isPresented: $isShowingSOSConfirmation) {
-                Button(languageManager.localizedString(for: "cancel"), role: .cancel) { }
-                Button(languageManager.localizedString(for: "location.share.send"), role: .destructive) {
-                    Task {
-                        await viewModel.sendEmergencySOS()
-                    }
-                }
-            } message: {
-                Text(languageManager.localizedString(for: "location.share.sos.message"))
+                let accountId = sessionManager.currentUser?.id
+                viewModel.configureIfNeeded(context: modelContext, accountId: accountId)
             }
             .alert(languageManager.localizedString(for: "error"), isPresented: .constant(viewModel.error != nil), presenting: viewModel.error) { error in
                 Button(languageManager.localizedString(for: "ok")) {
@@ -103,8 +93,11 @@ struct LocationSharingView: View {
             } message: { error in
                 Text(error)
             }
-            .onAppear {
-                viewModel.configureIfNeeded(context: modelContext)
+            .onChange(of: sessionManager.currentUser?.id) { oldValue, newValue in
+                // Reload contacts when user changes
+                if let accountId = newValue {
+                    viewModel.refreshEmergencyContacts(accountId: accountId)
+                }
             }
         }
     }
@@ -152,7 +145,11 @@ struct LocationSharingView: View {
     
     private var emergencySOSButton: some View {
         Button {
-            isShowingSOSConfirmation = true
+            // Open phone dialer with 999 (Hong Kong emergency number)
+            // Using tel: URL scheme opens the dialer, user needs to press call button
+            if let url = URL(string: "tel:999") {
+                UIApplication.shared.open(url)
+            }
         } label: {
             HStack {
                 Image(systemName: "sos")
@@ -173,8 +170,6 @@ struct LocationSharingView: View {
             .foregroundStyle(.white)
             .shadow(color: .red.opacity(0.3), radius: 10, x: 0, y: 5)
         }
-        .disabled(viewModel.isSendingSOS || viewModel.emergencyContacts.isEmpty)
-        .opacity(viewModel.isSendingSOS || viewModel.emergencyContacts.isEmpty ? 0.6 : 1.0)
     }
     
     private func anomalyAlertCard(_ anomaly: Anomaly) -> some View {
@@ -301,6 +296,10 @@ struct LocationSharingView: View {
                 ForEach(viewModel.emergencyContacts) { contact in
                     ContactRow(contact: contact) {
                         viewModel.removeEmergencyContact(contact)
+                        // Refresh contacts after removing
+                        if let accountId = sessionManager.currentUser?.id {
+                            viewModel.refreshEmergencyContacts(accountId: accountId)
+                        }
                     }
                 }
             }
@@ -341,6 +340,8 @@ struct LocationSharingView: View {
                             email: newContactEmail.isEmpty ? nil : newContactEmail
                         )
                         viewModel.addEmergencyContact(contact)
+                        // Refresh contacts after adding
+                        viewModel.refreshEmergencyContacts(accountId: accountId)
                         isShowingAddContact = false
                         resetContactForm()
                     }

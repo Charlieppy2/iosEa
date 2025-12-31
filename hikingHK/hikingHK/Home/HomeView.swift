@@ -36,6 +36,7 @@ struct HomeView: View {
     @State private var isShowingLocationPicker = false
     @State private var trailPendingPlan: Trail?
     @State private var isShowingAddPlanConfirmation = false
+    @StateObject private var weatherAlertManager = WeatherAlertManager()
     private let featuredTimer = Timer.publish(every: 6, on: .main, in: .common).autoconnect()
 
     /// Featured trails carousel data source – 当前简单使用所有 trails 作为精选候选。
@@ -266,6 +267,22 @@ struct HomeView: View {
                     featuredIndex = 0
                 } else {
                     featuredIndex += 1
+                }
+            }
+            .task {
+                // Request notification permission and start automatic weather monitoring
+                let hasPermission = await weatherAlertManager.requestNotificationPermission()
+                if hasPermission {
+                    weatherAlertManager.startMonitoring(language: languageManager.currentLanguage.rawValue)
+                }
+            }
+            .onChange(of: languageManager.currentLanguage) { oldValue, newValue in
+                // Restart monitoring with new language
+                if weatherAlertManager.isMonitoring {
+                    weatherAlertManager.stopMonitoring()
+                    Task {
+                        weatherAlertManager.startMonitoring(language: newValue.rawValue)
+                    }
                 }
             }
         }

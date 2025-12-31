@@ -112,10 +112,13 @@ final class AppViewModel: ObservableObject {
     ///   - accountId: The user account ID to associate this hike with.
     func addSavedHike(for trail: Trail, scheduledDate: Date, note: String = "", accountId: UUID) {
         let newHike = SavedHike(trail: trail, scheduledDate: scheduledDate, note: note)
+        // Insert at the beginning to show newest first (before sorting)
         savedHikes.insert(newHike, at: 0)
-        sortSavedHikes()
+        
         do {
             try trailDataStore?.save(newHike, accountId: accountId)
+            // After saving, sort to ensure completed hikes are at bottom, but keep newest incomplete at top
+            sortSavedHikesWithNewestFirst()
             objectWillChange.send()
             print("✅ AppViewModel: Saved hike '\(trail.name)' scheduled for \(scheduledDate.formatted(date: .abbreviated, time: .omitted))")
         } catch {
@@ -285,6 +288,29 @@ final class AppViewModel: ObservableObject {
             }
             return !lhs.isCompleted && rhs.isCompleted
         }
+    }
+    
+    /// Sorts saved hikes with newest incomplete hikes at the top
+    /// This ensures newly added plans appear first
+    private func sortSavedHikesWithNewestFirst() {
+        // Separate completed and incomplete hikes
+        var incomplete = savedHikes.filter { !$0.isCompleted }
+        let completed = savedHikes.filter { $0.isCompleted }
+        
+        // For incomplete hikes, maintain insertion order (newest first)
+        // Since we insert at index 0, the array is already in reverse insertion order
+        // So we reverse it to get newest first
+        incomplete.reverse()
+        
+        // Sort completed hikes by completion date (newest first)
+        let sortedCompleted = completed.sorted { lhs, rhs in
+            let lhsDate = lhs.completedAt ?? lhs.scheduledDate
+            let rhsDate = rhs.completedAt ?? rhs.scheduledDate
+            return lhsDate > rhsDate
+        }
+        
+        // Combine: incomplete first (newest at top), then completed
+        savedHikes = incomplete + sortedCompleted
     }
     
     

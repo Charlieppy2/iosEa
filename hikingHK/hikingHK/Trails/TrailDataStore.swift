@@ -30,7 +30,7 @@ final class TrailDataStore {
         let records = try context.fetch(descriptor)
         let trailMap = Dictionary(uniqueKeysWithValues: trails.map { ($0.id, $0) })
 
-        return records.compactMap { record in
+        let hikes = records.compactMap { record -> SavedHike? in
             guard let trail = trailMap[record.trailId] else { return nil }
             return SavedHike(
                 id: record.id,
@@ -41,12 +41,27 @@ final class TrailDataStore {
                 completedAt: record.completedAt
             )
         }
-        .sorted { lhs, rhs in
-            if lhs.isCompleted == rhs.isCompleted {
-                return lhs.scheduledDate < rhs.scheduledDate
-            }
-            return !lhs.isCompleted && rhs.isCompleted
+        
+        // Separate completed and incomplete hikes
+        let incomplete = hikes.filter { !$0.isCompleted }
+        let completed = hikes.filter { $0.isCompleted }
+        
+        // Sort incomplete hikes by ID (newest first - newer UUIDs tend to be "larger" in string comparison)
+        // This ensures newly added plans appear at the top
+        let sortedIncomplete = incomplete.sorted { lhs, rhs in
+            // Compare UUID strings - we want newest (larger UUID string) first
+            return lhs.id.uuidString > rhs.id.uuidString
         }
+        
+        // Sort completed hikes by completion date (newest first)
+        let sortedCompleted = completed.sorted { lhs, rhs in
+            let lhsDate = lhs.completedAt ?? lhs.scheduledDate
+            let rhsDate = rhs.completedAt ?? rhs.scheduledDate
+            return lhsDate > rhsDate
+        }
+        
+        // Combine: incomplete first (newest at top), then completed
+        return sortedIncomplete + sortedCompleted
     }
 
     /// Loads the set of trail IDs that are currently marked as favorites.

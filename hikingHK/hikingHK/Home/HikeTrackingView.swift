@@ -17,8 +17,11 @@ struct HikeTrackingView: View {
     @EnvironmentObject private var languageManager: LanguageManager
     @EnvironmentObject private var sessionManager: SessionManager
     @StateObject private var viewModel: HikeTrackingViewModel
+    @StateObject private var weatherAlertManager = WeatherAlertManager()
     @State private var selectedTrail: Trail?
     @State private var isShowingTrailPicker = false
+    @State private var latestWeather: WeatherSnapshot?
+    @State private var isShowingWeatherUpdate = false
     
     init(locationManager: LocationManager) {
         _viewModel = StateObject(wrappedValue: HikeTrackingViewModel(locationManager: locationManager))
@@ -66,6 +69,7 @@ struct HikeTrackingView: View {
                     }
                 }
                 .mapStyle(.standard(elevation: .realistic))
+                .mapLanguage(languageManager)
                 .ignoresSafeArea()
                 
                 VStack {
@@ -121,7 +125,28 @@ struct HikeTrackingView: View {
                     isShowingTrailPicker = true
                 }
             }
+            .onChange(of: viewModel.isTracking) { oldValue, newValue in
+                if newValue {
+                    // Start weather monitoring when tracking starts
+                    Task {
+                        let hasPermission = await weatherAlertManager.requestNotificationPermission()
+                        if hasPermission {
+                            weatherAlertManager.startHikeMonitoring(language: languageManager.currentLanguage.rawValue)
+                            await updateWeather()
+                        }
+                    }
+                } else {
+                    // Stop weather monitoring when tracking stops
+                    weatherAlertManager.stopMonitoring()
+                }
+            }
         }
+    }
+    
+    /// Updates the latest weather snapshot
+    private func updateWeather() async {
+        let language = languageManager.currentLanguage.rawValue
+        latestWeather = await weatherAlertManager.getLatestWeather(language: language)
     }
     
     private var statsCard: some View {
@@ -166,6 +191,106 @@ struct HikeTrackingView: View {
                 )
             }
             
+            // Real-time weather update section (only shown during active tracking)
+            if viewModel.isTracking {
+                Divider()
+                
+                // Weather update card
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "cloud.sun.fill")
+                            .foregroundStyle(Color.hikingGreen)
+                        Text(languageManager.localizedString(for: "weather.alert.real.time.update"))
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Color.hikingDarkGreen)
+                        Spacer()
+                        if let weather = latestWeather {
+                            Button {
+                                Task {
+                                    await updateWeather()
+                                }
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.caption)
+                                    .foregroundStyle(Color.hikingGreen)
+                            }
+                        }
+                    }
+                    
+                    if let weather = latestWeather {
+                        HStack(spacing: 16) {
+                            Label("\(Int(weather.temperature))°C", systemImage: "thermometer")
+                                .font(.caption)
+                            Label("\(weather.humidity)%", systemImage: "humidity")
+                                .font(.caption)
+                            if weather.uvIndex >= 0 {
+                                Label("UV \(weather.uvIndex)", systemImage: "sun.max.fill")
+                                    .font(.caption)
+                            }
+                        }
+                        .foregroundStyle(.secondary)
+                        
+                        if let warning = weather.warningMessage, !warning.isEmpty {
+                            HStack(alignment: .top, spacing: 6) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                    .font(.caption)
+                                Text(warning)
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                            .padding(.top, 4)
+                        }
+                    } else {
+                        Button {
+                            Task {
+                                await updateWeather()
+                            }
+                        } label: {
+                            Text(languageManager.localizedString(for: "weather.alert.check.now"))
+                                .font(.caption)
+                                .foregroundStyle(Color.hikingGreen)
+                        }
+                    }
+                    
+                    if weatherAlertManager.isMonitoring {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                            Text(languageManager.localizedString(for: "weather.alert.monitoring"))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button {
+                                weatherAlertManager.stopMonitoring()
+                            } label: {
+                                Text(languageManager.localizedString(for: "weather.alert.stop.monitoring"))
+                                    .font(.caption2)
+                                    .foregroundStyle(.red)
+                            }
+                        }
+                        .padding(.top, 4)
+                    } else {
+                        Button {
+                            Task {
+                                let hasPermission = await weatherAlertManager.requestNotificationPermission()
+                                if hasPermission {
+                                    weatherAlertManager.startHikeMonitoring(language: languageManager.currentLanguage.rawValue)
+                                    await updateWeather()
+                                }
+                            }
+                        } label: {
+                            Text(languageManager.localizedString(for: "weather.alert.start.monitoring"))
+                                .font(.caption2)
+                                .foregroundStyle(Color.hikingGreen)
+                        }
+                        .padding(.top, 4)
+                    }
+                }
+                .padding()
+                .background(Color.hikingCardGradient, in: RoundedRectangle(cornerRadius: 12))
+            }
+            
             // Tracking control buttons
             if viewModel.isTracking {
                 HStack(spacing: 12) {
@@ -183,6 +308,7 @@ struct HikeTrackingView: View {
                     }
                     
                     Button {
+                        weatherAlertManager.stopMonitoring()
                         viewModel.stopTracking()
                         dismiss()
                     } label: {
