@@ -72,7 +72,15 @@ extension OfflineMapRegion {
         "Hong Kong Island",
         "Kowloon Ridge",
         "Sai Kung East",
-        "Lantau North"
+        "Sai Kung West",
+        "Lantau North",
+        "Lantau South",
+        "New Territories Central",
+        "New Territories West",
+        "New Territories East",
+        "Tai Mo Shan Area",
+        "Pat Sin Leng",
+        "MacLehose Trail Sections"
     ]
     
     // Get the localized display name for this region
@@ -84,8 +92,24 @@ extension OfflineMapRegion {
             return languageManager.localizedString(for: "offline.maps.region.kowloon.ridge")
         case "Sai Kung East":
             return languageManager.localizedString(for: "offline.maps.region.sai.kung.east")
+        case "Sai Kung West":
+            return languageManager.localizedString(for: "offline.maps.region.sai.kung.west")
         case "Lantau North":
             return languageManager.localizedString(for: "offline.maps.region.lantau.north")
+        case "Lantau South":
+            return languageManager.localizedString(for: "offline.maps.region.lantau.south")
+        case "New Territories Central":
+            return languageManager.localizedString(for: "offline.maps.region.new.territories.central")
+        case "New Territories West":
+            return languageManager.localizedString(for: "offline.maps.region.new.territories.west")
+        case "New Territories East":
+            return languageManager.localizedString(for: "offline.maps.region.new.territories.east")
+        case "Tai Mo Shan Area":
+            return languageManager.localizedString(for: "offline.maps.region.tai.mo.shan.area")
+        case "Pat Sin Leng":
+            return languageManager.localizedString(for: "offline.maps.region.pat.sin.leng")
+        case "MacLehose Trail Sections":
+            return languageManager.localizedString(for: "offline.maps.region.maclehose.trail.sections")
         default:
             return name
         }
@@ -109,10 +133,50 @@ extension OfflineMapRegion {
                 center: CLLocationCoordinate2D(latitude: 22.383, longitude: 114.350),
                 span: MKCoordinateSpan(latitudeDelta: 0.20, longitudeDelta: 0.20)
             )
+        case "Sai Kung West":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.350, longitude: 114.250),
+                span: MKCoordinateSpan(latitudeDelta: 0.18, longitudeDelta: 0.18)
+            )
         case "Lantau North":
             return MKCoordinateRegion(
                 center: CLLocationCoordinate2D(latitude: 22.267, longitude: 113.950),
                 span: MKCoordinateSpan(latitudeDelta: 0.18, longitudeDelta: 0.18)
+            )
+        case "Lantau South":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.200, longitude: 113.950),
+                span: MKCoordinateSpan(latitudeDelta: 0.20, longitudeDelta: 0.20)
+            )
+        case "New Territories Central":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.400, longitude: 114.200),
+                span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15)
+            )
+        case "New Territories West":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.400, longitude: 113.950),
+                span: MKCoordinateSpan(latitudeDelta: 0.18, longitudeDelta: 0.18)
+            )
+        case "New Territories East":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.450, longitude: 114.300),
+                span: MKCoordinateSpan(latitudeDelta: 0.20, longitudeDelta: 0.20)
+            )
+        case "Tai Mo Shan Area":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.410, longitude: 114.120),
+                span: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.12)
+            )
+        case "Pat Sin Leng":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.500, longitude: 114.300),
+                span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15)
+            )
+        case "MacLehose Trail Sections":
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 22.400, longitude: 114.250),
+                span: MKCoordinateSpan(latitudeDelta: 0.35, longitudeDelta: 0.35)
             )
         default:
             return MKCoordinateRegion(

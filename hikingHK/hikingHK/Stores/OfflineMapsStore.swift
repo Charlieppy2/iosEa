@@ -18,42 +18,74 @@ final class OfflineMapsStore {
     }
     
     /// Inserts the default offline regions if none exist for a specific user, and returns all regions.
+    /// Also adds any missing regions from the available regions list.
     /// - Parameter accountId: The user account ID to create regions for.
     func seedDefaultsIfNeeded(accountId: UUID) throws -> [OfflineMapRegion] {
         let descriptor = FetchDescriptor<OfflineMapRegion>(
             predicate: #Predicate { $0.accountId == accountId }
         )
         let existing = try context.fetch(descriptor)
-        guard existing.isEmpty else {
-            print("OfflineMapsStore: Found \(existing.count) existing regions, skipping seed")
-            // Return all existing regions if seeding is not needed.
+        
+        // Get all available region names
+        let availableRegionNames = Set(OfflineMapRegion.availableRegions)
+        let existingRegionNames = Set(existing.map { $0.name })
+        
+        // Find missing regions
+        let missingRegionNames = availableRegionNames.subtracting(existingRegionNames)
+        
+        if existing.isEmpty {
+            print("OfflineMapsStore: No existing regions, seeding all default regions for account: \(accountId)...")
+            let downloadService = OfflineMapsDownloadService()
+            let defaultRegions = OfflineMapRegion.availableRegions.map { name in
+                let estimatedSize = downloadService.getEstimatedSize(for: name)
+                return OfflineMapRegion(accountId: accountId, name: name, totalSize: estimatedSize)
+            }
+            
+            for region in defaultRegions {
+                context.insert(region)
+            }
+            
+            do {
+                try context.save()
+                print("OfflineMapsStore: Successfully seeded \(defaultRegions.count) regions")
+            } catch {
+                print("❌ OfflineMapsStore: Failed to save seeded regions: \(error)")
+                context.processPendingChanges()
+                try context.save()
+                print("✅ OfflineMapsStore: Successfully saved after processing pending changes")
+            }
+            
+            return defaultRegions.sorted { $0.name < $1.name }
+        } else if !missingRegionNames.isEmpty {
+            // Add missing regions
+            print("OfflineMapsStore: Found \(existing.count) existing regions, adding \(missingRegionNames.count) missing regions...")
+            let downloadService = OfflineMapsDownloadService()
+            let newRegions = missingRegionNames.map { name in
+                let estimatedSize = downloadService.getEstimatedSize(for: name)
+                return OfflineMapRegion(accountId: accountId, name: name, totalSize: estimatedSize)
+            }
+            
+            for region in newRegions {
+                context.insert(region)
+            }
+            
+            do {
+                try context.save()
+                print("OfflineMapsStore: Successfully added \(newRegions.count) missing regions")
+            } catch {
+                print("❌ OfflineMapsStore: Failed to save new regions: \(error)")
+                context.processPendingChanges()
+                try context.save()
+                print("✅ OfflineMapsStore: Successfully saved after processing pending changes")
+            }
+            
+            // Return all regions (existing + new)
+            return try loadAllRegions(accountId: accountId)
+        } else {
+            print("OfflineMapsStore: Found \(existing.count) existing regions, all regions present")
+            // Return all existing regions if all are present.
             return try loadAllRegions(accountId: accountId)
         }
-        
-        print("OfflineMapsStore: Seeding default regions for account: \(accountId)...")
-        let downloadService = OfflineMapsDownloadService()
-        let defaultRegions = OfflineMapRegion.availableRegions.map { name in
-            let estimatedSize = downloadService.getEstimatedSize(for: name)
-            return OfflineMapRegion(accountId: accountId, name: name, totalSize: estimatedSize)
-        }
-        
-        for region in defaultRegions {
-            context.insert(region)
-        }
-        
-        do {
-            try context.save()
-            print("OfflineMapsStore: Successfully seeded \(defaultRegions.count) regions")
-        } catch {
-            print("❌ OfflineMapsStore: Failed to save seeded regions: \(error)")
-            context.processPendingChanges()
-            try context.save()
-            print("✅ OfflineMapsStore: Successfully saved after processing pending changes")
-        }
-        
-        // Return the inserted regions directly instead of querying again.
-        print("OfflineMapsStore: Returning \(defaultRegions.count) inserted regions directly")
-        return defaultRegions.sorted { $0.name < $1.name }
     }
     
     /// Loads all offline map regions for a specific user, sorted by name.

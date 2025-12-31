@@ -1741,11 +1741,18 @@ struct OfflineMapsView: View {
                 guard let accountId = sessionManager.currentUser?.id else { return }
                 isCreatingRegions = true
                 await viewModel.configureIfNeeded(context: modelContext, accountId: accountId)
-                // configureIfNeeded 已经会自动创建区域，如果还是空的才手动创建
+                // configureIfNeeded 已经会自动创建区域并添加缺失的区域，如果还是空的才手动创建
                 if viewModel.regions.isEmpty {
                     await viewModel.createDefaultRegions(context: modelContext, accountId: accountId)
                 }
                 isCreatingRegions = false
+            }
+            .onAppear {
+                // 每次视图出现时，刷新区域列表以确保显示所有可用区域
+                guard let accountId = sessionManager.currentUser?.id else { return }
+                Task {
+                    await viewModel.configureIfNeeded(context: modelContext, accountId: accountId)
+                }
             }
             .alert(languageManager.localizedString(for: "offline.maps.download.error"), isPresented: Binding(
                 get: { viewModel.error != nil },
@@ -1891,17 +1898,60 @@ struct QuickAddTrailPickerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
     
+    enum SortOption: String, CaseIterable {
+        case name = "name"
+        case district = "district"
+        case difficulty = "difficulty"
+        case length = "length"
+        
+        func localizedName(_ languageManager: LanguageManager) -> String {
+            switch self {
+            case .name:
+                return languageManager.localizedString(for: "trails.sort.name")
+            case .district:
+                return languageManager.localizedString(for: "trails.sort.district")
+            case .difficulty:
+                return languageManager.localizedString(for: "trails.sort.difficulty")
+            case .length:
+                return languageManager.localizedString(for: "trails.sort.length")
+            }
+        }
+    }
+    
+    @State private var sortOption: SortOption = .name
+    @State private var isAscending: Bool = true
+    
     var onTrailSelected: (Trail) -> Void
     
     private var filteredTrails: [Trail] {
-        guard !searchText.isEmpty else { return viewModel.trails }
-        return viewModel.trails.filter { trail in
-            let localizedName = trail.localizedName(languageManager: languageManager)
-            let localizedDistrict = trail.localizedDistrict(languageManager: languageManager)
-            return localizedName.localizedCaseInsensitiveContains(searchText) ||
-                   localizedDistrict.localizedCaseInsensitiveContains(searchText) ||
-                   trail.name.localizedCaseInsensitiveContains(searchText) ||
-                   trail.district.localizedCaseInsensitiveContains(searchText)
+        let filtered: [Trail]
+        if searchText.isEmpty {
+            filtered = viewModel.trails
+        } else {
+            filtered = viewModel.trails.filter { trail in
+                let localizedName = trail.localizedName(languageManager: languageManager)
+                let localizedDistrict = trail.localizedDistrict(languageManager: languageManager)
+                return localizedName.localizedCaseInsensitiveContains(searchText) ||
+                       localizedDistrict.localizedCaseInsensitiveContains(searchText) ||
+                       trail.name.localizedCaseInsensitiveContains(searchText) ||
+                       trail.district.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        // Sort filtered trails
+        return filtered.sorted { lhs, rhs in
+            let comparison: Bool
+            switch sortOption {
+            case .name:
+                comparison = lhs.localizedName(languageManager: languageManager) < rhs.localizedName(languageManager: languageManager)
+            case .district:
+                comparison = lhs.localizedDistrict(languageManager: languageManager) < rhs.localizedDistrict(languageManager: languageManager)
+            case .difficulty:
+                comparison = lhs.difficulty.rawValue < rhs.difficulty.rawValue
+            case .length:
+                comparison = lhs.lengthKm < rhs.lengthKm
+            }
+            return isAscending ? comparison : !comparison
         }
     }
     
@@ -1943,6 +1993,25 @@ struct QuickAddTrailPickerView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(languageManager.localizedString(for: "cancel")) {
                         dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Picker(languageManager.localizedString(for: "trails.sort.by"), selection: $sortOption) {
+                            ForEach(SortOption.allCases, id: \.self) { option in
+                                Text(option.localizedName(languageManager)).tag(option)
+                            }
+                        }
+                        Button {
+                            isAscending.toggle()
+                        } label: {
+                            HStack {
+                                Text(isAscending ? languageManager.localizedString(for: "trails.sort.ascending") : languageManager.localizedString(for: "trails.sort.descending"))
+                                Image(systemName: isAscending ? "arrow.up" : "arrow.down")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up.arrow.down")
                     }
                 }
             }

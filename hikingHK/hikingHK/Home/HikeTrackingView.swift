@@ -440,10 +440,51 @@ struct TrailPickerForTracking: View {
     @EnvironmentObject private var languageManager: LanguageManager
     let onTrailSelected: (Trail) -> Void
     
+    enum SortOption: String, CaseIterable {
+        case name = "name"
+        case district = "district"
+        case difficulty = "difficulty"
+        case length = "length"
+        
+        func localizedName(_ languageManager: LanguageManager) -> String {
+            switch self {
+            case .name:
+                return languageManager.localizedString(for: "trails.sort.name")
+            case .district:
+                return languageManager.localizedString(for: "trails.sort.district")
+            case .difficulty:
+                return languageManager.localizedString(for: "trails.sort.difficulty")
+            case .length:
+                return languageManager.localizedString(for: "trails.sort.length")
+            }
+        }
+    }
+    
+    @State private var sortOption: SortOption = .name
+    @State private var isAscending: Bool = true
+    
+    private var sortedTrails: [Trail] {
+        let sorted = appViewModel.trails.sorted { lhs, rhs in
+            let comparison: Bool
+            switch sortOption {
+            case .name:
+                comparison = lhs.localizedName(languageManager: languageManager) < rhs.localizedName(languageManager: languageManager)
+            case .district:
+                comparison = lhs.localizedDistrict(languageManager: languageManager) < rhs.localizedDistrict(languageManager: languageManager)
+            case .difficulty:
+                comparison = lhs.difficulty.rawValue < rhs.difficulty.rawValue
+            case .length:
+                comparison = lhs.lengthKm < rhs.lengthKm
+            }
+            return isAscending ? comparison : !comparison
+        }
+        return sorted
+    }
+    
     var body: some View {
         NavigationStack {
             List {
-                ForEach(appViewModel.trails) { trail in
+                ForEach(sortedTrails) { trail in
                     Button {
                         onTrailSelected(trail)
                         dismiss()
@@ -470,6 +511,25 @@ struct TrailPickerForTracking: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(languageManager.localizedString(for: "cancel")) {
                         dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Picker(languageManager.localizedString(for: "trails.sort.by"), selection: $sortOption) {
+                            ForEach(SortOption.allCases, id: \.self) { option in
+                                Text(option.localizedName(languageManager)).tag(option)
+                            }
+                        }
+                        Button {
+                            isAscending.toggle()
+                        } label: {
+                            HStack {
+                                Text(isAscending ? languageManager.localizedString(for: "trails.sort.ascending") : languageManager.localizedString(for: "trails.sort.descending"))
+                                Image(systemName: isAscending ? "arrow.up" : "arrow.down")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up.arrow.down")
                     }
                 }
             }

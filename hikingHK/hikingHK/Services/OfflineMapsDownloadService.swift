@@ -58,7 +58,15 @@ struct OfflineMapsDownloadService: OfflineMapsDownloadServiceProtocol {
             "Hong Kong Island": 1.0,
             "Kowloon Ridge": 0.85,
             "Sai Kung East": 1.2,
-            "Lantau North": 1.1
+            "Sai Kung West": 1.1,
+            "Lantau North": 1.1,
+            "Lantau South": 1.3,
+            "New Territories Central": 1.0,
+            "New Territories West": 1.15,
+            "New Territories East": 1.2,
+            "Tai Mo Shan Area": 0.9,
+            "Pat Sin Leng": 1.0,
+            "MacLehose Trail Sections": 1.5
         ]
         
         let multiplier = regionMultiplier[region] ?? 1.0

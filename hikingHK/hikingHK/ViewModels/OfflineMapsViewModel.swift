@@ -34,15 +34,35 @@ final class OfflineMapsViewModel: ObservableObject {
     ///   - context: The SwiftData model context.
     ///   - accountId: The user account ID to load regions for.
     func configureIfNeeded(context: ModelContext, accountId: UUID) async {
-        // If already configured, just refresh the region list.
+        // If already configured, refresh the region list and check for missing regions.
         if let existingStore = offlineMapsStore {
             do {
-                regions = try existingStore.loadAllRegions(accountId: accountId)
-                if regions.isEmpty {
-                    // If the list is empty, try to re-seed the default regions.
-                    let seededRegions = try existingStore.seedDefaultsIfNeeded(accountId: accountId)
-                    regions = seededRegions
+                // Always call seedDefaultsIfNeeded to ensure all available regions are present
+                // This will add any missing regions without affecting existing ones
+                let seededRegions = try existingStore.seedDefaultsIfNeeded(accountId: accountId)
+                regions = seededRegions
+                
+                // Reconcile download status with file system
+                for region in regions {
+                    if region.totalSize == 0 {
+                        region.totalSize = downloadService.getEstimatedSize(for: region.name)
+                        try? existingStore.updateRegion(region)
+                    }
+                    
+                    if downloadService.isRegionDownloaded(region) && region.downloadStatus != .downloaded {
+                        region.downloadStatus = .downloaded
+                        region.downloadProgress = 1.0
+                        try? existingStore.updateRegion(region)
+                    } else if !downloadService.isRegionDownloaded(region) && region.downloadStatus == .downloaded {
+                        region.downloadStatus = .notDownloaded
+                        region.downloadProgress = 0
+                        region.downloadedSize = 0
+                        try? existingStore.updateRegion(region)
+                    }
                 }
+                
+                // Persist updated regions to JSON
+                try? fileStore.saveRegions(regions)
             } catch {
                 print("Offline maps refresh error: \(error)")
             }
@@ -60,6 +80,15 @@ final class OfflineMapsViewModel: ObservableObject {
             if !persisted.isEmpty {
                 regions = persisted
                 print("✅ OfflineMapsViewModel: Loaded \(regions.count) regions from JSON store")
+                
+                // Check if there are missing regions and add them
+                let seededRegions = try store.seedDefaultsIfNeeded(accountId: accountId)
+                if seededRegions.count > regions.count {
+                    print("✅ OfflineMapsViewModel: Added \(seededRegions.count - regions.count) missing regions")
+                    regions = seededRegions
+                    // Persist updated regions to JSON
+                    try? fileStore.saveRegions(regions)
+                }
                 return
             }
             
