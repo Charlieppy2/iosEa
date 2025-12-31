@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 /// Transport query view for MTR and Bus services
 struct TransportView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager
+    @StateObject private var locationManager = LocationManager()
     @State private var selectedTab: TransportTab = .mtr
     @State private var searchText = ""
     @State private var selectedLine: String?
@@ -18,6 +20,10 @@ struct TransportView: View {
     @State private var mtrSchedule: MTRScheduleData?
     @State private var isLoadingMTR = false
     @State private var mtrError: String?
+    @State private var nearbyStations: [(name: String, distance: Double)] = []
+    @State private var isLoadingNearby = false
+    @State private var nearbyBusStations: [(name: String, distance: Double)] = []
+    @State private var isLoadingNearbyBus = false
     
     // MTR filter states
     @State private var selectedMTRFilterStation: String? = nil // Selected station name for filtering
@@ -73,6 +79,7 @@ struct TransportView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding()
+                .tint(Color.hikingGreen)
                 
                 // Content based on selected tab
                 if selectedTab == .mtr {
@@ -81,6 +88,7 @@ struct TransportView: View {
                     busView
                 }
             }
+            .hikingBackground()
             .navigationTitle(languageManager.localizedString(for: "transport.title"))
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: KMBRoute.self) { route in
@@ -92,9 +100,244 @@ struct TransportView: View {
                     Button(languageManager.localizedString(for: "done")) {
                         dismiss()
                     }
+                    .foregroundStyle(Color.hikingGreen)
+                }
+            }
+            .onAppear {
+                loadNearbyStations()
+                loadNearbyBusStations()
+            }
+            .onChange(of: locationManager.currentLocation) { _, newLocation in
+                if newLocation != nil {
+                    loadNearbyStations()
+                    loadNearbyBusStations()
                 }
             }
         }
+    }
+    
+    // MARK: - Nearby Stations Section
+    
+    private var nearbyStationsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "location.circle.fill")
+                    .foregroundStyle(Color.hikingGreen)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "transport.nearby.stations"))
+                    .font(.headline)
+                Spacer()
+                if isLoadingNearby {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                }
+            }
+            
+            VStack(spacing: 8) {
+                ForEach(Array(nearbyStations.enumerated()), id: \.offset) { index, station in
+                    Button {
+                        // Directly search for this station
+                        Task {
+                            await searchMTRStationDirectly(stationName: station.name)
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            // Station number badge
+                            Text("\(index + 1)")
+                                .font(.headline.bold())
+                                .foregroundStyle(.white)
+                                .frame(width: 32, height: 32)
+                                .background(
+                                    Circle()
+                                        .fill(Color.hikingGreen)
+                                )
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(station.name)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.primary)
+                                Text(String(format: "%.1f km", station.distance))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "arrow.right.circle.fill")
+                                .foregroundStyle(Color.hikingGreen)
+                                .font(.title3)
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.hikingCardGradient)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .stroke(Color.hikingGreen.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding()
+        .hikingCard()
+    }
+    
+    /// Load nearby stations based on current GPS location
+    private func loadNearbyStations() {
+        // Check location permission
+        if locationManager.authorizationStatus == .notDetermined {
+            locationManager.requestPermission()
+            return
+        }
+        
+        guard locationManager.authorizationStatus == .authorizedWhenInUse || 
+              locationManager.authorizationStatus == .authorizedAlways else {
+            return
+        }
+        
+        guard let currentLocation = locationManager.currentLocation else {
+            // Start location updates if not available
+            locationManager.startUpdates()
+            return
+        }
+        
+        isLoadingNearby = true
+        
+        Task {
+            let preferChinese = languageManager.currentLanguage == .traditionalChinese
+            let stations = TransportStationCoordinates.nearbyMTRStations(from: currentLocation, limit: 3, preferChinese: preferChinese)
+            
+            await MainActor.run {
+                // Filter out Chinese names in English mode
+                if languageManager.currentLanguage == .english {
+                    nearbyStations = stations.filter { station in
+                        // Only keep stations with English names (no Chinese characters)
+                        !station.name.unicodeScalars.contains { scalar in
+                            (0x4E00...0x9FFF).contains(scalar.value) ||
+                            (0x3400...0x4DBF).contains(scalar.value)
+                        }
+                    }
+                } else {
+                    nearbyStations = stations
+                }
+                isLoadingNearby = false
+            }
+        }
+    }
+    
+    /// Load nearby bus stations based on current GPS location
+    private func loadNearbyBusStations() {
+        // Check location permission
+        if locationManager.authorizationStatus == .notDetermined {
+            locationManager.requestPermission()
+            return
+        }
+        
+        guard locationManager.authorizationStatus == .authorizedWhenInUse || 
+              locationManager.authorizationStatus == .authorizedAlways else {
+            return
+        }
+        
+        guard let currentLocation = locationManager.currentLocation else {
+            // Start location updates if not available
+            locationManager.startUpdates()
+            return
+        }
+        
+        isLoadingNearbyBus = true
+        
+        Task {
+            let preferChinese = languageManager.currentLanguage == .traditionalChinese
+            let stations = TransportStationCoordinates.nearbyBusStations(from: currentLocation, limit: 3, preferChinese: preferChinese)
+            
+            await MainActor.run {
+                // Filter out Chinese names in English mode
+                if languageManager.currentLanguage == .english {
+                    nearbyBusStations = stations.filter { station in
+                        // Only keep stations with English names (no Chinese characters)
+                        !station.name.unicodeScalars.contains { scalar in
+                            (0x4E00...0x9FFF).contains(scalar.value) ||
+                            (0x3400...0x4DBF).contains(scalar.value)
+                        }
+                    }
+                } else {
+                    nearbyBusStations = stations
+                }
+                isLoadingNearbyBus = false
+            }
+        }
+    }
+    
+    /// Nearby bus stations section view
+    private var nearbyBusStationsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "location.circle.fill")
+                    .foregroundStyle(Color.hikingGreen)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "transport.nearby.stations"))
+                    .font(.headline)
+                Spacer()
+                if isLoadingNearbyBus {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                }
+            }
+            
+            VStack(spacing: 8) {
+                ForEach(Array(nearbyBusStations.enumerated()), id: \.offset) { index, station in
+                    Button {
+                        // Set search text to station name and search
+                        searchText = station.name
+                        Task {
+                            await searchBusRoutes()
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            // Station number badge
+                            Text("\(index + 1)")
+                                .font(.headline.bold())
+                                .foregroundStyle(.white)
+                                .frame(width: 32, height: 32)
+                                .background(
+                                    Circle()
+                                        .fill(Color.hikingGreen)
+                                )
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(station.name)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.primary)
+                                Text(String(format: "%.1f km", station.distance))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "arrow.right.circle.fill")
+                                .foregroundStyle(Color.hikingGreen)
+                                .font(.title3)
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.hikingCardGradient)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .stroke(Color.hikingGreen.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding()
+        .hikingCard()
     }
     
     // MARK: - MTR View
@@ -109,6 +352,11 @@ struct TransportView: View {
                         .padding(.horizontal)
                     
                     VStack(spacing: 12) {
+                        // Nearby stations based on GPS
+                        if !nearbyStations.isEmpty {
+                            nearbyStationsSection
+                        }
+                        
                         // Filter section - moved above search bar
                         mtrFilterSection
                         
@@ -135,8 +383,12 @@ struct TransportView: View {
                         }
                         .padding()
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.secondarySystemBackground))
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.hikingCardGradient)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .stroke(Color.hikingGreen.opacity(0.2), lineWidth: 1)
+                                )
                         )
                         
                         Button {
@@ -152,8 +404,9 @@ struct TransportView: View {
                             }
                             .padding()
                             .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(searchText.isEmpty ? Color.gray.opacity(0.3) : Color.red)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(searchText.isEmpty ? Color.hikingStone.opacity(0.3) : Color.hikingGreen)
+                                    .shadow(color: searchText.isEmpty ? Color.clear : Color.hikingGreen.opacity(0.3), radius: 8, x: 0, y: 4)
                             )
                             .foregroundColor(searchText.isEmpty ? .secondary : .white)
                         }
@@ -171,7 +424,7 @@ struct TransportView: View {
                 } else if let error = mtrError {
                     VStack {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.hikingBrown)
                             .font(.largeTitle)
                         Text(error)
                             .foregroundStyle(.secondary)
@@ -183,7 +436,7 @@ struct TransportView: View {
                 } else {
                     VStack {
                         Image(systemName: "tram.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.hikingGreen)
                             .font(.largeTitle)
                         Text(languageManager.localizedString(for: "transport.mtr.no.schedule"))
                             .foregroundStyle(.secondary)
@@ -203,7 +456,7 @@ struct TransportView: View {
                     let mainDestination = getMainDestination(from: upTrains)
                     HStack(spacing: 8) {
                         Image(systemName: "arrow.right.circle.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.hikingGreen)
                             .font(.title3)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(languageManager.localizedString(for: "transport.mtr.towards"))
@@ -211,7 +464,7 @@ struct TransportView: View {
                                 .foregroundStyle(.secondary)
                             Text(mainDestination)
                                 .font(.headline.bold())
-                                .foregroundStyle(.red)
+                                .foregroundStyle(Color.hikingDarkGreen)
                         }
                     }
                     .padding(.bottom, 4)
@@ -238,8 +491,8 @@ struct TransportView: View {
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.red)
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(Color.hikingGreen)
                                 )
                         }
                         .padding(.vertical, 8)
@@ -247,11 +500,7 @@ struct TransportView: View {
                     }
                 }
                 .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                )
+                .hikingCard()
             }
             
             if let downTrains = schedule.DOWN, !downTrains.isEmpty {
@@ -260,7 +509,7 @@ struct TransportView: View {
                     let mainDestination = getMainDestination(from: downTrains)
                     HStack(spacing: 8) {
                         Image(systemName: "arrow.left.circle.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.hikingGreen)
                             .font(.title3)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(languageManager.localizedString(for: "transport.mtr.towards"))
@@ -268,7 +517,7 @@ struct TransportView: View {
                                 .foregroundStyle(.secondary)
                             Text(mainDestination)
                                 .font(.headline.bold())
-                                .foregroundStyle(.red)
+                                .foregroundStyle(Color.hikingDarkGreen)
                         }
                     }
                     .padding(.bottom, 4)
@@ -295,8 +544,8 @@ struct TransportView: View {
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.red)
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(Color.hikingGreen)
                                 )
                         }
                         .padding(.vertical, 8)
@@ -304,11 +553,7 @@ struct TransportView: View {
                     }
                 }
                 .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                )
+                .hikingCard()
             }
         }
         .padding(.horizontal)
@@ -474,6 +719,15 @@ struct TransportView: View {
         }
         
         if let stationInfo = MTRStationMapper.mapStation(searchText) {
+            // Check if line is known to be disabled
+            if MTRStationMapper.isLineDisabled(stationInfo.line) {
+                await MainActor.run {
+                    self.mtrError = languageManager.localizedString(for: "mtr.error.line.disabled")
+                    self.isLoadingMTR = false
+                }
+                return
+            }
+            
             do {
                 let schedule = try await mtrService.fetchSchedule(
                     line: stationInfo.line,
@@ -483,6 +737,18 @@ struct TransportView: View {
                     self.mtrSchedule = schedule
                     self.isLoadingMTR = false
                     self.mtrError = nil
+                }
+            } catch let error as MTRServiceError {
+                await MainActor.run {
+                    // Handle specific error types
+                    switch error {
+                    case .lineDisabled(let line):
+                        self.mtrError = languageManager.localizedString(for: "mtr.error.line.disabled")
+                    default:
+                        self.mtrError = error.localizedDescription ?? languageManager.localizedString(for: "mtr.error.load.failed")
+                    }
+                    self.isLoadingMTR = false
+                    print("❌ MTR Service Error: \(error.localizedDescription ?? "Unknown error")")
                 }
             } catch {
                 await MainActor.run {
@@ -511,6 +777,11 @@ struct TransportView: View {
                         .padding(.horizontal)
                     
                     VStack(spacing: 12) {
+                        // Nearby bus stations based on GPS
+                        if !nearbyBusStations.isEmpty {
+                            nearbyBusStationsSection
+                        }
+                        
                         // Filter section - moved above search bar
                         filterSection
                         
@@ -537,8 +808,12 @@ struct TransportView: View {
                         }
                         .padding()
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.secondarySystemBackground))
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.hikingCardGradient)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .stroke(Color.hikingGreen.opacity(0.2), lineWidth: 1)
+                                )
                         )
                         
                         Button {
@@ -554,8 +829,9 @@ struct TransportView: View {
                             }
                             .padding()
                             .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(searchText.isEmpty ? Color.gray.opacity(0.3) : Color.orange)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(searchText.isEmpty ? Color.hikingStone.opacity(0.3) : Color.hikingGreen)
+                                    .shadow(color: searchText.isEmpty ? Color.clear : Color.hikingGreen.opacity(0.3), radius: 8, x: 0, y: 4)
                             )
                             .foregroundColor(searchText.isEmpty ? .secondary : .white)
                         }
@@ -590,7 +866,7 @@ struct TransportView: View {
                     } else if let error = busError, !error.isEmpty {
                         VStack(spacing: 12) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(Color.hikingBrown)
                                 .font(.largeTitle)
                             Text(error)
                                 .foregroundStyle(.secondary)
@@ -600,7 +876,7 @@ struct TransportView: View {
                                     await searchBusRoutes()
                                 }
                             }
-                            .buttonStyle(.bordered)
+                            .hikingButton(style: .primary)
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding()
@@ -613,7 +889,7 @@ struct TransportView: View {
                         // User searched but no results
                         VStack(spacing: 12) {
                             Image(systemName: "magnifyingglass")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(Color.hikingGreen)
                                 .font(.largeTitle)
                             Text(languageManager.localizedString(for: "transport.bus.no.results"))
                                 .foregroundStyle(.secondary)
@@ -625,7 +901,7 @@ struct TransportView: View {
                         // Initial state - no search yet
                         VStack(spacing: 12) {
                             Image(systemName: "bus.fill")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(Color.hikingGreen)
                                 .font(.largeTitle)
                             Text(languageManager.localizedString(for: "transport.bus.search.placeholder"))
                                 .foregroundStyle(.secondary)
@@ -665,26 +941,23 @@ struct TransportView: View {
                             .foregroundStyle(.white)
                             .frame(width: 70, height: 58)
                             .background(
-                                LinearGradient(
-                                    colors: [Color.orange, Color.orange.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                in: RoundedRectangle(cornerRadius: 14)
+                                Color.hikingGradient,
+                                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
                             )
+                            .shadow(color: Color.hikingGreen.opacity(0.3), radius: 4, x: 0, y: 2)
                         
                         // Route information
                         VStack(alignment: .leading, spacing: 6) {
                             // Route number and direction in the same line - ensure they stay on one line
                             HStack(spacing: 8) {
                                 Image(systemName: route.bound == "O" ? "arrow.right.circle.fill" : "arrow.left.circle.fill")
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.hikingGreen)
                                     .font(.body)
                                 Text(route.bound == "O" ? 
                                      "\(languageManager.localizedString(for: "transport.bus.outbound")) \(route.localizedDestination(languageManager: languageManager))" :
                                      "\(languageManager.localizedString(for: "transport.bus.inbound")) \(route.localizedOrigin(languageManager: languageManager))")
                                     .font(.body.bold())
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.hikingDarkGreen)
                                     .lineLimit(1)
                                     .fixedSize(horizontal: false, vertical: false)
                             }
@@ -694,7 +967,7 @@ struct TransportView: View {
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "mappin.circle.fill")
-                                        .foregroundStyle(.green)
+                                        .foregroundStyle(Color.hikingGreen)
                                         .font(.subheadline)
                                     Text(languageManager.localizedString(for: "trail.start.point"))
                                         .font(.subheadline)
@@ -707,7 +980,7 @@ struct TransportView: View {
                                 
                                 HStack(spacing: 6) {
                                     Image(systemName: "flag.circle.fill")
-                                        .foregroundStyle(.red)
+                                        .foregroundStyle(Color.hikingBrown)
                                         .font(.subheadline)
                                     Text(languageManager.localizedString(for: "trail.end.point"))
                                         .font(.subheadline)
@@ -729,11 +1002,7 @@ struct TransportView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.secondarySystemBackground))
-                            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                    )
+                    .hikingCard()
                 }
                 .buttonStyle(.plain)
             }
@@ -784,7 +1053,7 @@ struct TransportView: View {
                                     if selectedStop?.id == stop.id {
                                         if !busETAs.isEmpty {
                                             Image(systemName: "checkmark.circle.fill")
-                                                .foregroundStyle(.orange)
+                                                .foregroundStyle(Color.hikingGreen)
                                         } else {
                                             ProgressView()
                                                 .scaleEffect(0.8)
@@ -794,8 +1063,15 @@ struct TransportView: View {
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(
-                                    selectedStop?.id == stop.id ? Color.orange.opacity(0.1) : Color(.secondarySystemBackground),
-                                    in: RoundedRectangle(cornerRadius: 8)
+                                    Group {
+                                        if selectedStop?.id == stop.id {
+                                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                                .fill(Color.hikingGreen.opacity(0.1))
+                                        } else {
+                                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                                .fill(Color.hikingCardGradient)
+                                        }
+                                    }
                                 )
                             }
                             .buttonStyle(.plain)
@@ -833,12 +1109,12 @@ struct TransportView: View {
                                     }
                                     Spacer()
                                     Text(eta.formattedETA)
-                                        .foregroundStyle(.orange)
+                                        .foregroundStyle(Color.hikingGreen)
                                         .fontWeight(.medium)
                                         .font(.headline)
                                 }
                                 .padding()
-                                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8))
+                                .background(Color.hikingCardGradient, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
                         } else {
                             Text(languageManager.localizedString(for: "transport.bus.no.eta.found"))
@@ -1301,7 +1577,7 @@ struct TransportView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "line.3.horizontal.decrease.circle")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Color.hikingGreen)
                     .font(.headline)
                 Text(languageManager.localizedString(for: "transport.bus.filter"))
                     .font(.headline)
@@ -1315,7 +1591,7 @@ struct TransportView: View {
                     } label: {
                         Text(languageManager.localizedString(for: "transport.bus.filter.clear"))
                             .font(.caption)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.hikingGreen)
                     }
                 }
             }
@@ -1354,7 +1630,7 @@ struct TransportView: View {
                         }
                         .padding()
                     } else if stationsByDistrict.isEmpty {
-                        Text("暫無車站選項")
+                        Text(languageManager.localizedString(for: "transport.no.stations.available"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding()
@@ -1407,7 +1683,7 @@ struct TransportView: View {
                 } label: {
                     HStack {
                         Image(systemName: "mappin.circle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.hikingGreen)
                             .font(.subheadline)
                         Text({
                             if let station = selectedFilterStation, 
@@ -1429,17 +1705,18 @@ struct TransportView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(.secondarySystemBackground))
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color.hikingCardGradient)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(Color.hikingGreen.opacity(0.2), lineWidth: 1)
+                            )
                     )
                 }
             }
         }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
-        )
+        .hikingCard()
         .task {
             // Load all stations when filter section appears (for pre-search filtering)
             loadAllStations()
@@ -1452,7 +1729,7 @@ struct TransportView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "line.3.horizontal.decrease.circle")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color.hikingGreen)
                     .font(.headline)
                 Text(languageManager.localizedString(for: "transport.bus.filter"))
                     .font(.headline)
@@ -1466,7 +1743,7 @@ struct TransportView: View {
                     } label: {
                         Text(languageManager.localizedString(for: "transport.bus.filter.clear"))
                             .font(.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.hikingGreen)
                     }
                 }
             }
@@ -1496,7 +1773,7 @@ struct TransportView: View {
                     
                     // Stations grouped by district
                     if mtrStationsByDistrict.isEmpty {
-                        Text("暫無車站選項")
+                        Text(languageManager.localizedString(for: "transport.no.stations.available"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding()
@@ -1543,7 +1820,7 @@ struct TransportView: View {
                 } label: {
                     HStack {
                         Image(systemName: "mappin.circle.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.hikingGreen)
                             .font(.subheadline)
                         Text({
                             if let station = selectedMTRFilterStation, 
@@ -1564,17 +1841,18 @@ struct TransportView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(.secondarySystemBackground))
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color.hikingCardGradient)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(Color.hikingGreen.opacity(0.2), lineWidth: 1)
+                            )
                     )
                 }
             }
         }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
-        )
+        .hikingCard()
         .task {
             // Load all MTR stations when filter section appears
             loadAllMTRStations()
@@ -1806,6 +2084,17 @@ struct TransportView: View {
         
         if let stationInfo = MTRStationMapper.mapStation(stationName) {
             print("✅ Mapped station: \(stationName) -> Line: \(stationInfo.line), Station: \(stationInfo.station)")
+            
+            // Check if line is known to be disabled
+            if MTRStationMapper.isLineDisabled(stationInfo.line) {
+                await MainActor.run {
+                    self.mtrError = languageManager.localizedString(for: "mtr.error.line.disabled")
+                    self.isLoadingMTR = false
+                    print("⚠️ Line \(stationInfo.line) is known to be disabled in MTR API")
+                }
+                return
+            }
+            
             do {
                 let schedule = try await mtrService.fetchSchedule(
                     line: stationInfo.line,
@@ -1816,6 +2105,18 @@ struct TransportView: View {
                     self.isLoadingMTR = false
                     self.mtrError = nil
                     print("✅ Successfully loaded MTR schedule for \(stationName)")
+                }
+            } catch let error as MTRServiceError {
+                await MainActor.run {
+                    // Handle specific error types
+                    switch error {
+                    case .lineDisabled(let line):
+                        self.mtrError = languageManager.localizedString(for: "mtr.error.line.disabled")
+                    default:
+                        self.mtrError = error.localizedDescription ?? languageManager.localizedString(for: "mtr.error.load.failed")
+                    }
+                    self.isLoadingMTR = false
+                    print("❌ MTR Service Error for \(stationName): \(error.localizedDescription ?? "Unknown error")")
                 }
             } catch {
                 await MainActor.run {
@@ -1927,7 +2228,7 @@ struct TransportView: View {
                     HStack {
                         Text(languageManager.localizedString(for: "transport.bus.real.time.eta"))
                             .font(.subheadline.bold())
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.hikingDarkGreen)
                         
                         Spacer()
                         
@@ -1960,12 +2261,12 @@ struct TransportView: View {
             } else if let error = busError {
                 Text(error)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color.hikingBrown)
                     .padding()
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+        .hikingCard()
     }
     
     private func stopETACard(stop: KMBStop) -> some View {
@@ -1992,7 +2293,7 @@ struct TransportView: View {
                         Spacer()
                         Text(eta.formattedETA)
                             .font(.caption.bold())
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.hikingGreen)
                     }
                 }
             } else if isLoadingBus {

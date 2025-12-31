@@ -120,11 +120,12 @@ struct TrailDetailView: View {
 
     /// Top summary header with district, distance, elevation and duration.
     private var header: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .center, spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 12) {
                     Label(trail.localizedDistrict(languageManager: languageManager), systemImage: "mappin.and.ellipse")
-                        .foregroundStyle(.secondary)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Color.hikingBrown)
                     HStack(spacing: 12) {
                         statBlock(title: languageManager.localizedString(for: "trails.distance"), value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) \(languageManager.localizedString(for: "unit.km"))")
                         statBlock(title: languageManager.localizedString(for: "trails.elevation"), value: "\(trail.elevationGain) \(languageManager.localizedString(for: "unit.m"))")
@@ -133,94 +134,156 @@ struct TrailDetailView: View {
                 }
                 Spacer()
                 Image(systemName: trail.difficulty.icon)
-                    .font(.largeTitle)
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 40))
+                    .foregroundStyle(Color.hikingGreen)
             }
             Text(trail.localizedSummary(languageManager: languageManager))
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.hikingBrown.opacity(0.8))
+                .lineSpacing(4)
         }
+        .padding()
+        .hikingCard()
     }
 
     /// Timeline-style list of checkpoints along the trail.
     private var timelineSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(languageManager.localizedString(for: "trail.checkpoints"))
-                .font(.headline)
-            VStack(alignment: .leading, spacing: 16) {
-                ForEach(trail.checkpoints) { checkpoint in
-                    HStack(alignment: .top, spacing: 12) {
-                        VStack {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "map.fill")
+                    .foregroundStyle(Color.hikingGreen)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "trail.checkpoints"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
+            }
+            VStack(alignment: .leading, spacing: 20) {
+                ForEach(Array(trail.checkpoints.enumerated()), id: \.element.id) { index, checkpoint in
+                    HStack(alignment: .top, spacing: 16) {
+                        VStack(spacing: 0) {
                             Circle()
-                                .frame(width: 10, height: 10)
-                                .foregroundStyle(Color.accentColor)
-                            Rectangle()
-                                .frame(width: 2, height: 30)
-                                .foregroundStyle(Color.accentColor.opacity(0.3))
+                                .frame(width: 16, height: 16)
+                                .foregroundStyle(Color.hikingGreen)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white, lineWidth: 3)
+                                )
+                            if index < trail.checkpoints.count - 1 {
+                                Rectangle()
+                                    .frame(width: 3, height: 50)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [Color.hikingGreen.opacity(0.4), Color.hikingGreen.opacity(0.2)],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                            }
                         }
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 8) {
                             Text(localizedCheckpointTitle(checkpoint.title))
-                                .font(.subheadline.weight(.semibold))
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(Color.hikingDarkGreen)
                             Text(localizedCheckpointSubtitle(checkpoint.subtitle))
-                                .foregroundStyle(.secondary)
-                            HStack(spacing: 12) {
+                                .font(.caption)
+                                .foregroundStyle(Color.hikingBrown)
+                            HStack(spacing: 16) {
                                 Label {
                                     Text("\(checkpoint.distanceKm.formatted(.number.precision(.fractionLength(1)))) \(languageManager.localizedString(for: "unit.km"))")
+                                        .font(.caption.weight(.medium))
                                 } icon: {
                                     Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                                        .font(.caption)
                                 }
+                                .foregroundStyle(Color.hikingBrown.opacity(0.8))
                                 Label {
                                     Text("\(checkpoint.altitude) \(languageManager.localizedString(for: "unit.m"))")
+                                        .font(.caption.weight(.medium))
                                 } icon: {
                                     Image(systemName: "altimeter")
+                                        .font(.caption)
                                 }
+                                .foregroundStyle(Color.hikingBrown.opacity(0.8))
                             }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                         }
+                        Spacer()
                     }
                 }
             }
-            .padding()
-            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .padding(20)
+            .hikingCard()
         }
     }
 
     /// Horizontal list of trail facilities (toilets, shelters, kiosks, etc.).
     private var facilitiesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(languageManager.localizedString(for: "trail.facilities"))
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "building.2.fill")
+                    .foregroundStyle(Color.hikingGreen)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "trail.facilities"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
+            }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
                     ForEach(trail.facilities, id: \.self) { facility in
-                        VStack(spacing: 8) {
+                        VStack(spacing: 12) {
                             Image(systemName: facility.systemImage)
-                                .font(.title2)
+                                .font(.system(size: 32))
+                                .foregroundStyle(Color.hikingGreen)
                             Text(localizedFacilityName(facility.name))
-                                .font(.caption)
+                                .font(.caption.weight(.medium))
                                 .multilineTextAlignment(.center)
+                                .foregroundStyle(Color.hikingDarkGreen)
                         }
-                        .frame(width: 120, height: 100)
-                        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .frame(width: 120, height: 110)
+                        .padding(.vertical, 12)
+                        .hikingCard()
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, 4)
             }
         }
     }
 
     /// Section listing key highlights of the trail.
     private var highlightsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(languageManager.localizedString(for: "trail.highlights"))
-                .font(.headline)
-            ForEach(trail.highlights, id: \.self) { highlight in
-                Label(localizedHighlight(highlight), systemImage: "sparkles")
-                    .padding(.vertical, 6)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "sparkles")
+                    .foregroundStyle(Color.hikingGreen)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "trail.highlights"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
             }
-            .padding()
-            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            VStack(spacing: 12) {
+                ForEach(trail.highlights, id: \.self) { highlight in
+                    HStack(spacing: 12) {
+                        Image(systemName: "star.fill")
+                            .font(.caption)
+                            .foregroundStyle(Color.hikingGreen)
+                        Text(localizedHighlight(highlight))
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Color.hikingDarkGreen)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.hikingGreen.opacity(0.08))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(Color.hikingGreen.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                }
+            }
+            .padding(16)
+            .hikingCard()
         }
     }
     
@@ -462,110 +525,138 @@ struct TrailDetailView: View {
 
     /// Section describing how to reach the trailhead and return from the finish.
     private var transportationSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(languageManager.localizedString(for: "trail.transportation"))
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "car.fill")
+                    .foregroundStyle(Color.hikingGreen)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "trail.transportation"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
+            }
             
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 16) {
                 // 起點交通
                 if let startTransport = trail.startPointTransport, !startTransport.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 8) {
                         Label(languageManager.localizedString(for: "trail.start.point"), systemImage: "location.circle.fill")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Color.hikingGreen)
                         Text(localizedStartTransport)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.hikingBrown.opacity(0.8))
                     }
                 }
                 
                 // 終點交通
                 if let endTransport = trail.endPointTransport, !endTransport.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 8) {
                         Label(languageManager.localizedString(for: "trail.end.point"), systemImage: "flag.circle.fill")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Color.hikingGreen)
                         Text(localizedEndTransport)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.hikingBrown.opacity(0.8))
                     }
                 }
                 
                 // 如果沒有分開的起終點，使用舊的 transportation
                 if trail.startPointTransport == nil && trail.endPointTransport == nil {
-            Text(localizedTransportation)
+                    Text(localizedTransportation)
                         .font(.subheadline)
-                .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.hikingBrown.opacity(0.8))
                 }
             }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .padding(20)
+            .hikingCard()
         }
     }
     
     /// Section listing supply points along the trail.
     private var supplyPointsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(languageManager.localizedString(for: "trail.supply.points"))
-                .font(.headline)
-            VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "drop.fill")
+                    .foregroundStyle(Color.hikingGreen)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "trail.supply.points"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
+            }
+            VStack(alignment: .leading, spacing: 12) {
                 ForEach(trail.supplyPoints, id: \.self) { supply in
-                    HStack(alignment: .top, spacing: 8) {
+                    HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "drop.fill")
                             .foregroundStyle(Color.hikingGreen)
-                            .font(.caption)
+                            .font(.subheadline)
                         Text(localizedSupplyPoint(supply))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.hikingBrown.opacity(0.8))
                     }
                 }
             }
-            .padding()
-            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .padding(20)
+            .hikingCard()
         }
     }
     
     /// Section listing exit routes from the trail.
     private var exitRoutesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(languageManager.localizedString(for: "trail.exit.routes"))
-                .font(.headline)
-            VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "arrow.turn.up.right")
+                    .foregroundStyle(Color.hikingBrown)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "trail.exit.routes"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
+            }
+            VStack(alignment: .leading, spacing: 12) {
                 ForEach(trail.exitRoutes, id: \.self) { exit in
-                    HStack(alignment: .top, spacing: 8) {
+                    HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "arrow.turn.up.right")
-                            .foregroundStyle(Color.orange)
-                            .font(.caption)
+                            .foregroundStyle(Color.hikingBrown)
+                            .font(.subheadline)
                         Text(localizedExitRoute(exit))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.hikingBrown.opacity(0.8))
                     }
                 }
             }
-            .padding()
-            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .padding(20)
+            .hikingCard()
         }
     }
     
     /// Section displaying important notes and warnings.
     private func notesSection(_ notes: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(languageManager.localizedString(for: "trail.notes"))
-                .font(.headline)
-            HStack(alignment: .top, spacing: 8) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(Color.orange)
+                    .foregroundStyle(Color.hikingBrown)
+                    .font(.headline)
+                Text(languageManager.localizedString(for: "trail.notes"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
+            }
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "info.circle.fill")
+                    .foregroundStyle(Color.hikingBrown)
+                    .font(.subheadline)
                 Text(localizedNotes(notes))
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.hikingBrown.opacity(0.8))
+                    .lineSpacing(4)
             }
-            .padding()
+            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(
+            .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                    .fill(Color.hikingBrown.opacity(0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(Color.hikingBrown.opacity(0.2), lineWidth: 1)
+                    )
             )
         }
     }
@@ -864,14 +955,19 @@ struct TrailDetailView: View {
     
     /// Section displaying MTR real-time train schedules
     private var mtrScheduleSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text(languageManager.localizedString(for: "mtr.real.time.schedule"))
+                Image(systemName: "tram.fill")
+                    .foregroundStyle(Color.hikingGreen)
                     .font(.headline)
+                Text(languageManager.localizedString(for: "mtr.real.time.schedule"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.hikingDarkGreen)
                 Spacer()
                 if mtrViewModel.isLoading {
                     ProgressView()
                         .scaleEffect(0.8)
+                        .tint(Color.hikingGreen)
                 } else {
                     Button {
                         Task {
@@ -879,21 +975,36 @@ struct TrailDetailView: View {
                         }
                     } label: {
                         Image(systemName: "arrow.clockwise")
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(Color.hikingGreen)
+                            .padding(8)
+                            .background(
+                                Circle()
+                                    .fill(Color.hikingGreen.opacity(0.1))
+                            )
                     }
                 }
             }
             
             if let error = mtrViewModel.error {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
+                HStack(spacing: 12) {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundStyle(Color.hikingBrown)
+                        .font(.subheadline)
                     Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.hikingBrown.opacity(0.8))
                 }
-                .padding(.vertical, 4)
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.hikingBrown.opacity(0.08))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(Color.hikingBrown.opacity(0.2), lineWidth: 1)
+                        )
+                )
             }
             
             if let schedule = mtrViewModel.schedule {
@@ -907,12 +1018,12 @@ struct TrailDetailView: View {
                                 Image(systemName: "arrow.right.circle.fill")
                                     .foregroundStyle(Color.hikingGreen)
                                     .font(.title3)
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text(languageManager.localizedString(for: "transport.mtr.towards"))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .font(.caption.weight(.medium))
+                                        .foregroundStyle(Color.hikingBrown)
                                     Text(mainDestination)
-                                        .font(.headline.bold())
+                                        .font(.headline.weight(.bold))
                                         .foregroundStyle(Color.hikingDarkGreen)
                                 }
                             }
@@ -922,30 +1033,47 @@ struct TrailDetailView: View {
                             ForEach(Array(upTrains.prefix(4))) { train in
                                 HStack(spacing: 12) {
                                     // Destination station
-                                    HStack(spacing: 6) {
+                                    HStack(spacing: 8) {
                                         Image(systemName: "mappin.circle.fill")
                                             .foregroundStyle(Color.hikingGreen)
-                                            .font(.caption)
+                                            .font(.subheadline)
                                         Text(getStationName(train.dest))
-                                            .font(.subheadline.bold())
-                                            .foregroundStyle(.primary)
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(Color.hikingDarkGreen)
                                     }
                                     
                                     Spacer()
                                     
                                     // Arrival time badge
-                                    Text(formatTrainTime(train.formattedTime))
-                                        .font(.headline)
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                                .fill(Color.hikingGreen)
-                                        )
+                                    HStack(spacing: 4) {
+                                        Text(formatTrainTime(train.formattedTime))
+                                            .font(.headline.weight(.bold))
+                                        if train.formattedTime != "Arr" {
+                                            Text(languageManager.localizedString(for: "mtr.minutes"))
+                                                .font(.caption)
+                                        }
+                                    }
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        Capsule()
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Color.hikingGreen, Color.hikingDarkGreen],
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                )
+                                            )
+                                            .shadow(color: Color.hikingGreen.opacity(0.3), radius: 4, x: 0, y: 2)
+                                    )
                                 }
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 4)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color.hikingGreen.opacity(0.05))
+                                )
                             }
                         }
                         .padding()
@@ -961,12 +1089,12 @@ struct TrailDetailView: View {
                                 Image(systemName: "arrow.left.circle.fill")
                                     .foregroundStyle(Color.hikingGreen)
                                     .font(.title3)
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text(languageManager.localizedString(for: "transport.mtr.towards"))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .font(.caption.weight(.medium))
+                                        .foregroundStyle(Color.hikingBrown)
                                     Text(mainDestination)
-                                        .font(.headline.bold())
+                                        .font(.headline.weight(.bold))
                                         .foregroundStyle(Color.hikingDarkGreen)
                                 }
                             }
@@ -976,30 +1104,47 @@ struct TrailDetailView: View {
                             ForEach(Array(downTrains.prefix(4))) { train in
                                 HStack(spacing: 12) {
                                     // Destination station
-                                    HStack(spacing: 6) {
+                                    HStack(spacing: 8) {
                                         Image(systemName: "mappin.circle.fill")
                                             .foregroundStyle(Color.hikingGreen)
-                                            .font(.caption)
+                                            .font(.subheadline)
                                         Text(getStationName(train.dest))
-                                            .font(.subheadline.bold())
-                                            .foregroundStyle(.primary)
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(Color.hikingDarkGreen)
                                     }
                                     
                                     Spacer()
                                     
                                     // Arrival time badge
-                                    Text(formatTrainTime(train.formattedTime))
-                                        .font(.headline)
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                                .fill(Color.hikingGreen)
-                                        )
+                                    HStack(spacing: 4) {
+                                        Text(formatTrainTime(train.formattedTime))
+                                            .font(.headline.weight(.bold))
+                                        if train.formattedTime != "Arr" {
+                                            Text(languageManager.localizedString(for: "mtr.minutes"))
+                                                .font(.caption)
+                                        }
+                                    }
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        Capsule()
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Color.hikingGreen, Color.hikingDarkGreen],
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                )
+                                            )
+                                            .shadow(color: Color.hikingGreen.opacity(0.3), radius: 4, x: 0, y: 2)
+                                    )
                                 }
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 4)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color.hikingGreen.opacity(0.05))
+                                )
                             }
                         }
                         .padding()
@@ -1008,18 +1153,26 @@ struct TrailDetailView: View {
                 }
             } else if !mtrViewModel.isLoading && mtrViewModel.error == nil {
                 // Show message when no station found but no error occurred
-                HStack {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(.secondary)
+                HStack(spacing: 12) {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundStyle(Color.hikingBrown)
+                        .font(.subheadline)
                     Text(languageManager.localizedString(for: "mtr.no.station.found"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.hikingBrown.opacity(0.8))
                 }
-                .padding(.vertical, 4)
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.hikingBrown.opacity(0.08))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(Color.hikingBrown.opacity(0.2), lineWidth: 1)
+                        )
+                )
             }
         }
-        .padding()
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
     
     /// Format train time string (e.g., "1 分鐘" or "即將到達")
@@ -1478,12 +1631,13 @@ struct TrailDetailView: View {
     }
     
     private func statBlock(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(value)
-                .font(.headline)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(Color.hikingDarkGreen)
             Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(Color.hikingBrown)
         }
     }
 }

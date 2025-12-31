@@ -1513,6 +1513,7 @@ struct LocalizedStrings {
         "mtr.arriving": "Arriving",
         "mtr.minutes": "min",
         "mtr.error.load.failed": "Unable to load train schedule",
+        "mtr.error.line.disabled": "This line is temporarily unavailable for real-time schedule information",
         "mtr.no.station.found": "Unable to identify MTR station from transportation information",
         
         // Transport
@@ -2675,6 +2676,7 @@ struct LocalizedStrings {
         "mtr.arriving": "即將到站",
         "mtr.minutes": "分鐘",
         "mtr.error.load.failed": "無法載入列車時間表",
+        "mtr.error.line.disabled": "此路線暫時不提供實時列車資訊",
         "mtr.no.station.found": "未能從交通信息中識別港鐵站點",
         
         // Transport

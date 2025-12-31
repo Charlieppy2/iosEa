@@ -52,8 +52,35 @@ final class MTRScheduleViewModel: ObservableObject {
                     return
                 } catch {
                     lastError = error
-                    // Try next transport text if this one fails
-                    continue
+                    // Check if it's a specific API error
+                    if let mtrError = error as? MTRServiceError {
+                        switch mtrError {
+                        case .apiError(let message):
+                            // Check for "empty" or "no data" errors
+                            if message.lowercased().contains("empty") || message.lowercased().contains("contents are empty") || message.contains("NT-204") {
+                                // This station might not have real-time data available at the moment
+                                // Don't set error immediately, try next transport text
+                                continue
+                            } else if message.contains("disabled in CMS") || message.contains("NT-205") {
+                                self.error = languageManager.localizedString(for: "mtr.error.line.disabled")
+                                isLoading = false
+                                return
+                            } else {
+                                // Other API errors - try next transport text
+                                continue
+                            }
+                        case .lineDisabled:
+                            self.error = languageManager.localizedString(for: "mtr.error.line.disabled")
+                            isLoading = false
+                            return
+                        default:
+                            // Try next transport text if this one fails
+                            continue
+                        }
+                    } else {
+                        // Try next transport text if this one fails
+                        continue
+                    }
                 }
             }
         }
@@ -62,8 +89,8 @@ final class MTRScheduleViewModel: ObservableObject {
         isLoading = false
         hasSchedule = false
         
-        // Set error message if we tried but failed
-        if lastError != nil {
+        // Set error message if we tried but failed and haven't set a specific error yet
+        if lastError != nil && self.error == nil {
             self.error = languageManager.localizedString(for: "mtr.error.load.failed")
         }
     }

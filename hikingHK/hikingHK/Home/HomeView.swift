@@ -406,16 +406,278 @@ struct HomeView: View {
     }
     
     private func localizedHighlight(_ highlight: String, for trail: Trail) -> String {
-        // Create a localization key based on trail ID and highlight text
+        // In Traditional Chinese mode, if original text is already Chinese, return it directly
+        if languageManager.currentLanguage == .traditionalChinese && containsChineseCharacters(highlight) {
+            return highlight
+        }
+        
+        // In English mode, if original text is already English, return it directly
+        if languageManager.currentLanguage == .english && !containsChineseCharacters(highlight) {
+            return highlight
+        }
+        
+        // First, try with the original highlight text (as it appears in the key)
+        let originalKey = "trail.\(trail.id.uuidString.lowercased()).highlight.\(highlight)"
+        var localized = languageManager.localizedString(for: originalKey)
+        
+        // If found, return it
+        if localized != originalKey {
+            return localized
+        }
+        
+        // If not found, try with normalized key (lowercase, spaces to dots, remove special chars)
         let highlightKey = highlight.lowercased()
             .replacingOccurrences(of: " ", with: ".")
             .replacingOccurrences(of: "'", with: "")
             .replacingOccurrences(of: "(", with: "")
             .replacingOccurrences(of: ")", with: "")
-        let key = "trail.\(trail.id.uuidString.lowercased()).highlight.\(highlightKey)"
-        let localized = languageManager.localizedString(for: key)
+        let normalizedKey = "trail.\(trail.id.uuidString.lowercased()).highlight.\(highlightKey)"
+        localized = languageManager.localizedString(for: normalizedKey)
+        
+        // If found, return it
+        if localized != normalizedKey {
+            return localized
+        }
+        
+        // In Traditional Chinese mode, if original text is English, try to map common English highlights to Chinese
+        if languageManager.currentLanguage == .traditionalChinese && !containsChineseCharacters(highlight) {
+            // Map common English highlights to Chinese
+            let englishToChinese: [String: String] = [
+                "Peak Scenery": "山頂景色",
+                "Harbor Panorama": "海港全景",
+                "Easy Walk": "輕鬆步行",
+                "Pyramid Shape": "金字塔形狀",
+                "Coastal Scenery": "海岸景色",
+                "Shaded Bamboo Forest": "陰涼竹林",
+                "Main Fall 35 m drop": "主瀑布 35 米落差",
+                "Stream Recreation Area": "溪流遊樂區",
+                "Historic Dams": "歷史堤壩",
+                "Reservoir Views": "水塘景色",
+                "Family Friendly": "適合家庭",
+                "Shek O Peninsula Viewing Platform": "石澳半島觀景台",
+                "Paragliding Launch Site": "滑翔傘起飛點",
+                "Surfing Beach Finish": "衝浪海灘終點",
+                "Pok Fu Lam Reservoir": "薄扶林水塘",
+                "Lady Clementi's Ride": "金夫人徑",
+                "Middle Gap": "中峽",
+                "Black's Link": "布力徑",
+                "City View": "城市景色",
+                "Jardine's Lookout": "渣甸山",
+                "Tai Fung Au": "大風坳",
+                "Tai Tam Road": "大潭道",
+                "Mountain Path Views": "山徑景色",
+                "Dragon's Back Start Point": "龍脊起點",
+                "Shek O Peak": "打爛埕頂山",
+                "Hong Kong Trail End Point": "港島徑終點",
+                "Kau Ling Chung": "狗嶺涌",
+                "Shek Pik": "石壁",
+                "Shek Pik Reservoir": "石壁水塘",
+                "Lantau Trail End Point": "鳳凰徑終點",
+                "Sunset Peak (869m)": "鳳凰山 (869m)",
+                "Lantau Peak (934m)": "大東山 (934m)",
+                "Wisdom Path": "心經簡林",
+                "Sham Wat Road": "深屈道",
+                "Big Buddha Views": "大佛景色",
+                "Keung Shan Road": "羗山道",
+                "Keung Shan": "羗山",
+                "Lantau Island View": "大嶼山景觀",
+                "Ling Wui Shan": "靈會山",
+                "Man Cheung Po": "萬丈布",
+                "Yi O": "二澳",
+                "Tai O": "大澳",
+                "Fishing Village Scenery": "漁村景色",
+                "Ng Yat Kok": "牙鷹角",
+                "Fan Lau": "分流",
+                "Shui Hau": "水口",
+                "Lion Rock (495m)": "獅子山 (495m)",
+                "Iconic Landmark": "標誌性地標",
+                "City Panorama": "城市全景",
+                "High Island Reservoir": "萬宜水庫",
+                "Long Ke Wan": "浪茄灣",
+                "Clear Water and Fine Sand": "水清沙幼",
+                "Sai Wan Shan": "西灣山",
+                "Hong Kong's Most Beautiful Beach": "香港最優美沙灘",
+                "Hwamei Shan": "畫眉山",
+                "Kai Kung Shan": "雞公山",
+                "Sai Kung West Peaks": "西貢西部山峰",
+                "Beacon Hill": "畢架山",
+                "Kowloon Reservoir": "九龍水塘",
+                "New Territories Central": "新界中部",
+                "Reservoir View": "水塘景觀",
+                "New Territories West": "新界西部",
+                "MacLehose Trail End Point": "麥理浩徑終點",
+                "Needle Hill": "針山",
+                "Grassy Hill": "草山",
+                "Steep Climb Section": "急攀路段",
+                "Tai Mo Shan (957m)": "大帽山 (957m)",
+                "Hong Kong's Highest Peak": "香港最高峰",
+                "Sea of Clouds View": "雲海景觀",
+                "Tai Lam Country Park": "大欖郊野公園",
+                "Plantation Area": "植林區",
+                "Sharp Peak (468m)": "蚺蛇尖 (468m)",
+                "Highest Peak": "最高峰",
+                "Sea of Clouds": "雲海",
+                "Violet Hill": "紫羅蘭山",
+                "The Twins": "孖崗山",
+                "Repulse Bay View": "淺水灣景色",
+                "Mount Butler": "畢拿山",
+                "City Skyline": "城市天際線",
+                "Kowloon View": "九龍景觀",
+                "Fei Ngo Shan": "飛鵝山",
+                "Gilwell Camp": "基維爾營",
+                "Sai Kung View": "西貢景觀",
+                "Tate's Cairn": "大老山",
+                "Sha Tin Pass": "沙田坳",
+                "New Territories View": "新界景觀",
+                "Shing Mun Reservoir": "城門水塘",
+                "Lead Mine Pass": "鉛礦坳",
+                "Pat Sin Leng": "八仙嶺",
+                "Nam Chung": "南涌",
+                "New Territories Northeast": "新界東北",
+                "Mui Wo": "梅窩",
+                "Silvermine Bay": "銀礦灣",
+                "Lantau Trail Start": "鳳凰徑起點",
+                "Mountain Hut": "山屋",
+                "Sunset Views": "日落景色",
+                "Ngong Ping": "昂坪",
+                "Quarry Bay": "鰂魚涌",
+                "Lion Rock": "獅子山",
+                "Tin Fu Tsai": "田夫仔",
+                "Tuen Mun": "屯門",
+                "Tai Po Road": "大埔公路",
+                "Long Ke": "浪茄",
+                "Pak Tam Au": "北潭凹",
+                "Pak Tam Chung": "北潭涌",
+                "Pui O": "貝澳",
+                "Chi Ma Wan": "芝麻灣"
+            ]
+            
+            if let chinese = englishToChinese[highlight] {
+                return chinese
+            }
+        }
+        
+        // In English mode, if original text contains Chinese, try to map common Chinese highlights to English
+        if languageManager.currentLanguage == .english && containsChineseCharacters(highlight) {
+            // Map common Chinese highlights to English
+            let chineseToEnglish: [String: String] = [
+                "蚺蛇尖 (468m)": "Sharp Peak (468m)",
+                "主瀑布 35 米落差": "Main Fall 35 m drop",
+                "陰涼竹林": "Shaded Bamboo Forest",
+                "溪流遊樂區": "Stream Recreation Area",
+                "歷史堤壩": "Historic Dams",
+                "水塘景色": "Reservoir Views",
+                "適合家庭": "Family Friendly",
+                "石澳半島觀景台": "Shek O Peninsula Viewing Platform",
+                "滑翔傘起飛點": "Paragliding Launch Site",
+                "衝浪海灘終點": "Surfing Beach Finish",
+                "山頂景色": "Peak Scenery",
+                "薄扶林水塘": "Pok Fu Lam Reservoir",
+                "輕鬆步行": "Easy Walk",
+                "金夫人徑": "Lady Clementi's Ride",
+                "中峽": "Middle Gap",
+                "布力徑": "Black's Link",
+                "城市景色": "City View",
+                "渣甸山": "Jardine's Lookout",
+                "大風坳": "Tai Fung Au",
+                "大潭道": "Tai Tam Road",
+                "山徑景色": "Mountain Path Views",
+                "龍脊起點": "Dragon's Back Start Point",
+                "打爛埕頂山": "Shek O Peak",
+                "港島徑終點": "Hong Kong Trail End Point",
+                "狗嶺涌": "Kau Ling Chung",
+                "石壁": "Shek Pik",
+                "石壁水塘": "Shek Pik Reservoir",
+                "鳳凰徑終點": "Lantau Trail End Point",
+                "鳳凰山 (869m)": "Sunset Peak (869m)",
+                "大東山 (934m)": "Lantau Peak (934m)",
+                "心經簡林": "Wisdom Path",
+                "深屈道": "Sham Wat Road",
+                "大佛景色": "Big Buddha Views",
+                "羗山道": "Keung Shan Road",
+                "羗山": "Keung Shan",
+                "大嶼山景觀": "Lantau Island View",
+                "靈會山": "Ling Wui Shan",
+                "萬丈布": "Man Cheung Po",
+                "二澳": "Yi O",
+                "大澳": "Tai O",
+                "漁村景色": "Fishing Village Scenery",
+                "牙鷹角": "Ng Yat Kok",
+                "海岸景色": "Coastal Scenery",
+                "分流": "Fan Lau",
+                "水口": "Shui Hau",
+                "獅子山 (495m)": "Lion Rock (495m)",
+                "標誌性地標": "Iconic Landmark",
+                "城市全景": "City Panorama",
+                "萬宜水庫": "High Island Reservoir",
+                "浪茄灣": "Long Ke Wan",
+                "水清沙幼": "Clear Water and Fine Sand",
+                "西灣山": "Sai Wan Shan",
+                "香港最優美沙灘": "Hong Kong's Most Beautiful Beach",
+                "畫眉山": "Hwamei Shan",
+                "雞公山": "Kai Kung Shan",
+                "西貢西部山峰": "Sai Kung West Peaks",
+                "筆架山": "Beacon Hill",
+                "九龍水塘": "Kowloon Reservoir",
+                "城市景觀": "City View",
+                "新界中部": "New Territories Central",
+                "水塘景觀": "Reservoir View",
+                "針山": "Needle Hill",
+                "草山": "Grassy Hill",
+                "急攀路段": "Steep Climb Section",
+                "大帽山 (957m)": "Tai Mo Shan (957m)",
+                "香港最高峰": "Hong Kong's Highest Peak",
+                "雲海景觀": "Sea of Clouds View",
+                "大欖郊野公園": "Tai Lam Country Park",
+                "植林區": "Afforestation Area",
+                "田夫仔": "Tin Fu Tsai",
+                "新界西部": "New Territories West",
+                "屯門": "Tuen Mun",
+                "麥理浩徑終點": "MacLehose Trail End Point",
+                "紫羅蘭山": "Violet Hill",
+                "孖崗山": "The Twins",
+                "淺水灣景色": "Repulse Bay View",
+                "畢拿山": "Mount Butler",
+                "城市天際線": "City Skyline",
+                "畢架山": "Beacon Hill",
+                "獅子山": "Lion Rock",
+                "九龍景觀": "Kowloon View",
+                "飛鵝山": "Fei Ngo Shan",
+                "基維爾營": "Gilwell Camp",
+                "西貢景觀": "Sai Kung View",
+                "大老山": "Tate's Cairn",
+                "沙田坳": "Sha Tin Pass",
+                "新界景觀": "New Territories View",
+                "城門水塘": "Shing Mun Reservoir",
+                "鉛礦坳": "Lead Mine Pass",
+                "八仙嶺": "Pat Sin Leng",
+                "南涌": "Nam Chung",
+                "新界東北": "New Territories Northeast",
+                "梅窩": "Mui Wo",
+                "銀礦灣": "Silvermine Bay",
+                "鳳凰徑起點": "Lantau Trail Start",
+                "山屋": "Mountain Hut",
+                "日落景色": "Sunset Views",
+                "昂坪": "Ngong Ping",
+                "金字塔形狀": "Pyramid Shape"
+            ]
+            
+            if let english = chineseToEnglish[highlight] {
+                return english
+            }
+        }
+        
         // If no localization found, return original highlight
-        return localized != key ? localized : highlight
+        return highlight
+    }
+    
+    /// Helper function to check if a string contains Chinese characters
+    private func containsChineseCharacters(_ text: String) -> Bool {
+        return text.unicodeScalars.contains { scalar in
+            (0x4E00...0x9FFF).contains(scalar.value) || // CJK Unified Ideographs
+            (0x3400...0x4DBF).contains(scalar.value) || // CJK Extension A
+            (0x20000...0x2A6DF).contains(scalar.value) // CJK Extension B
+        }
     }
 
     private func label(value: String, caption: String) -> some View {
@@ -469,9 +731,9 @@ struct HomeView: View {
                 }
                 
                 HStack(spacing: 12) {
-                    statBadge(value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) km", caption: languageManager.localizedString(for: "trails.distance"))
-                    statBadge(value: "\(trail.elevationGain) m", caption: languageManager.localizedString(for: "home.elev.gain"))
-                    statBadge(value: "\(trail.estimatedDurationMinutes / 60) h", caption: languageManager.localizedString(for: "trails.duration"))
+                    statBadge(value: "\(trail.lengthKm.formatted(.number.precision(.fractionLength(1)))) \(languageManager.localizedString(for: "unit.km"))", caption: languageManager.localizedString(for: "trails.distance"))
+                    statBadge(value: "\(trail.elevationGain) \(languageManager.localizedString(for: "unit.m"))", caption: languageManager.localizedString(for: "home.elev.gain"))
+                    statBadge(value: "\(trail.estimatedDurationMinutes / 60) \(languageManager.localizedString(for: "unit.h"))", caption: languageManager.localizedString(for: "trails.duration"))
                 }
                 
                 if !trail.highlights.isEmpty {
@@ -1124,6 +1386,7 @@ struct SavedHikeDetailSheet: View {
                     }
                 }
             }
+            .environment(\.locale, Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US"))
             .navigationTitle(languageManager.localizedString(for: "hike.plan.title"))
             .navigationBarTitleDisplayMode(.inline)
             .confirmationDialog(languageManager.localizedString(for: "hike.plan.delete"), isPresented: $isShowingDeleteConfirmation, titleVisibility: .visible) {

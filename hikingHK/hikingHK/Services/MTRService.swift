@@ -147,6 +147,15 @@ struct MTRService: MTRServiceProtocol {
             throw MTRServiceError.invalidResponse
         }
         
+        // Check for error response first
+        if let errorResponse = try? decoder.decode(MTRErrorResponse.self, from: data) {
+            if errorResponse.resultCode == 0 && errorResponse.status == 0 {
+                // API returned an error (e.g., line disabled in CMS)
+                let errorMsg = errorResponse.error?.errorMsg ?? errorResponse.message ?? "Line or station not available"
+                throw MTRServiceError.apiError(errorMsg)
+            }
+        }
+        
         let decoded = try decoder.decode(MTRScheduleResponse.self, from: data)
         
         guard decoded.status == 1 else {
@@ -161,11 +170,26 @@ struct MTRService: MTRServiceProtocol {
     }
 }
 
+/// Error response structure from MTR API
+struct MTRErrorResponse: Codable {
+    let resultCode: Int
+    let timestamp: String?
+    let error: MTRAPIError?
+    let status: Int
+    let message: String?
+}
+
+struct MTRAPIError: Codable {
+    let errorCode: String?
+    let errorMsg: String?
+}
+
 enum MTRServiceError: LocalizedError {
     case invalidURL
     case invalidResponse
     case httpError(Int)
     case apiError(String)
+    case lineDisabled(String) // Specific error for disabled lines
     
     var errorDescription: String? {
         switch self {
@@ -176,19 +200,35 @@ enum MTRServiceError: LocalizedError {
         case .httpError(let code):
             return "HTTP error: \(code)"
         case .apiError(let message):
+            // Check if it's a line disabled error
+            if message.contains("disabled in CMS") || message.contains("NT-205") {
+                return "此路線暫時不提供實時列車資訊"
+            }
             return message
+        case .lineDisabled(let line):
+            return "\(line) 路線暫時不提供實時列車資訊"
         }
     }
 }
 
 /// Helper to map station names to MTR line and station codes
 struct MTRStationMapper {
+    /// Lines that are known to be disabled in MTR API CMS
+    /// These lines will return error "line is disabled in CMS"
+    static let disabledLines: Set<String> = ["TKO", "DIS"]
+    
+    /// Check if a line is known to be disabled
+    static func isLineDisabled(_ line: String) -> Bool {
+        return disabledLines.contains(line)
+    }
+    
     /// Map a station name (in Chinese or English) to MTR line and station codes
     /// Returns (line, station) tuple if found, nil otherwise
     static func mapStation(_ stationName: String) -> (line: String, station: String)? {
         let normalizedName = stationName.lowercased()
             .replacingOccurrences(of: "站", with: "")
             .replacingOccurrences(of: "station", with: "")
+            .replacingOccurrences(of: " ", with: "") // Remove all spaces
             .trimmingCharacters(in: .whitespaces)
         
         // Complete MTR station mapping
