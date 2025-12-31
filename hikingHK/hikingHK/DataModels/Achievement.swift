@@ -12,6 +12,7 @@ import SwiftData
 @Model
 final class Achievement {
     var id: String
+    var accountId: UUID // User account ID to associate this record with a specific user
     var badgeType: BadgeType
     var title: String
     /// Description field renamed to `achievementDescription` to avoid clashing with @Model macro internals.
@@ -61,6 +62,7 @@ final class Achievement {
     
     init(
         id: String,
+        accountId: UUID,
         badgeType: BadgeType,
         title: String,
         achievementDescription: String,
@@ -71,6 +73,7 @@ final class Achievement {
         unlockedAt: Date? = nil
     ) {
         self.id = id
+        self.accountId = accountId
         self.badgeType = badgeType
         self.title = title
         self.achievementDescription = achievementDescription
@@ -96,9 +99,32 @@ final class Achievement {
 }
 
 extension Achievement {
-    static let defaultAchievements: [Achievement] = [
+    /// Template structure for default achievement definitions (without accountId).
+    struct Template {
+        let id: String
+        let badgeType: BadgeType
+        let title: String
+        let achievementDescription: String
+        let icon: String
+        let targetValue: Double
+        
+        func createAchievement(accountId: UUID) -> Achievement {
+            Achievement(
+                id: id,
+                accountId: accountId,
+                badgeType: badgeType,
+                title: title,
+                achievementDescription: achievementDescription,
+                icon: icon,
+                targetValue: targetValue
+            )
+        }
+    }
+    
+    /// Default achievement templates that can be instantiated for any user.
+    static let defaultAchievementTemplates: [Template] = [
         // Distance Badges
-        Achievement(
+        Template(
             id: "distance_10km",
             badgeType: .distance,
             title: "Beginner Hiker",
@@ -106,7 +132,7 @@ extension Achievement {
             icon: "figure.walk",
             targetValue: 10.0
         ),
-        Achievement(
+        Template(
             id: "distance_50km",
             badgeType: .distance,
             title: "Hiking Enthusiast",
@@ -114,7 +140,7 @@ extension Achievement {
             icon: "figure.hiking",
             targetValue: 50.0
         ),
-        Achievement(
+        Template(
             id: "distance_100km",
             badgeType: .distance,
             title: "Hiking Expert",
@@ -122,7 +148,7 @@ extension Achievement {
             icon: "figure.climbing",
             targetValue: 100.0
         ),
-        Achievement(
+        Template(
             id: "distance_500km",
             badgeType: .distance,
             title: "Hiking Master",
@@ -132,7 +158,7 @@ extension Achievement {
         ),
         
         // Peak Badges
-        Achievement(
+        Template(
             id: "peak_lion_rock",
             badgeType: .peak,
             title: "Lion Rock Conqueror",
@@ -140,7 +166,7 @@ extension Achievement {
             icon: "mountain.2.fill",
             targetValue: 1.0
         ),
-        Achievement(
+        Template(
             id: "peak_tai_mo_shan",
             badgeType: .peak,
             title: "Tai Mo Shan Conqueror",
@@ -148,7 +174,7 @@ extension Achievement {
             icon: "mountain.2.fill",
             targetValue: 1.0
         ),
-        Achievement(
+        Template(
             id: "peak_sunset_peak",
             badgeType: .peak,
             title: "Sunset Peak Conqueror",
@@ -156,7 +182,7 @@ extension Achievement {
             icon: "mountain.2.fill",
             targetValue: 1.0
         ),
-        Achievement(
+        Template(
             id: "peak_sharp_peak",
             badgeType: .peak,
             title: "Sharp Peak Conqueror",
@@ -164,7 +190,7 @@ extension Achievement {
             icon: "mountain.2.fill",
             targetValue: 1.0
         ),
-        Achievement(
+        Template(
             id: "peak_4_peaks",
             badgeType: .peak,
             title: "Four Peaks Conqueror",
@@ -174,7 +200,7 @@ extension Achievement {
         ),
         
         // Streak Badges
-        Achievement(
+        Template(
             id: "streak_1_week",
             badgeType: .streak,
             title: "One Week Streak",
@@ -182,7 +208,7 @@ extension Achievement {
             icon: "calendar",
             targetValue: 7.0
         ),
-        Achievement(
+        Template(
             id: "streak_2_weeks",
             badgeType: .streak,
             title: "Two Week Streak",
@@ -190,7 +216,7 @@ extension Achievement {
             icon: "calendar.badge.clock",
             targetValue: 14.0
         ),
-        Achievement(
+        Template(
             id: "streak_1_month",
             badgeType: .streak,
             title: "Monthly Streak",
@@ -200,7 +226,7 @@ extension Achievement {
         ),
         
         // Exploration Badges
-        Achievement(
+        Template(
             id: "explore_3_districts",
             badgeType: .exploration,
             title: "Explorer",
@@ -208,7 +234,7 @@ extension Achievement {
             icon: "map",
             targetValue: 3.0
         ),
-        Achievement(
+        Template(
             id: "explore_5_districts",
             badgeType: .exploration,
             title: "Adventurer",
@@ -216,7 +242,7 @@ extension Achievement {
             icon: "map.circle.fill",
             targetValue: 5.0
         ),
-        Achievement(
+        Template(
             id: "explore_10_districts",
             badgeType: .exploration,
             title: "Exploration Master",
@@ -225,5 +251,12 @@ extension Achievement {
             targetValue: 10.0
         )
     ]
+    
+    /// Legacy property for backward compatibility - creates achievements with a placeholder accountId.
+    /// Note: This should not be used directly. Use `defaultAchievementTemplates` instead.
+    static var defaultAchievements: [Achievement] {
+        let placeholderAccountId = UUID() // Placeholder - should not be used
+        return defaultAchievementTemplates.map { $0.createAchievement(accountId: placeholderAccountId) }
+    }
 }
 

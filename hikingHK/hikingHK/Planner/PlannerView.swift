@@ -12,6 +12,7 @@ import SwiftData
 struct PlannerView: View {
     @EnvironmentObject private var viewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     @State private var selectedTrail: Trail?
     @State private var plannedDate = Date().addingTimeInterval(60 * 60 * 24)
     @State private var note = ""
@@ -31,7 +32,16 @@ struct PlannerView: View {
                 }
                 // Date and note section
                 Section(languageManager.localizedString(for: "planner.schedule")) {
-                    DatePicker(languageManager.localizedString(for: "planner.date"), selection: $plannedDate, displayedComponents: .date)
+                    HStack {
+                        Text(languageManager.localizedString(for: "planner.date"))
+                        Spacer()
+                        Text(formattedDate(plannedDate))
+                            .foregroundStyle(.secondary)
+                    }
+                    DatePicker("", selection: $plannedDate, displayedComponents: .date)
+                        .labelsHidden()
+                        .datePickerStyle(.compact)
+                        .environment(\.locale, Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US"))
                     TextField(languageManager.localizedString(for: "planner.note"), text: $note)
                 }
                 // Preview of the selected trail and basic stats
@@ -72,6 +82,7 @@ struct PlannerView: View {
                     }
                 }
             }
+            .environment(\.locale, Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US"))
             .scrollContentBackground(.hidden)
             .background(
                 ZStack {
@@ -85,8 +96,9 @@ struct PlannerView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(languageManager.localizedString(for: "save")) {
+                        guard let accountId = sessionManager.currentUser?.id else { return }
                         if let trail = selectedTrail {
-                            viewModel.addSavedHike(for: trail, scheduledDate: plannedDate, note: note)
+                            viewModel.addSavedHike(for: trail, scheduledDate: plannedDate, note: note, accountId: accountId)
                             // Reset the form to a fresh state after saving a plan
                             note = ""
                             selectedTrail = nil
@@ -112,6 +124,16 @@ struct PlannerView: View {
                 }
             }
         }
+        .environment(\.locale, Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US"))
+    }
+    
+    /// Format date in localized format
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US")
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
 }
 

@@ -13,6 +13,7 @@ import CoreLocation
 @Model
 final class HikeJournal {
     var id: UUID
+    var accountId: UUID // User account ID to associate this record with a specific user
     var title: String
     var content: String
     var hikeDate: Date
@@ -46,6 +47,7 @@ final class HikeJournal {
     
     init(
         id: UUID = UUID(),
+        accountId: UUID,
         title: String,
         content: String,
         hikeDate: Date = Date(),
@@ -64,6 +66,7 @@ final class HikeJournal {
         shareToken: String? = nil
     ) {
         self.id = id
+        self.accountId = accountId
         self.title = title
         self.content = content
         self.hikeDate = hikeDate

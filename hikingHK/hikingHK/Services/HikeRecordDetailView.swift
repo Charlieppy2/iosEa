@@ -435,7 +435,7 @@ struct ElevationChart: View {
 
 #Preview {
     NavigationStack {
-        HikeRecordDetailView(record: HikeRecord())
+        HikeRecordDetailView(record: HikeRecord(accountId: UUID(), trailId: nil, trailName: nil, startTime: Date(), isCompleted: false))
             .environmentObject(LanguageManager.shared)
     }
     .modelContainer(for: [HikeRecord.self, HikeTrackPoint.self], inMemory: true)

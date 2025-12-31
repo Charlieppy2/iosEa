@@ -12,6 +12,7 @@ import SwiftData
 struct AchievementView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     @StateObject private var viewModel: AchievementViewModel
     @State private var selectedType: Achievement.BadgeType?
     
@@ -44,13 +45,14 @@ struct AchievementView: View {
                 .ignoresSafeArea()
             )
             .onAppear {
+                guard let accountId = sessionManager.currentUser?.id else { return }
                 // Ensure default achievements exist in the database before loading
-                AchievementSeeder.ensureDefaults(in: modelContext)
-                viewModel.configureIfNeeded(context: modelContext)
+                AchievementSeeder.ensureDefaults(in: modelContext, accountId: accountId)
+                viewModel.configureIfNeeded(context: modelContext, accountId: accountId)
                 
                 // Load hike records and refresh achievement progress
                 Task {
-                    await refreshAchievementProgress()
+                    await refreshAchievementProgress(accountId: accountId)
                 }
             }
             .alert(languageManager.localizedString(for: "achievement.new.unlocked"), isPresented: .constant(!viewModel.newlyUnlockedAchievements.isEmpty)) {
@@ -69,10 +71,11 @@ struct AchievementView: View {
     }
     
     /// Loads hike records and refreshes achievement progress
-    private func refreshAchievementProgress() async {
+    /// - Parameter accountId: The user account ID to load records for.
+    private func refreshAchievementProgress(accountId: UUID) async {
         do {
             let recordStore = HikeRecordStore(context: modelContext)
-            let hikeRecords = try recordStore.loadAllRecords()
+            let hikeRecords = try recordStore.loadAllRecords(accountId: accountId)
             viewModel.refreshAchievements(from: hikeRecords)
         } catch {
             print("⚠️ AchievementView: Failed to load hike records: \(error)")

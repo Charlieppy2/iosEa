@@ -196,14 +196,14 @@ struct KMBETA: Codable, Identifiable, Hashable {
         }
     }
     
-    var formattedETA: String {
+    func formattedETA(languageManager: LanguageManager) -> String {
         guard let eta = eta else { return "" }
         // ETA format: "2024-01-01T12:00:00+08:00"
-        // Convert to relative time (e.g., "5 min")
-        return formatETATime(eta)
+        // Convert to relative time (e.g., "5 min" or "5 分鐘")
+        return formatETATime(eta, languageManager: languageManager)
     }
     
-    private func formatETATime(_ etaString: String) -> String {
+    private func formatETATime(_ etaString: String, languageManager: LanguageManager) -> String {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         
@@ -213,26 +213,30 @@ struct KMBETA: Codable, Identifiable, Hashable {
             guard let etaDate = formatter.date(from: etaString) else {
                 return etaString
             }
-            return formatRelativeTime(from: etaDate)
+            return formatRelativeTime(from: etaDate, languageManager: languageManager)
         }
         
-        return formatRelativeTime(from: etaDate)
+        return formatRelativeTime(from: etaDate, languageManager: languageManager)
     }
     
-    private func formatRelativeTime(from date: Date) -> String {
+    private func formatRelativeTime(from date: Date, languageManager: LanguageManager) -> String {
         let now = Date()
         let timeInterval = date.timeIntervalSince(now)
         
         if timeInterval < 0 {
-            return "已過"
+            return languageManager.localizedString(for: "bus.eta.passed")
         }
         
         let minutes = Int(timeInterval / 60)
         if minutes < 1 {
-            return "即將到站"
+            return languageManager.localizedString(for: "bus.eta.arriving")
         }
         
-        return "\(minutes) 分鐘"
+        let minutesUnit = languageManager.currentLanguage == .english 
+            ? languageManager.localizedString(for: "bus.eta.min")
+            : languageManager.localizedString(for: "bus.eta.minutes")
+        
+        return "\(minutes) \(minutesUnit)"
     }
 }
 

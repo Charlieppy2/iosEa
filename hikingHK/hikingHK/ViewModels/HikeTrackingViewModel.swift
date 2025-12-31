@@ -48,7 +48,11 @@ final class HikeTrackingViewModel: ObservableObject {
     }
     
     /// Starts a new hike tracking session, optionally associated with a trail.
-    func startTracking(trailId: UUID? = nil, trailName: String? = nil) {
+    /// - Parameters:
+    ///   - trailId: Optional trail ID to associate with this hike.
+    ///   - trailName: Optional trail name.
+    ///   - accountId: The user account ID to associate this record with.
+    func startTracking(trailId: UUID? = nil, trailName: String? = nil, accountId: UUID) {
         guard !isTracking else { return }
         
         // Request location permission if not determined.
@@ -68,6 +72,7 @@ final class HikeTrackingViewModel: ObservableObject {
         
         // Create a new hike record.
         currentRecord = HikeRecord(
+            accountId: accountId,
             trailId: trailId,
             trailName: trailName,
             startTime: startTime!,

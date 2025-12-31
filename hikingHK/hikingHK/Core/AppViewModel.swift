@@ -46,25 +46,26 @@ final class AppViewModel: ObservableObject {
         Task { await refreshWeather(language: savedLanguage) }
     }
 
-    /// Lazily sets up the backing `TrailDataStore` and loads any user-specific data.
+    /// Lazily sets up the backing `TrailDataStore`.
+    /// Note: After calling this, you should call `reloadUserData(accountId:)` separately with the user's accountId.
     func configurePersistenceIfNeeded(context: ModelContext) {
         guard trailDataStore == nil else { return }
         let store = TrailDataStore(context: context)
         trailDataStore = store
-        reloadUserData()
     }
     
     /// Reloads favorites and saved hikes from persistent storage.
-    func reloadUserData() {
+    /// - Parameter accountId: The user account ID to filter data for the current user.
+    func reloadUserData(accountId: UUID) {
         guard let store = trailDataStore else {
             print("⚠️ AppViewModel: TrailDataStore not configured, cannot reload data")
             return
         }
         
-        print("🔄 AppViewModel: Reloading user data...")
+        print("🔄 AppViewModel: Reloading user data for account: \(accountId)...")
         do {
-            try applyFavorites(ids: store.loadFavoriteTrailIds())
-            savedHikes = try store.loadSavedHikes(trails: trails)
+            try applyFavorites(ids: store.loadFavoriteTrailIds(accountId: accountId))
+            savedHikes = try store.loadSavedHikes(trails: trails, accountId: accountId)
             sortSavedHikes()
             objectWillChange.send()
             print("✅ AppViewModel: User data reloaded successfully")
@@ -74,7 +75,10 @@ final class AppViewModel: ObservableObject {
     }
 
     /// Toggles the favorite state for a given trail and persists the change.
-    func markFavorite(_ trail: Trail) {
+    /// - Parameters:
+    ///   - trail: The trail to toggle favorite status for.
+    ///   - accountId: The user account ID to associate this favorite with.
+    func markFavorite(_ trail: Trail, accountId: UUID) {
         guard let index = trails.firstIndex(of: trail) else {
             print("⚠️ AppViewModel: Trail not found in array")
             return
@@ -93,7 +97,7 @@ final class AppViewModel: ObservableObject {
         print("✅ AppViewModel: Toggled favorite for trail \(trail.name), isFavorite: \(updatedTrail.isFavorite)")
         
         do {
-            try trailDataStore?.setFavorite(updatedTrail.isFavorite, trailId: trail.id)
+            try trailDataStore?.setFavorite(updatedTrail.isFavorite, trailId: trail.id, accountId: accountId)
             print("✅ AppViewModel: Favorite status saved to database")
         } catch {
             print("❌ Favorite persistence error: \(error)")
@@ -101,12 +105,17 @@ final class AppViewModel: ObservableObject {
     }
 
     /// Adds a new planned hike for the given trail and date.
-    func addSavedHike(for trail: Trail, scheduledDate: Date, note: String = "") {
+    /// - Parameters:
+    ///   - trail: The trail to plan a hike for.
+    ///   - scheduledDate: The scheduled date for the hike.
+    ///   - note: Optional note for the hike.
+    ///   - accountId: The user account ID to associate this hike with.
+    func addSavedHike(for trail: Trail, scheduledDate: Date, note: String = "", accountId: UUID) {
         let newHike = SavedHike(trail: trail, scheduledDate: scheduledDate, note: note)
         savedHikes.insert(newHike, at: 0)
         sortSavedHikes()
         do {
-            try trailDataStore?.save(newHike)
+            try trailDataStore?.save(newHike, accountId: accountId)
             objectWillChange.send()
             print("✅ AppViewModel: Saved hike '\(trail.name)' scheduled for \(scheduledDate.formatted(date: .abbreviated, time: .omitted))")
         } catch {
@@ -117,12 +126,20 @@ final class AppViewModel: ObservableObject {
     }
 
     /// Updates an existing saved hike and re-sorts the list.
+    /// - Parameters:
+    ///   - hike: The hike to update.
+    ///   - scheduledDate: The new scheduled date.
+    ///   - note: The new note.
+    ///   - isCompleted: Whether the hike is completed.
+    ///   - completedAt: The completion date.
+    ///   - accountId: The user account ID to ensure only the owner can update.
     func updateSavedHike(
         _ hike: SavedHike,
         scheduledDate: Date,
         note: String,
         isCompleted: Bool,
-        completedAt: Date?
+        completedAt: Date?,
+        accountId: UUID
     ) {
         guard let index = savedHikes.firstIndex(where: { $0.id == hike.id }) else { return }
         savedHikes[index].scheduledDate = scheduledDate
@@ -132,7 +149,7 @@ final class AppViewModel: ObservableObject {
         sortSavedHikes()
         objectWillChange.send() // Ensure UI updates
         do {
-            try trailDataStore?.save(savedHikes[index])
+            try trailDataStore?.save(savedHikes[index], accountId: accountId)
             print("✅ AppViewModel: Updated saved hike '\(savedHikes[index].trail.name)' (ID: \(savedHikes[index].id)), isCompleted: \(isCompleted)")
         } catch {
             print("❌ AppViewModel: Update hike persistence error: \(error)")
@@ -140,7 +157,10 @@ final class AppViewModel: ObservableObject {
     }
 
     /// Removes a saved hike from both memory and persistent storage.
-    func removeSavedHike(_ hike: SavedHike) {
+    /// - Parameters:
+    ///   - hike: The hike to remove.
+    ///   - accountId: The user account ID to ensure only the owner can delete.
+    func removeSavedHike(_ hike: SavedHike, accountId: UUID) {
         let trailId = hike.trail.id
         
         // 1. 先从「即將計劃」中移除這條計劃
@@ -161,7 +181,7 @@ final class AppViewModel: ObservableObject {
                     }
                     
                     do {
-                        try trailDataStore?.setFavorite(false, trailId: trailId)
+                        try trailDataStore?.setFavorite(false, trailId: trailId, accountId: accountId)
                         print("✅ AppViewModel: Unfavorited trail '\(updatedTrail.name)' after deleting its last plan")
                     } catch {
                         print("❌ AppViewModel: Failed to unfavorite trail after deleting plan: \(error)")
@@ -171,7 +191,7 @@ final class AppViewModel: ObservableObject {
         }
         
         do {
-            try trailDataStore?.delete(hike)
+            try trailDataStore?.delete(hike, accountId: accountId)
         } catch {
             print("Delete hike persistence error: \(error)")
         }
@@ -239,13 +259,23 @@ final class AppViewModel: ObservableObject {
     }
 
     private func applyFavorites(ids: Set<UUID>) throws {
-        guard !ids.isEmpty else { return }
+        // Always update all trails' favorite status, even if ids is empty
+        // This ensures that trails that were previously favorited but are now unfavorited
+        // will have their isFavorite set to false
         trails = trails.map { trail in
             var mutableTrail = trail
             mutableTrail.isFavorite = ids.contains(trail.id)
             return mutableTrail
         }
-        featuredTrail = trails.first
+        
+        // Update featuredTrail to match the updated trail in the trails array
+        if let featuredId = featuredTrail?.id,
+           let updatedTrail = trails.first(where: { $0.id == featuredId }) {
+            featuredTrail = updatedTrail
+        } else if featuredTrail == nil {
+            // If featuredTrail is nil, set it to the first trail
+            featuredTrail = trails.first
+        }
     }
 
     private func sortSavedHikes() {

@@ -11,13 +11,15 @@ import SwiftData
 @Model
 final class SafetyChecklistItem {
     var id: String
+    var accountId: UUID // User account ID to associate this record with a specific user
     var iconName: String
     var title: String
     var isCompleted: Bool
     var lastUpdated: Date
     
-    init(id: String, iconName: String, title: String, isCompleted: Bool = false) {
+    init(id: String, accountId: UUID, iconName: String, title: String, isCompleted: Bool = false) {
         self.id = id
+        self.accountId = accountId
         self.iconName = iconName
         self.title = title
         self.isCompleted = isCompleted

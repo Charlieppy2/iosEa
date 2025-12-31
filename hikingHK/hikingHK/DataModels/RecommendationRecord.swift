@@ -12,6 +12,7 @@ import SwiftData
 @Model
 final class RecommendationRecord {
     var id: UUID
+    var accountId: UUID // User account ID to associate this record with a specific user
     var trailId: UUID
     var recommendedAt: Date
     var userAction: UserAction? // How the user responded to this recommendation
@@ -27,6 +28,7 @@ final class RecommendationRecord {
     
     init(
         id: UUID = UUID(),
+        accountId: UUID,
         trailId: UUID,
         recommendedAt: Date = Date(),
         userAction: UserAction? = nil,
@@ -34,6 +36,7 @@ final class RecommendationRecord {
         reason: String = ""
     ) {
         self.id = id
+        self.accountId = accountId
         self.trailId = trailId
         self.recommendedAt = recommendedAt
         self.userAction = userAction

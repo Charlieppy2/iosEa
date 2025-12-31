@@ -11,6 +11,7 @@ import Foundation
 /// DTO for JSON persistence of a safety checklist item.
 struct PersistedSafetyChecklistItem: FileStoreDTO {
     var id: String
+    var accountId: UUID // User account ID
     var iconName: String
     var title: String
     var isCompleted: Bool
@@ -89,6 +90,7 @@ final class SafetyChecklistItemFileStore: BaseFileStore<SafetyChecklistItem, Per
 extension PersistedSafetyChecklistItem {
     init(from model: SafetyChecklistItem) {
         self.id = model.id
+        self.accountId = model.accountId
         self.iconName = model.iconName
         self.title = model.title
         self.isCompleted = model.isCompleted
@@ -98,6 +100,7 @@ extension PersistedSafetyChecklistItem {
     func toModel() -> SafetyChecklistItem {
         SafetyChecklistItem(
             id: id,
+            accountId: accountId,
             iconName: iconName,
             title: title,
             isCompleted: isCompleted

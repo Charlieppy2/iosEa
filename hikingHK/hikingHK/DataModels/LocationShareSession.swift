@@ -13,6 +13,7 @@ import CoreLocation
 @Model
 final class LocationShareSession {
     var id: UUID
+    var accountId: UUID // User account ID to associate this record with a specific user
     var isActive: Bool
     var startedAt: Date?
     var lastLocationUpdate: Date?
@@ -24,6 +25,7 @@ final class LocationShareSession {
     
     init(
         id: UUID = UUID(),
+        accountId: UUID,
         isActive: Bool = false,
         startedAt: Date? = nil,
         lastLocationUpdate: Date? = nil,
@@ -33,6 +35,7 @@ final class LocationShareSession {
         expiresAt: Date? = nil
     ) {
         self.id = id
+        self.accountId = accountId
         self.isActive = isActive
         self.startedAt = startedAt
         self.lastLocationUpdate = lastLocationUpdate

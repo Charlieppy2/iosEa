@@ -327,6 +327,7 @@ private func createSampleRecord() -> HikeRecord {
     let endTime = startTime.addingTimeInterval(600)
     
     return HikeRecord(
+        accountId: UUID(), // Sample account ID for preview
         trailName: "Sample Trail",
         startTime: startTime,
         endTime: endTime,

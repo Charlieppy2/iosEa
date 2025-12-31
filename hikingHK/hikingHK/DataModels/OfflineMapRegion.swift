@@ -13,6 +13,7 @@ import MapKit
 @Model
 final class OfflineMapRegion {
     var id: UUID
+    var accountId: UUID // User account ID to associate this record with a specific user
     var name: String
     var downloadStatus: DownloadStatus
     var downloadProgress: Double
@@ -46,6 +47,7 @@ final class OfflineMapRegion {
     
     init(
         id: UUID = UUID(),
+        accountId: UUID,
         name: String,
         downloadStatus: DownloadStatus = .notDownloaded,
         downloadProgress: Double = 0,
@@ -54,6 +56,7 @@ final class OfflineMapRegion {
         downloadedAt: Date? = nil
     ) {
         self.id = id
+        self.accountId = accountId
         self.name = name
         self.downloadStatus = downloadStatus
         self.downloadProgress = downloadProgress

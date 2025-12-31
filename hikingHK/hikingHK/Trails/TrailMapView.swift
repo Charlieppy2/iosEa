@@ -47,6 +47,7 @@ struct TrailMapView: View {
     @StateObject private var locationManager = LocationManager()
     @StateObject private var networkMonitor = NetworkStatusMonitor()
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     @Environment(\.modelContext) private var modelContext
     @State private var position: MapCameraPosition
     @State private var dynamicPolyline: MKPolyline?
@@ -239,10 +240,11 @@ struct TrailMapView: View {
         #endif
         
         // Create the store (requires a ModelContext).
+        guard let accountId = sessionManager.currentUser?.id else { return }
         let store = OfflineMapsStore(context: modelContext)
         
-        // Load all offline map regions.
-        guard let allRegions = try? store.loadAllRegions() else { return }
+        // Load all offline map regions for the current user.
+        guard let allRegions = try? store.loadAllRegions(accountId: accountId) else { return }
         
         // Check whether the trail's coordinates fall inside any downloaded region.
         for region in allRegions where region.downloadStatus == .downloaded {

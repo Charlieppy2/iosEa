@@ -14,6 +14,8 @@ class APIConnectionChecker: ObservableObject {
     @Published var weatherAPIStatus: ConnectionStatus = .checking
     @Published var weatherWarningAPIStatus: ConnectionStatus = .checking
     @Published var mapboxAPIStatus: ConnectionStatus = .notConfigured
+    @Published var mtrAPIStatus: ConnectionStatus = .checking
+    @Published var busAPIStatus: ConnectionStatus = .checking
     @Published var lastCheckTime: Date?
     
     /// Possible connection states for an external service.
@@ -74,6 +76,8 @@ class APIConnectionChecker: ObservableObject {
         await checkWeatherAPI()
         await checkWeatherWarningAPI()
         checkMapboxAPI()
+        await checkMTRAPI()
+        await checkBusAPI()
         lastCheckTime = Date()
     }
     
@@ -133,6 +137,60 @@ class APIConnectionChecker: ObservableObject {
             // Mapbox is configured, but we don't test the connection here
             // as it requires actual coordinates
             mapboxAPIStatus = .connected
+        }
+    }
+    
+    /// Checks the MTR real-time train schedule API.
+    func checkMTRAPI() async {
+        mtrAPIStatus = .checking
+        
+        // Test with a common station (Central Station on Island Line)
+        let endpoint = URL(string: "https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=ISL&sta=CEN")!
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(from: endpoint)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                if (200..<300).contains(httpResponse.statusCode) {
+                    // Check if response is valid JSON (not HTML error page)
+                    if let responseString = String(data: data, encoding: .utf8),
+                       !responseString.contains("<!DOCTYPE") && !responseString.contains("<html") {
+                        mtrAPIStatus = .connected
+                    } else {
+                        mtrAPIStatus = .disconnected
+                    }
+                } else {
+                    mtrAPIStatus = .error("HTTP \(httpResponse.statusCode)")
+                }
+            } else {
+                mtrAPIStatus = .disconnected
+            }
+        } catch {
+            mtrAPIStatus = .error(error.localizedDescription)
+        }
+    }
+    
+    /// Checks the KMB/Long Win Bus real-time ETA API.
+    func checkBusAPI() async {
+        busAPIStatus = .checking
+        
+        // Test with a common route endpoint (get all routes)
+        let endpoint = URL(string: "https://data.etabus.gov.hk/v1/transport/kmb/route/")!
+        
+        do {
+            let (_, response) = try await URLSession.shared.data(from: endpoint)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                if (200..<300).contains(httpResponse.statusCode) {
+                    busAPIStatus = .connected
+                } else {
+                    busAPIStatus = .error("HTTP \(httpResponse.statusCode)")
+                }
+            } else {
+                busAPIStatus = .disconnected
+            }
+        } catch {
+            busAPIStatus = .error(error.localizedDescription)
         }
     }
 }

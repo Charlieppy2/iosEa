@@ -12,14 +12,16 @@ import SwiftData
 @Model
 final class EmergencyContact {
     var id: UUID
+    var accountId: UUID // User account ID to associate this record with a specific user
     var name: String
     var phoneNumber: String
     var email: String?
     var isPrimary: Bool
     var createdAt: Date
     
-    init(id: UUID = UUID(), name: String, phoneNumber: String, email: String? = nil, isPrimary: Bool = false, createdAt: Date = Date()) {
+    init(id: UUID = UUID(), accountId: UUID, name: String, phoneNumber: String, email: String? = nil, isPrimary: Bool = false, createdAt: Date = Date()) {
         self.id = id
+        self.accountId = accountId
         self.name = name
         self.phoneNumber = phoneNumber
         self.email = email

@@ -13,6 +13,7 @@ import CoreLocation
 struct LocationSharingView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     @StateObject private var viewModel: LocationSharingViewModel
     @State private var isShowingAddContact = false
     @State private var newContactName = ""
@@ -332,7 +333,9 @@ struct LocationSharingView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(languageManager.localizedString(for: "save")) {
+                        guard let accountId = sessionManager.currentUser?.id else { return }
                         let contact = EmergencyContact(
+                            accountId: accountId,
                             name: newContactName,
                             phoneNumber: newContactPhone,
                             email: newContactEmail.isEmpty ? nil : newContactEmail

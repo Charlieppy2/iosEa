@@ -25,12 +25,14 @@ struct RootView: View {
                     .environmentObject(appViewModel)
                     .environmentObject(sessionManager)
                     .environmentObject(languageManager)
+                    .environment(\.locale, Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US"))
                     .id("logged_in_\(sessionManager.currentUser?.id.uuidString ?? "")") // Force refresh when the logged-in user changes
                     .transition(.opacity)
             } else {
                 AuthView()
                     .environmentObject(sessionManager)
                     .environmentObject(languageManager)
+                    .environment(\.locale, Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US"))
                     .id("logged_out_\(viewRefreshID.uuidString)") // Force refresh when logging out
                     .transition(.opacity)
             }
@@ -41,11 +43,11 @@ struct RootView: View {
             print("🔄 RootView: Will show \(newValue != nil ? "ContentView" : "AuthView")")
             
             // When the user logs in, reload user-scoped data
-            if oldValue == nil && newValue != nil {
-                print("🔄 RootView: User logged in, reloading data...")
+            if oldValue == nil && newValue != nil, let accountId = newValue?.id {
+                print("🔄 RootView: User logged in, reloading data for account: \(accountId)...")
                 appViewModel.configurePersistenceIfNeeded(context: modelContext)
                 // Ensure data is loaded after configuration
-                appViewModel.reloadUserData()
+                appViewModel.reloadUserData(accountId: accountId)
             }
             
             // When the user logs out, ensure the view refreshes

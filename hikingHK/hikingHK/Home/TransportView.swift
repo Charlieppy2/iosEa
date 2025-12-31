@@ -1097,6 +1097,18 @@ struct TransportView: View {
                         if !busETAs.isEmpty {
                             ForEach(busETAs) { eta in
                                 let remark = eta.localizedRemark(languageManager: languageManager)
+                                let etaText = eta.formattedETA(languageManager: languageManager)
+                                let etaColor: Color = {
+                                    // Check for "Passed" status (both Chinese and English)
+                                    if etaText.contains("已過") || etaText.contains("Passed") {
+                                        return Color.gray // Gray for passed buses
+                                    } else if etaText.contains("即將到站") || etaText.contains("Arriving") {
+                                        return Color.orange // Orange for arriving buses
+                                    } else {
+                                        return Color.hikingGreen // Green for normal ETA times
+                                    }
+                                }()
+                                
                                 HStack {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(eta.localizedDestination(languageManager: languageManager))
@@ -1108,8 +1120,8 @@ struct TransportView: View {
                                         }
                                     }
                                     Spacer()
-                                    Text(eta.formattedETA)
-                                        .foregroundStyle(Color.hikingGreen)
+                                    Text(etaText)
+                                        .foregroundStyle(etaColor)
                                         .fontWeight(.medium)
                                         .font(.headline)
                                 }
@@ -1606,7 +1618,11 @@ struct TransportView: View {
                     // All option
                     Button {
                         selectedFilterStation = nil
-                        applyFilters()
+                        // Delay filter application to prevent menu from closing
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                            applyFilters()
+                        }
                     } label: {
                         HStack {
                             Text(languageManager.localizedString(for: "transport.bus.filter.all"))
@@ -1646,7 +1662,11 @@ struct TransportView: View {
                                 }, id: \.self) { station in
                                     Button {
                                         selectedFilterStation = station
-                                        applyFilters()
+                                        // Delay filter application to prevent menu from closing
+                                        Task { @MainActor in
+                                            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                                            applyFilters()
+                                        }
                                     } label: {
                                         HStack {
                                             Image(systemName: "mappin.circle.fill")
@@ -1739,7 +1759,11 @@ struct TransportView: View {
                 if selectedMTRFilterStation != nil {
                     Button {
                         selectedMTRFilterStation = nil
-                        applyMTRFilters()
+                        // Delay filter application to prevent menu from closing
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                            applyMTRFilters()
+                        }
                     } label: {
                         Text(languageManager.localizedString(for: "transport.bus.filter.clear"))
                             .font(.caption)
@@ -1758,7 +1782,11 @@ struct TransportView: View {
                     // All option
                     Button {
                         selectedMTRFilterStation = nil
-                        applyMTRFilters()
+                        // Delay filter application to prevent menu from closing
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                            applyMTRFilters()
+                        }
                     } label: {
                         HStack {
                             Text(languageManager.localizedString(for: "transport.bus.filter.all"))
@@ -1783,7 +1811,11 @@ struct TransportView: View {
                                 ForEach(group.stations, id: \.self) { station in
                                     Button {
                                         selectedMTRFilterStation = station
-                                        applyMTRFilters()
+                                        // Delay filter application to prevent menu from closing
+                                        Task { @MainActor in
+                                            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                                            applyMTRFilters()
+                                        }
                                     } label: {
                                         HStack {
                                             Image(systemName: "mappin.circle.fill")
@@ -2291,7 +2323,7 @@ struct TransportView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Text(eta.formattedETA)
+                        Text(eta.formattedETA(languageManager: languageManager))
                             .font(.caption.bold())
                             .foregroundStyle(Color.hikingGreen)
                     }

@@ -26,14 +26,17 @@ final class AchievementViewModel: ObservableObject {
     }
     
     /// Lazily configures the underlying `AchievementStore` and loads initial data.
-    func configureIfNeeded(context: ModelContext) {
+    /// - Parameters:
+    ///   - context: The SwiftData model context.
+    ///   - accountId: The user account ID to load achievements for.
+    func configureIfNeeded(context: ModelContext, accountId: UUID) {
         guard store == nil else { return }
         self.modelContext = context
         store = AchievementStore(context: context)
         
         do {
-            try store?.seedDefaultsIfNeeded()
-            achievements = try store?.loadAllAchievements() ?? []
+            try store?.seedDefaultsIfNeeded(accountId: accountId)
+            achievements = try store?.loadAllAchievements(accountId: accountId) ?? []
         } catch {
             self.error = "Failed to load achievements: \(error.localizedDescription)"
         }

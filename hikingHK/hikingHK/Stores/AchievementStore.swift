@@ -17,23 +17,30 @@ final class AchievementStore {
         self.context = context
     }
     
-    /// Inserts the default achievements if the store is currently empty.
-    func seedDefaultsIfNeeded() throws {
-        let descriptor = FetchDescriptor<Achievement>()
+    /// Inserts the default achievements if the store is currently empty for a specific user.
+    /// - Parameter accountId: The user account ID to create achievements for.
+    func seedDefaultsIfNeeded(accountId: UUID) throws {
+        let descriptor = FetchDescriptor<Achievement>(
+            predicate: #Predicate { $0.accountId == accountId }
+        )
         let existing = try context.fetch(descriptor)
         guard existing.isEmpty else { return }
         
-        // Insert the full default achievement set when none exist yet.
-        for achievement in Achievement.defaultAchievements {
+        // Insert the full default achievement set when none exist yet for this user.
+        for template in Achievement.defaultAchievementTemplates {
+            let achievement = template.createAchievement(accountId: accountId)
             context.insert(achievement)
         }
         try context.save()
     }
     
-    /// Loads all achievements, ordered by badge type then target value.
-    func loadAllAchievements() throws -> [Achievement] {
+    /// Loads all achievements for a specific user, ordered by badge type then target value.
+    /// - Parameter accountId: The user account ID to filter achievements for.
+    func loadAllAchievements(accountId: UUID) throws -> [Achievement] {
         // SwiftData's SortDescriptor has limitations with @Model, so we sort in memory.
-        let descriptor = FetchDescriptor<Achievement>()
+        let descriptor = FetchDescriptor<Achievement>(
+            predicate: #Predicate { $0.accountId == accountId }
+        )
         let achievements = try context.fetch(descriptor)
         
         // Sort manually: first by badge type, then by target value.
@@ -45,10 +52,11 @@ final class AchievementStore {
         }
     }
     
-    /// Loads only unlocked achievements, sorted by unlock date descending (newest first).
-    func loadUnlockedAchievements() throws -> [Achievement] {
+    /// Loads only unlocked achievements for a specific user, sorted by unlock date descending (newest first).
+    /// - Parameter accountId: The user account ID to filter achievements for.
+    func loadUnlockedAchievements(accountId: UUID) throws -> [Achievement] {
         var descriptor = FetchDescriptor<Achievement>()
-        descriptor.predicate = #Predicate { $0.isUnlocked == true }
+        descriptor.predicate = #Predicate { $0.accountId == accountId && $0.isUnlocked == true }
         let achievements = try context.fetch(descriptor)
         
         // Sort manually by unlock date (newest first).

@@ -11,6 +11,7 @@ import Foundation
 /// DTO for JSON persistence of an emergency contact.
 struct PersistedEmergencyContact: FileStoreDTO {
     var id: UUID
+    var accountId: UUID // User account ID
     var name: String
     var phoneNumber: String
     var email: String?
@@ -79,6 +80,7 @@ final class EmergencyContactFileStore: BaseFileStore<EmergencyContact, Persisted
 extension PersistedEmergencyContact {
     init(from model: EmergencyContact) {
         self.id = model.id
+        self.accountId = model.accountId
         self.name = model.name
         self.phoneNumber = model.phoneNumber
         self.email = model.email
@@ -89,6 +91,7 @@ extension PersistedEmergencyContact {
     func toModel() -> EmergencyContact {
         EmergencyContact(
             id: id,
+            accountId: accountId,
             name: name,
             phoneNumber: phoneNumber,
             email: email,

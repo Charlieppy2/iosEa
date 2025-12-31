@@ -34,25 +34,22 @@ struct BusRouteDetailView: View {
                             .minimumScaleFactor(0.7) // Allow text to scale down if needed
                             .frame(width: 70, height: 60, alignment: .center) // Fixed width for 5 characters
                             .background(
-                                LinearGradient(
-                                    colors: [Color.orange, Color.orange.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                in: RoundedRectangle(cornerRadius: 12)
+                                Color.hikingGradient,
+                                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                             )
+                            .shadow(color: Color.hikingGreen.opacity(0.3), radius: 4, x: 0, y: 2)
                         
                         VStack(alignment: .leading, spacing: 8) {
                             // Direction indicator with destination - same line as route number
                             HStack(spacing: 8) {
                                 Image(systemName: route.bound == "O" ? "arrow.right.circle.fill" : "arrow.left.circle.fill")
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.hikingGreen)
                                     .font(.title3)
                                 Text(route.bound == "O" ? 
                                      "\(languageManager.localizedString(for: "transport.bus.outbound")) \(route.localizedDestination(languageManager: languageManager))" :
                                      "\(languageManager.localizedString(for: "transport.bus.inbound")) \(route.localizedOrigin(languageManager: languageManager))")
                                     .font(.title3.bold())
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.hikingDarkGreen)
                                     .lineLimit(1)
                                     .fixedSize(horizontal: false, vertical: false)
                             }
@@ -62,7 +59,7 @@ struct BusRouteDetailView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack(spacing: 8) {
                                     Image(systemName: "mappin.circle.fill")
-                                        .foregroundStyle(.green)
+                                        .foregroundStyle(Color.hikingGreen)
                                         .font(.title3)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(languageManager.localizedString(for: "trail.start.point"))
@@ -76,7 +73,7 @@ struct BusRouteDetailView: View {
                                 
                                 HStack(spacing: 8) {
                                     Image(systemName: "flag.circle.fill")
-                                        .foregroundStyle(.red)
+                                        .foregroundStyle(Color.hikingBrown)
                                         .font(.title3)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(languageManager.localizedString(for: "trail.end.point"))
@@ -95,11 +92,7 @@ struct BusRouteDetailView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.secondarySystemBackground))
-                        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
-                )
+                .hikingCard()
                 
                 if isLoading {
                     ProgressView()
@@ -108,14 +101,14 @@ struct BusRouteDetailView: View {
                 } else if let error = error {
                     Text(error)
                         .font(.caption)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.hikingBrown)
                         .padding()
                 } else if !routeStops.isEmpty {
                     // Show stops with ETA in scrollable single page
                     VStack(alignment: .leading, spacing: 8) {
                         Text(languageManager.localizedString(for: "transport.bus.real.time.eta"))
                             .font(.headline.bold())
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.hikingDarkGreen)
                             .padding(.horizontal)
                         
                         // Scrollable list of all stops
@@ -132,6 +125,7 @@ struct BusRouteDetailView: View {
             }
             .padding()
         }
+        .hikingBackground()
         .navigationTitle(route.route)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -247,14 +241,9 @@ struct BusRouteDetailView: View {
                 // Station icon badge - smaller
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.orange, Color.orange.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Color.hikingGradient)
                         .frame(width: 36, height: 36)
+                        .shadow(color: Color.hikingGreen.opacity(0.3), radius: 3, x: 0, y: 2)
                     
                     Image(systemName: "mappin.circle.fill")
                         .foregroundStyle(.white)
@@ -278,11 +267,7 @@ struct BusRouteDetailView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .background(
-                LinearGradient(
-                    colors: [Color.orange.opacity(0.1), Color.orange.opacity(0.05)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                Color.hikingCardGradient
             )
             
             if !stopETAs.isEmpty {
@@ -297,7 +282,7 @@ struct BusRouteDetailView: View {
                             // Destination header - compact
                             HStack(spacing: 6) {
                                 Image(systemName: "flag.circle.fill")
-                                    .foregroundStyle(.blue)
+                                    .foregroundStyle(Color.hikingBrown)
                                     .font(.subheadline)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(languageManager.localizedString(for: "trail.end.point"))
@@ -317,13 +302,13 @@ struct BusRouteDetailView: View {
                                 
                                 // ETA badges in a row
                                 ForEach(etas.prefix(2)) { eta in
-                                    ETABadge(time: eta.formattedETA)
+                                    ETABadge(time: eta.formattedETA(languageManager: languageManager))
                                 }
                             }
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
-                        .background(Color(.systemBackground))
+                        .background(Color.hikingCardGradient)
                     }
                 }
             } else if isLoading {
@@ -337,11 +322,11 @@ struct BusRouteDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color(.systemBackground))
+                .background(Color.hikingCardGradient)
             } else {
                 HStack(spacing: 10) {
                     Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.hikingBrown)
                         .font(.subheadline)
                     Text(languageManager.localizedString(for: "transport.bus.no.eta.found"))
                         .font(.caption)
@@ -350,17 +335,13 @@ struct BusRouteDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color(.systemBackground))
+                .background(Color.hikingCardGradient)
             }
         }
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
-        )
+        .hikingCard()
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.orange.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.hikingGreen.opacity(0.2), lineWidth: 1)
         )
     }
     
@@ -368,14 +349,15 @@ struct BusRouteDetailView: View {
         let backgroundColor: Color
         let icon: String
         
-        if time.contains("已過") {
-            backgroundColor = Color.gray.opacity(0.8)
+        // Check for "Passed" status (both Chinese and English)
+        if time.contains("已過") || time.contains("Passed") {
+            backgroundColor = Color.gray.opacity(0.7) // Gray for passed buses
             icon = "clock.arrow.circlepath"
-        } else if time.contains("即將到站") {
-            backgroundColor = Color.green
+        } else if time.contains("即將到站") || time.contains("Arriving") {
+            backgroundColor = Color.orange // Orange for arriving buses
             icon = "bolt.fill"
         } else {
-            backgroundColor = Color.orange
+            backgroundColor = Color.hikingGreen // Green for normal ETA times
             icon = "clock.fill"
         }
         
@@ -389,7 +371,7 @@ struct BusRouteDetailView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(backgroundColor)
                 .shadow(color: backgroundColor.opacity(0.3), radius: 3, x: 0, y: 1)
         )

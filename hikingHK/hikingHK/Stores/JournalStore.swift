@@ -19,11 +19,14 @@ final class JournalStore {
         self.context = context
     }
     
-    /// Loads all journal entries from the SwiftData context.
+    /// Loads all journal entries from the SwiftData context for a specific user.
+    /// - Parameter accountId: The user account ID to filter journals for.
     /// - Returns: An array of `HikeJournal` models, sorted by hike date (most recent first).
-    func loadAllJournals() throws -> [HikeJournal] {
-        print("📖 JournalStore: Loading all journals from context...")
-        var descriptor = FetchDescriptor<HikeJournal>()
+    func loadAllJournals(accountId: UUID) throws -> [HikeJournal] {
+        print("📖 JournalStore: Loading all journals from context for account: \(accountId)...")
+        var descriptor = FetchDescriptor<HikeJournal>(
+            predicate: #Predicate { $0.accountId == accountId }
+        )
         descriptor.sortBy = [SortDescriptor(\.hikeDate, order: .reverse)]
         let journals = try context.fetch(descriptor)
         print("📖 JournalStore: Loaded \(journals.count) journals from database")
@@ -38,12 +41,14 @@ final class JournalStore {
         return journals
     }
     
-    /// Loads a specific journal entry by its ID.
-    /// - Parameter id: The UUID of the journal to load.
+    /// Loads a specific journal entry by its ID for a specific user.
+    /// - Parameters:
+    ///   - id: The UUID of the journal to load.
+    ///   - accountId: The user account ID to ensure only the owner can access.
     /// - Returns: The `HikeJournal` if found, otherwise `nil`.
-    func loadJournal(by id: UUID) throws -> HikeJournal? {
+    func loadJournal(by id: UUID, accountId: UUID) throws -> HikeJournal? {
         var descriptor = FetchDescriptor<HikeJournal>()
-        descriptor.predicate = #Predicate { $0.id == id }
+        descriptor.predicate = #Predicate { $0.id == id && $0.accountId == accountId }
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
     }

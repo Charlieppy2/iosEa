@@ -126,6 +126,8 @@ struct LocalizedStrings {
         "service.gps.tracking": "GPS tracking",
         "service.offline.maps": "Offline maps",
         "service.mapbox.api": "Mapbox API",
+        "service.mtr.api": "MTR API",
+        "service.bus.api": "Bus API",
         "service.status.connected": "Connected",
         "service.status.disconnected": "Disconnected",
         "service.status.unavailable": "Unavailable",
@@ -1547,6 +1549,10 @@ struct LocalizedStrings {
         "transport.nearby.stations": "Nearby Stations",
         "transport.mtr.towards": "Towards",
         "transport.no.stations.available": "No stations available",
+        "bus.eta.passed": "Passed",
+        "bus.eta.arriving": "Arriving",
+        "bus.eta.minutes": "minutes",
+        "bus.eta.min": "min",
         
         // Home Quick Actions
         "home.transport": "Transport"
@@ -1657,6 +1663,8 @@ struct LocalizedStrings {
         "service.gps.tracking": "GPS追蹤",
         "service.offline.maps": "離線地圖",
         "service.mapbox.api": "Mapbox API",
+        "service.mtr.api": "港鐵實時列車API",
+        "service.bus.api": "巴士實時到站API",
         "service.status.connected": "已連接",
         "service.status.disconnected": "未連接",
         "service.status.unavailable": "不可用",
@@ -2710,6 +2718,10 @@ struct LocalizedStrings {
         "transport.nearby.stations": "附近車站",
         "transport.mtr.towards": "往",
         "transport.no.stations.available": "暫無車站選項",
+        "bus.eta.passed": "已過",
+        "bus.eta.arriving": "即將到站",
+        "bus.eta.minutes": "分鐘",
+        "bus.eta.min": "min",
         
         // Home Quick Actions
         "home.transport": "交通"

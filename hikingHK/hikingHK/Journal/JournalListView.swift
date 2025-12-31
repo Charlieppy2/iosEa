@@ -12,6 +12,7 @@ struct JournalListView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
     @EnvironmentObject private var viewModel: AppViewModel
+    @EnvironmentObject private var sessionManager: SessionManager
     @StateObject private var journalViewModel: JournalViewModel
     @State private var isShowingCreateJournal = false
     @State private var selectedJournal: HikeJournal?
@@ -55,12 +56,20 @@ struct JournalListView: View {
             .onAppear {
                 // On every appearance, ensure configuration and then refresh data
                 print("🔄 JournalListView: View appeared")
-                journalViewModel.configureIfNeeded(context: modelContext, skipRefresh: true)
+                if let accountId = sessionManager.currentUser?.id {
+                    journalViewModel.configureIfNeeded(context: modelContext, skipRefresh: true, accountId: accountId)
+                } else {
+                    journalViewModel.configureIfNeeded(context: modelContext, skipRefresh: true)
+                }
                 // Delay refresh slightly to give the JSON store time to sync
                 Task { @MainActor in
                     try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
                     print("🔄 JournalListView: Refreshing journals on appear...")
-                    journalViewModel.refreshJournals()
+                    if let accountId = sessionManager.currentUser?.id {
+                        journalViewModel.refreshJournals(accountId: accountId)
+                    } else {
+                        journalViewModel.refreshJournals()
+                    }
                 }
             }
             .onChange(of: isShowingCreateJournal) { oldValue, newValue in
@@ -76,7 +85,11 @@ struct JournalListView: View {
                         // Only refresh if the array is empty to avoid overwriting manual additions
                         if journalViewModel.journals.isEmpty {
                             print("🔄 JournalListView: Array is empty, refreshing from database...")
-                            journalViewModel.refreshJournals()
+                            if let accountId = sessionManager.currentUser?.id {
+                                journalViewModel.refreshJournals(accountId: accountId)
+                            } else {
+                                journalViewModel.refreshJournals()
+                            }
                         } else {
                             print("🔄 JournalListView: Array has \(journalViewModel.journals.count) items, skipping refresh to preserve manual additions")
                         }

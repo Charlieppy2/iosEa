@@ -159,10 +159,11 @@ struct EditJournalView: View {
 
 #Preview {
     let journal = HikeJournal(
+        accountId: UUID(),
         title: "Test",
         content: "Test content"
     )
-    return EditJournalView(journal: journal, viewModel: JournalViewModel())
+    EditJournalView(journal: journal, viewModel: JournalViewModel())
         .modelContainer(for: [HikeJournal.self, JournalPhoto.self], inMemory: true)
         .environmentObject(LanguageManager.shared)
 }

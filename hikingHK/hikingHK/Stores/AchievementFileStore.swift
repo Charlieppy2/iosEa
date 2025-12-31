@@ -11,6 +11,7 @@ import Foundation
 /// DTO for JSON persistence of an achievement.
 struct PersistedAchievement: FileStoreDTO {
     var id: String
+    var accountId: UUID // User account ID
     var badgeType: Achievement.BadgeType
     var title: String
     var achievementDescription: String
@@ -99,6 +100,7 @@ final class AchievementFileStore: BaseFileStore<Achievement, PersistedAchievemen
 extension PersistedAchievement {
     init(from model: Achievement) {
         self.id = model.id
+        self.accountId = model.accountId
         self.badgeType = model.badgeType
         self.title = model.title
         self.achievementDescription = model.achievementDescription
@@ -112,6 +114,7 @@ extension PersistedAchievement {
     func toModel() -> Achievement {
         Achievement(
             id: id,
+            accountId: accountId,
             badgeType: badgeType,
             title: title,
             achievementDescription: achievementDescription,

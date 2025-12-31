@@ -37,17 +37,20 @@ final class TrailRecommendationViewModel: ObservableObject {
     
     /// Lazily configures the underlying `RecommendationStore`
     /// and loads or creates the user's preference model.
-    func configureIfNeeded(context: ModelContext) {
+    /// - Parameters:
+    ///   - context: The SwiftData model context.
+    ///   - accountId: The user account ID to load preferences for.
+    func configureIfNeeded(context: ModelContext, accountId: UUID) {
         guard store == nil else { return }
         self.modelContext = context
         store = RecommendationStore(context: context)
         
         // Load existing user preferences; create a default one if missing.
         do {
-            userPreference = try store?.loadUserPreference()
+            userPreference = try store?.loadUserPreference(accountId: accountId)
             if userPreference == nil {
                 // Create a default preference if none exists yet.
-                userPreference = UserPreference()
+                userPreference = UserPreference(accountId: accountId)
             }
         } catch {
             self.error = "Failed to load user preferences: \(error.localizedDescription)"
@@ -55,8 +58,10 @@ final class TrailRecommendationViewModel: ObservableObject {
     }
     
     /// Generates trail recommendations for the current user context.
-    /// - Parameter availableTime: Optional time budget in seconds for the hike.
-    func generateRecommendations(availableTime: TimeInterval? = nil) async {
+    /// - Parameters:
+    ///   - availableTime: Optional time budget in seconds for the hike.
+    ///   - accountId: The user account ID to load history for.
+    func generateRecommendations(availableTime: TimeInterval? = nil, accountId: UUID) async {
         guard let store = store else { return }
         
         isLoading = true
@@ -70,7 +75,7 @@ final class TrailRecommendationViewModel: ObservableObject {
         if let context = modelContext {
             do {
                 let recordStore = HikeRecordStore(context: context)
-                history = try recordStore.loadAllRecords()
+                history = try recordStore.loadAllRecords(accountId: accountId)
             } catch {
                 history = []
             }
@@ -93,6 +98,7 @@ final class TrailRecommendationViewModel: ObservableObject {
         // Persist the top recommendations as history records (limit to first 10).
         for recommendation in newRecommendations.prefix(10) {
             let record = RecommendationRecord(
+                accountId: accountId,
                 trailId: recommendation.trail.id,
                 recommendationScore: recommendation.score,
                 reason: recommendation.reasons.joined(separator: "；")
@@ -120,11 +126,15 @@ final class TrailRecommendationViewModel: ObservableObject {
     
     /// Records what the user did with a recommendation (e.g. opened, accepted),
     /// so future suggestions can be improved.
-    func recordUserAction(for recommendation: TrailRecommendation, action: RecommendationRecord.UserAction) {
+    /// - Parameters:
+    ///   - recommendation: The recommendation that was acted upon.
+    ///   - action: The action taken by the user.
+    ///   - accountId: The user account ID to filter history for.
+    func recordUserAction(for recommendation: TrailRecommendation, action: RecommendationRecord.UserAction, accountId: UUID) {
         guard let store = store else { return }
         
         do {
-            let history = try store.loadRecommendationHistory(trailId: recommendation.trail.id)
+            let history = try store.loadRecommendationHistory(accountId: accountId, trailId: recommendation.trail.id)
             if let record = history.first(where: { $0.trailId == recommendation.trail.id && $0.recommendedAt > Date().addingTimeInterval(-3600) }) {
                 try store.updateRecommendationAction(record, action: action)
             }

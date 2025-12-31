@@ -76,14 +76,17 @@ struct ProfileView: View {
             List {
                 accountSection
                 statsSection
-                Section(languageManager.localizedString(for: "profile.achievements")) {
+                Section {
                     NavigationLink {
                         AchievementView()
                     } label: {
-                        HStack {
+                        HStack(spacing: 12) {
                             Image(systemName: "trophy.fill")
+                                .font(.title3)
                                 .foregroundStyle(Color.hikingGreen)
+                                .frame(width: 32, height: 32)
                             Text(languageManager.localizedString(for: "profile.achievements.badges"))
+                                .font(.subheadline.weight(.medium))
                                 .foregroundStyle(Color.hikingDarkGreen)
                             Spacer()
                             HStack(spacing: 4) {
@@ -95,14 +98,24 @@ struct ProfileView: View {
                                 Text("\(achievementViewModel.totalCount)")
                                     .foregroundStyle(Color.hikingStone)
                             }
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(Color.hikingStone)
                         }
+                        .padding(.vertical, 4)
                     }
+                } header: {
+                    Text(languageManager.localizedString(for: "profile.achievements"))
+                        .foregroundStyle(Color.hikingDarkGreen)
                 }
-                Section(languageManager.localizedString(for: "profile.goals")) {
+                Section {
                     goalRow(goal: ridgeLinesGoal)
                     goalRow(goal: monthlyDistanceGoal)
+                } header: {
+                    Text(languageManager.localizedString(for: "profile.goals"))
+                        .foregroundStyle(Color.hikingDarkGreen)
                 }
-                Section(languageManager.localizedString(for: "profile.data.services")) {
+                Section {
                     apiStatusRow(
                         title: languageManager.localizedString(for: "service.weather.api"),
                         icon: "cloud.sun",
@@ -123,8 +136,21 @@ struct ProfileView: View {
                         icon: "map",
                         status: apiChecker.mapboxAPIStatus
                     )
+                    apiStatusRow(
+                        title: languageManager.localizedString(for: "service.mtr.api"),
+                        icon: "tram.fill",
+                        status: apiChecker.mtrAPIStatus
+                    )
+                    apiStatusRow(
+                        title: languageManager.localizedString(for: "service.bus.api"),
+                        icon: "bus.fill",
+                        status: apiChecker.busAPIStatus
+                    )
+                } header: {
+                    Text(languageManager.localizedString(for: "profile.data.services"))
+                        .foregroundStyle(Color.hikingDarkGreen)
                 }
-                Section(languageManager.localizedString(for: "profile.trails.data")) {
+                Section {
                     HStack {
                         Label(languageManager.localizedString(for: "profile.trails.total"), systemImage: "map.fill")
                             .font(.subheadline.weight(.medium))
@@ -134,11 +160,17 @@ struct ProfileView: View {
                             .font(.headline)
                             .foregroundStyle(Color.hikingGreen)
                     }
+                } header: {
+                    Text(languageManager.localizedString(for: "profile.trails.data"))
+                        .foregroundStyle(Color.hikingDarkGreen)
                 }
-                Section(languageManager.localizedString(for: "profile.language")) {
+                Section {
                     languageSelectionRow
+                } header: {
+                    Text(languageManager.localizedString(for: "profile.language"))
+                        .foregroundStyle(Color.hikingDarkGreen)
                 }
-                Section(languageManager.localizedString(for: "api.status.title")) {
+                Section {
                     HStack {
                         Text(languageManager.localizedString(for: "api.status.last.checked"))
                             .font(.subheadline)
@@ -167,6 +199,9 @@ struct ProfileView: View {
                     }
                     .buttonStyle(.bordered)
                     .tint(Color.hikingGreen)
+                } header: {
+                    Text(languageManager.localizedString(for: "api.status.title"))
+                        .foregroundStyle(Color.hikingDarkGreen)
                 }
             }
             .scrollContentBackground(.hidden)
@@ -184,9 +219,12 @@ struct ProfileView: View {
                 servicesStatus.refreshAllStatuses(
                     weatherError: viewModel.weatherError,
                     hasWeatherData: viewModel.weatherSnapshot.updatedAt > Date().addingTimeInterval(-3600),
-                    context: modelContext
+                    context: modelContext,
+                    accountId: sessionManager.currentUser?.id
                 )
-                achievementViewModel.configureIfNeeded(context: modelContext)
+                if let accountId = sessionManager.currentUser?.id {
+                    achievementViewModel.configureIfNeeded(context: modelContext, accountId: accountId)
+                }
                 
                 // Update achievements based on the latest hike records
                 Task {
@@ -217,10 +255,11 @@ struct ProfileView: View {
     /// Refreshes achievements using persisted hike records.
     private func updateAchievements() {
         // Update achievements from hike records
+        guard let accountId = sessionManager.currentUser?.id else { return }
         Task {
             do {
                 let recordStore = HikeRecordStore(context: modelContext)
-                let hikeRecords = try recordStore.loadAllRecords()
+                let hikeRecords = try recordStore.loadAllRecords(accountId: accountId)
                 achievementViewModel.refreshAchievements(from: hikeRecords)
             } catch {
                 // If there are no HikeRecord entries, we could derive progress from savedHikes.
@@ -231,36 +270,48 @@ struct ProfileView: View {
 
     /// Account information and sign-out controls.
     private var accountSection: some View {
-        Section(languageManager.localizedString(for: "profile.account")) {
+        Section {
             if let user = sessionManager.currentUser {
                 HStack(spacing: 16) {
                     Image(systemName: user.avatarSymbol)
                         .font(.title3)
+                        .foregroundStyle(Color.hikingGreen)
                         .padding()
-                        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    VStack(alignment: .leading) {
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(Color.hikingCardGradient)
+                        )
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(user.name)
                             .font(.headline)
+                            .foregroundStyle(Color.hikingDarkGreen)
                         Text(user.email)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.hikingStone)
                     }
                 }
+                .padding(.vertical, 4)
             }
             Button(languageManager.localizedString(for: "profile.sign.out"), role: .destructive) {
                 showSignOutConfirmation = true
             }
+        } header: {
+            Text(languageManager.localizedString(for: "profile.account"))
+                .foregroundStyle(Color.hikingDarkGreen)
         }
     }
 
     /// High-level stats for planned hikes, favorites, and logged distance.
     private var statsSection: some View {
-        Section(languageManager.localizedString(for: "profile.stats")) {
-            HStack {
+        Section {
+            HStack(spacing: 12) {
                 stat(value: "\(plannedCount)", label: languageManager.localizedString(for: "stats.planned"))
                 stat(value: "\(favoritesCount)", label: languageManager.localizedString(for: "stats.favorites"))
                 stat(value: "\(loggedDistance.formatted(.number.precision(.fractionLength(1)))) km", label: languageManager.localizedString(for: "stats.logged"))
             }
+        } header: {
+            Text(languageManager.localizedString(for: "profile.stats"))
+                .foregroundStyle(Color.hikingDarkGreen)
         }
     }
 
@@ -269,61 +320,75 @@ struct ProfileView: View {
         VStack(spacing: 6) {
             Text(value)
                 .font(.title2.weight(.bold))
-                .foregroundStyle(Color.hikingDarkGreen)
+                .foregroundStyle(Color.hikingGreen)
             Text(label.uppercased())
                 .font(.caption2.weight(.medium))
-                .foregroundStyle(Color.hikingBrown)
+                .foregroundStyle(Color.hikingDarkGreen)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.hikingTan.opacity(0.2))
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.hikingCardGradient)
+                .shadow(color: Color.hikingGreen.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
     
     /// Renders a single goal row with a progress bar and value text.
     private func goalRow(goal: Goal) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label(goal.localizedTitle(languageManager: languageManager), systemImage: goal.icon)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.hikingDarkGreen)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: goal.icon)
+                    .font(.title3)
+                    .foregroundStyle(Color.hikingGreen)
+                    .frame(width: 32, height: 32)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(goal.localizedTitle(languageManager: languageManager))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.hikingDarkGreen)
+                    
+                    // Progress bar for the specific goal
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.hikingStone.opacity(0.2))
+                                .frame(height: 8)
+                            
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(
+                                    LinearGradient(
+                                        colors: goal.isCompleted ? 
+                                            [Color.hikingGreen, Color.hikingDarkGreen] :
+                                            [Color.hikingGreen.opacity(0.7), Color.hikingGreen],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: geometry.size.width * goal.progress, height: 8)
+                                .animation(.spring(response: 0.3), value: goal.progress)
+                        }
+                    }
+                    .frame(height: 8)
+                    
+                    Text(goal.progressText(languageManager: languageManager))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(goal.isCompleted ? Color.hikingGreen : Color.hikingStone)
+                }
                 Spacer()
                 if goal.isCompleted {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(Color.hikingGreen)
+                        .font(.title3)
                 }
             }
-            
-            // Progress bar for the specific goal
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.hikingTan.opacity(0.3))
-                        .frame(height: 8)
-                    
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(
-                            LinearGradient(
-                                colors: goal.isCompleted ? 
-                                    [Color.hikingGreen, Color.hikingDarkGreen] :
-                                    [Color.hikingGreen.opacity(0.7), Color.hikingGreen],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: geometry.size.width * goal.progress, height: 8)
-                        .animation(.spring(response: 0.3), value: goal.progress)
-                }
-            }
-            .frame(height: 8)
-            
-            Text(goal.progressText(languageManager: languageManager))
-                .font(.caption.weight(.medium))
-                .foregroundStyle(goal.isCompleted ? Color.hikingGreen : Color.hikingBrown)
         }
-        .padding(.vertical, 6)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.hikingCardGradient)
+                .shadow(color: Color.hikingGreen.opacity(0.1), radius: 8, x: 0, y: 2)
+        )
+        .padding(.vertical, 4)
     }
     
     /// Row displaying the status of an internal service (GPS, offline maps, etc.).

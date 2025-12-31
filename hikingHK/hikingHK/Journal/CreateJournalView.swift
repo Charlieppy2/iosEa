@@ -16,6 +16,7 @@ struct CreateJournalView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var appViewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     @ObservedObject var viewModel: JournalViewModel
     
     @State private var title: String = ""
@@ -165,8 +166,12 @@ struct CreateJournalView: View {
             // Ensure the view model is configured with the current modelContext
             viewModel.configureIfNeeded(context: modelContext)
             
+            guard let accountId = sessionManager.currentUser?.id else {
+                throw NSError(domain: "CreateJournalView", code: 1, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])
+            }
             print("💾 CreateJournalView: Saving journal with modelContext: \(modelContext)")
             try viewModel.createJournal(
+                accountId: accountId,
                 title: title,
                 content: content,
                 hikeDate: hikeDate,

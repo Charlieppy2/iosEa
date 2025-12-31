@@ -13,6 +13,7 @@ import CoreLocation
 struct PersistedLocationShareSession: FileStoreDTO {
     struct PersistedEmergencyContact: Codable {
         var id: UUID
+        var accountId: UUID // User account ID
         var name: String
         var phoneNumber: String
         var email: String?
@@ -21,6 +22,7 @@ struct PersistedLocationShareSession: FileStoreDTO {
     }
     
     var id: UUID
+    var accountId: UUID // User account ID
     var isActive: Bool
     var startedAt: Date?
     var lastLocationUpdate: Date?
@@ -80,6 +82,7 @@ final class LocationShareSessionFileStore: BaseFileStore<LocationShareSession, P
 extension PersistedLocationShareSession {
     init(from model: LocationShareSession) {
         self.id = model.id
+        self.accountId = model.accountId
         self.isActive = model.isActive
         self.startedAt = model.startedAt
         self.lastLocationUpdate = model.lastLocationUpdate
@@ -90,6 +93,7 @@ extension PersistedLocationShareSession {
         self.emergencyContacts = model.emergencyContacts?.map {
             PersistedEmergencyContact(
                 id: $0.id,
+                accountId: $0.accountId,
                 name: $0.name,
                 phoneNumber: $0.phoneNumber,
                 email: $0.email,
@@ -102,6 +106,7 @@ extension PersistedLocationShareSession {
     func toModel() -> LocationShareSession {
         let session = LocationShareSession(
             id: id,
+            accountId: accountId,
             isActive: isActive,
             startedAt: startedAt,
             lastLocationUpdate: lastLocationUpdate,
@@ -116,6 +121,7 @@ extension PersistedLocationShareSession {
             session.emergencyContacts = persistedContacts.map {
                 EmergencyContact(
                     id: $0.id,
+                    accountId: $0.accountId,
                     name: $0.name,
                     phoneNumber: $0.phoneNumber,
                     email: $0.email,

@@ -20,6 +20,7 @@ struct PersistedJournal: FileStoreDTO {
     }
 
     var id: UUID
+    var accountId: UUID // User account ID
     var title: String
     var content: String
     var hikeDate: Date
@@ -90,6 +91,7 @@ final class JournalFileStore: BaseFileStore<HikeJournal, PersistedJournal> {
 extension PersistedJournal {
     init(from model: HikeJournal) {
         self.id = model.id
+        self.accountId = model.accountId
         self.title = model.title
         self.content = model.content
         self.hikeDate = model.hikeDate
@@ -126,6 +128,7 @@ extension PersistedJournal {
     func toModel() -> HikeJournal {
         let journal = HikeJournal(
             id: id,
+            accountId: accountId,
             title: title,
             content: content,
             hikeDate: hikeDate,

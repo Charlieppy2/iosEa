@@ -15,6 +15,7 @@ struct HikeTrackingView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appViewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     @StateObject private var viewModel: HikeTrackingViewModel
     @State private var selectedTrail: Trail?
     @State private var isShowingTrailPicker = false
@@ -95,10 +96,11 @@ struct HikeTrackingView: View {
                         .foregroundStyle(.red)
                     } else {
                         Button(languageManager.localizedString(for: "start")) {
+                            guard let accountId = sessionManager.currentUser?.id else { return }
                             if let trail = selectedTrail {
-                                viewModel.startTracking(trailId: trail.id, trailName: trail.name)
+                                viewModel.startTracking(trailId: trail.id, trailName: trail.name, accountId: accountId)
                             } else {
-                                viewModel.startTracking()
+                                viewModel.startTracking(accountId: accountId)
                             }
                         }
                         .foregroundStyle(Color.hikingGreen)

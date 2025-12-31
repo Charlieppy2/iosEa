@@ -26,8 +26,12 @@ final class LocationSharingStore {
         // In a real app, users should be prompted to add their own contacts.
     }
     
-    func loadAllContacts() throws -> [EmergencyContact] {
-        let descriptor = FetchDescriptor<EmergencyContact>()
+    /// Loads all emergency contacts for a specific user.
+    /// - Parameter accountId: The user account ID to filter contacts for.
+    func loadAllContacts(accountId: UUID) throws -> [EmergencyContact] {
+        let descriptor = FetchDescriptor<EmergencyContact>(
+            predicate: #Predicate { $0.accountId == accountId }
+        )
         let contacts = try context.fetch(descriptor)
         // Manual sorting because SwiftData's SortDescriptor has limitations with @Model types.
         return contacts.sorted { contact1, contact2 in
@@ -48,9 +52,11 @@ final class LocationSharingStore {
         try context.save()
     }
     
-    func loadActiveSession() throws -> LocationShareSession? {
+    /// Loads the active location sharing session for a specific user.
+    /// - Parameter accountId: The user account ID to filter sessions for.
+    func loadActiveSession(accountId: UUID) throws -> LocationShareSession? {
         var descriptor = FetchDescriptor<LocationShareSession>(
-            predicate: #Predicate { $0.isActive == true },
+            predicate: #Predicate { $0.isActive == true && $0.accountId == accountId },
             sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
         )
         descriptor.fetchLimit = 1

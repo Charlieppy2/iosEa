@@ -12,6 +12,7 @@ import SwiftData
 @Model
 final class UserPreference {
     var id: UUID
+    var accountId: UUID // User account ID to associate this record with a specific user
     var preferredScenery: [SceneryType] // Preferred scenery types
     var preferredDifficultyRawValue: String? // Preferred difficulty stored as a String raw value
     
@@ -112,6 +113,7 @@ final class UserPreference {
     
     init(
         id: UUID = UUID(),
+        accountId: UUID,
         preferredScenery: [SceneryType] = [],
         preferredDifficulty: Trail.Difficulty? = nil,
         preferredDuration: TimeRange? = nil,
@@ -121,6 +123,7 @@ final class UserPreference {
         lastUpdated: Date = Date()
     ) {
         self.id = id
+        self.accountId = accountId
         self.preferredScenery = preferredScenery
         self.preferredDifficultyRawValue = preferredDifficulty?.rawValue
         self.preferredDuration = preferredDuration

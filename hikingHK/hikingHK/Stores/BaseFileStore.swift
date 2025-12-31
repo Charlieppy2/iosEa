@@ -101,7 +101,25 @@ class BaseFileStore<Model, DTO: FileStoreDTO>: FileStoreProtocol where DTO.Model
         do {
             return try decoder.decode([DTO].self, from: data)
         } catch {
-            throw FileStoreError.decodingFailed(error)
+            // If decoding fails, the file might be corrupted
+            // Try to recover by backing up the corrupted file and starting fresh
+            print("⚠️ BaseFileStore: Failed to decode data from \(fileURL.path)")
+            print("   Error: \(error.localizedDescription)")
+            
+            // Backup corrupted file
+            let backupURL = fileURL.appendingPathExtension("corrupted.\(Date().timeIntervalSince1970)")
+            do {
+                try FileManager.default.moveItem(at: fileURL, to: backupURL)
+                print("✅ BaseFileStore: Backed up corrupted file to \(backupURL.path)")
+            } catch {
+                print("⚠️ BaseFileStore: Failed to backup corrupted file: \(error)")
+                // If backup fails, try to delete the corrupted file
+                try? FileManager.default.removeItem(at: fileURL)
+            }
+            
+            // Return empty array to start fresh
+            print("✅ BaseFileStore: Starting with empty data")
+            return []
         }
     }
     

@@ -13,14 +13,16 @@ import SwiftData
 @Model
 final class SavedHikeRecord {
     @Attribute(.unique) var id: UUID
+    var accountId: UUID // User account ID to associate this record with a specific user
     var trailId: UUID
     var scheduledDate: Date
     var note: String
     var isCompleted: Bool = false
     var completedAt: Date?
 
-    init(id: UUID, trailId: UUID, scheduledDate: Date, note: String, isCompleted: Bool = false, completedAt: Date? = nil) {
+    init(id: UUID, accountId: UUID, trailId: UUID, scheduledDate: Date, note: String, isCompleted: Bool = false, completedAt: Date? = nil) {
         self.id = id
+        self.accountId = accountId
         self.trailId = trailId
         self.scheduledDate = scheduledDate
         self.note = note

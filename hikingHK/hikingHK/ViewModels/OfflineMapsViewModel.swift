@@ -30,14 +30,17 @@ final class OfflineMapsViewModel: ObservableObject {
     
     /// Lazily configures the underlying `OfflineMapsStore` and loads all regions.
     /// Uses JSON as the primary source when available, and falls back to SwiftData seeding.
-    func configureIfNeeded(context: ModelContext) async {
+    /// - Parameters:
+    ///   - context: The SwiftData model context.
+    ///   - accountId: The user account ID to load regions for.
+    func configureIfNeeded(context: ModelContext, accountId: UUID) async {
         // If already configured, just refresh the region list.
         if let existingStore = offlineMapsStore {
             do {
-                regions = try existingStore.loadAllRegions()
+                regions = try existingStore.loadAllRegions(accountId: accountId)
                 if regions.isEmpty {
                     // If the list is empty, try to re-seed the default regions.
-                    let seededRegions = try existingStore.seedDefaultsIfNeeded()
+                    let seededRegions = try existingStore.seedDefaultsIfNeeded(accountId: accountId)
                     regions = seededRegions
                 }
             } catch {
@@ -52,6 +55,7 @@ final class OfflineMapsViewModel: ObservableObject {
         
         do {
             // 1️⃣ Prefer loading from JSON if we have previously persisted regions.
+            // BaseFileStore will automatically recover from corrupted files by returning empty array
             let persisted = try fileStore.loadAllRegions()
             if !persisted.isEmpty {
                 regions = persisted
@@ -59,15 +63,15 @@ final class OfflineMapsViewModel: ObservableObject {
                 return
             }
             
-            // 2️⃣ If JSON is empty, use SwiftData to create/load default regions, then persist to JSON.
-            let seededRegions = try store.seedDefaultsIfNeeded()
+            // 2️⃣ If JSON is empty (or was corrupted and recovered), use SwiftData to create/load default regions, then persist to JSON.
+            let seededRegions = try store.seedDefaultsIfNeeded(accountId: accountId)
             // Use the returned regions directly instead of querying again.
             regions = seededRegions
             
             // If the region list is still empty, force-create default regions.
             if regions.isEmpty {
                 print("⚠️ OfflineMapsViewModel: Regions list is still empty after seeding, forcing creation...")
-                let forceSeededRegions = try store.forceSeedRegions()
+                let forceSeededRegions = try store.forceSeedRegions(accountId: accountId)
                 regions = forceSeededRegions
                 print("✅ OfflineMapsViewModel: Force created \(regions.count) regions")
             } else {
@@ -77,8 +81,24 @@ final class OfflineMapsViewModel: ObservableObject {
             // Persist the initialized regions to JSON as the primary source for future loads.
             try? fileStore.saveRegions(regions)
         } catch {
-            print("❌ Offline maps load error: \(error)")
-            self.error = "Failed to load offline map regions: \(error.localizedDescription)"
+            // If loading from JSON failed (e.g., corrupted file), BaseFileStore should have recovered automatically
+            // But if SwiftData operations fail, we should still try to continue with empty regions
+            print("⚠️ Offline maps load error: \(error)")
+            print("   Attempting to recover by creating default regions...")
+            
+            // Try to recover by creating default regions
+            do {
+                let forceSeededRegions = try store.forceSeedRegions(accountId: accountId)
+                regions = forceSeededRegions
+                print("✅ OfflineMapsViewModel: Recovered by creating \(regions.count) default regions")
+                // Persist the recovered regions
+                try? fileStore.saveRegions(regions)
+            } catch {
+                // If even recovery fails, just log the error but don't show it to the user
+                print("❌ OfflineMapsViewModel: Recovery failed: \(error)")
+                // Set regions to empty array so the UI can still function
+                regions = []
+            }
         }
     }
     
@@ -165,7 +185,8 @@ final class OfflineMapsViewModel: ObservableObject {
             try? fileStore.saveRegions(regions)
             
             // Refresh the list so UI and store stay in sync with the file system.
-            refreshRegions()
+            // Use the region's accountId to refresh from the store.
+            refreshRegions(accountId: region.accountId)
         } catch {
             print("Delete region error: \(error)")
             self.error = "Failed to delete region: \(error.localizedDescription)"
@@ -174,7 +195,11 @@ final class OfflineMapsViewModel: ObservableObject {
     
     /// Ensures a default set of offline regions exists.
     /// If none exist, they will be created through the store and assigned to `regions`.
-    func createDefaultRegions(context: ModelContext) async {
+    /// Creates default regions for a specific user.
+    /// - Parameters:
+    ///   - context: The SwiftData model context.
+    ///   - accountId: The user account ID to create regions for.
+    func createDefaultRegions(context: ModelContext, accountId: UUID) async {
         print("🔧 OfflineMapsViewModel: Creating default regions...")
         
         // If we already have regions, do not create them again.
@@ -189,7 +214,7 @@ final class OfflineMapsViewModel: ObservableObject {
             let newStore = OfflineMapsStore(context: context)
             offlineMapsStore = newStore
             do {
-                let seededRegions = try newStore.seedDefaultsIfNeeded()
+                let seededRegions = try newStore.seedDefaultsIfNeeded(accountId: accountId)
                 regions = seededRegions
                 print("✅ OfflineMapsViewModel: Created store and seeded \(seededRegions.count) regions")
             } catch {
@@ -200,7 +225,7 @@ final class OfflineMapsViewModel: ObservableObject {
         
         do {
             // Use the store's `seedDefaultsIfNeeded` to get the regions directly.
-            let createdRegions = try store.seedDefaultsIfNeeded()
+            let createdRegions = try store.seedDefaultsIfNeeded(accountId: accountId)
             print("✅ OfflineMapsViewModel: Created \(createdRegions.count) regions")
             // Set `regions` directly instead of querying again.
             regions = createdRegions
@@ -208,15 +233,16 @@ final class OfflineMapsViewModel: ObservableObject {
         } catch {
             print("❌ OfflineMapsViewModel: Failed to create regions: \(error)")
             // If creation fails, try to refresh from the store.
-            refreshRegions()
+            refreshRegions(accountId: accountId)
         }
     }
     
     /// Reloads regions from the store and reconciles download status with on-disk files.
-    func refreshRegions() {
+    /// - Parameter accountId: The user account ID to load regions for.
+    func refreshRegions(accountId: UUID) {
         guard let store = offlineMapsStore else { return }
         do {
-            regions = try store.loadAllRegions()
+            regions = try store.loadAllRegions(accountId: accountId)
             
             // Reconcile each region's download status with the actual file system.
             for region in regions {

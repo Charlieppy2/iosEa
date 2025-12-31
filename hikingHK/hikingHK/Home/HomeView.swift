@@ -15,6 +15,7 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var viewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     @State private var isShowingSafetySheet = false
     @State private var isShowingTrailAlerts = false
     @State private var isShowingOfflineMaps = false
@@ -123,6 +124,10 @@ struct HomeView: View {
             .onAppear {
                 // Configure persistence if needed
                 viewModel.configurePersistenceIfNeeded(context: modelContext)
+                // Reload user data if user is logged in
+                if let accountId = sessionManager.currentUser?.id {
+                    viewModel.reloadUserData(accountId: accountId)
+                }
                 // Refresh weather using the currently selected language
                 Task {
                     await viewModel.refreshWeather(language: languageManager.currentLanguage.rawValue)
@@ -211,23 +216,27 @@ struct HomeView: View {
                 SavedHikeDetailSheet(
                     hike: hike,
                     onUpdate: { date, note, isCompleted, completedAt in
+                        guard let accountId = sessionManager.currentUser?.id else { return }
                         viewModel.updateSavedHike(
                             hike,
                             scheduledDate: date,
                             note: note,
                             isCompleted: isCompleted,
-                            completedAt: completedAt
+                            completedAt: completedAt,
+                            accountId: accountId
                         )
                     },
                     onDelete: {
-                        viewModel.removeSavedHike(hike)
+                        guard let accountId = sessionManager.currentUser?.id else { return }
+                        viewModel.removeSavedHike(hike, accountId: accountId)
                     }
                 )
             }
             .sheet(isPresented: $isShowingTrailPicker) {
                 QuickAddTrailPickerView(
                     onTrailSelected: { trail in
-                        viewModel.addSavedHike(for: trail, scheduledDate: Date().addingTimeInterval(60 * 60 * 24))
+                        guard let accountId = sessionManager.currentUser?.id else { return }
+                        viewModel.addSavedHike(for: trail, scheduledDate: Date().addingTimeInterval(60 * 60 * 24), accountId: accountId)
                         isShowingTrailPicker = false
                     }
                 )
@@ -238,10 +247,11 @@ struct HomeView: View {
                     trailPendingPlan = nil
                 }
                 Button(languageManager.localizedString(for: "ok")) {
+                    guard let accountId = sessionManager.currentUser?.id else { return }
                     if let trail = trailPendingPlan {
                         let defaultDate = Date().addingTimeInterval(60 * 60 * 24)
-                        viewModel.addSavedHike(for: trail, scheduledDate: defaultDate)
-                        viewModel.markFavorite(trail)
+                        viewModel.addSavedHike(for: trail, scheduledDate: defaultDate, accountId: accountId)
+                        viewModel.markFavorite(trail, accountId: accountId)
                     }
                     trailPendingPlan = nil
                 }
@@ -715,9 +725,10 @@ struct HomeView: View {
                     }
                     Spacer()
                     Button {
+                        guard let accountId = sessionManager.currentUser?.id else { return }
                         if trail.isFavorite {
                             // 已经是收藏，直接取消收藏，不弹窗
-                        viewModel.markFavorite(trail)
+                        viewModel.markFavorite(trail, accountId: accountId)
                         } else {
                             // 首次点亮时先弹出确认对话框
                             trailPendingPlan = trail
@@ -1017,6 +1028,7 @@ struct SafetyChecklistView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     @StateObject private var viewModel = SafetyChecklistViewModel()
     @State private var isCreatingItems = false
     @State private var isShowingAddItem = false
@@ -1129,17 +1141,19 @@ struct SafetyChecklistView: View {
             }
             .task {
                 // Configure view model and seed defaults when needed
+                guard let accountId = sessionManager.currentUser?.id else { return }
                 isCreatingItems = true
-                await viewModel.configureIfNeeded(context: modelContext)
+                await viewModel.configureIfNeeded(context: modelContext, accountId: accountId)
                 // If still empty after configuration, create default items explicitly
                 if viewModel.items.isEmpty {
-                    await viewModel.createDefaultItems(context: modelContext)
+                    await viewModel.createDefaultItems(context: modelContext, accountId: accountId)
                 }
                 isCreatingItems = false
             }
             .onAppear {
                 // Refresh items on each appearance to ensure latest state
-                viewModel.refreshItems()
+                guard let accountId = sessionManager.currentUser?.id else { return }
+                viewModel.refreshItems(accountId: accountId)
             }
         }
     }
@@ -1147,8 +1161,9 @@ struct SafetyChecklistView: View {
     // Single checklist row view
     private func checklistItemRow(_ item: SafetyChecklistItem) -> some View {
         Button {
+            guard let accountId = sessionManager.currentUser?.id else { return }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                viewModel.toggleItem(item, context: modelContext)
+                viewModel.toggleItem(item, context: modelContext, accountId: accountId)
             }
         } label: {
             HStack(spacing: 16) {
@@ -1214,6 +1229,7 @@ struct SafetyChecklistView: View {
 struct AddSafetyChecklistItemView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     let viewModel: SafetyChecklistViewModel
     let modelContext: ModelContext
     
@@ -1298,7 +1314,8 @@ struct AddSafetyChecklistItemView: View {
         }
         
         do {
-            try viewModel.addItem(title: trimmedTitle, iconName: selectedIcon, context: modelContext)
+            guard let accountId = sessionManager.currentUser?.id else { return }
+            try viewModel.addItem(title: trimmedTitle, iconName: selectedIcon, context: modelContext, accountId: accountId)
             dismiss()
         } catch {
             errorMessage = languageManager.localizedString(for: "safety.item.save.error")
@@ -1630,6 +1647,7 @@ struct OfflineMapsView: View {
     @StateObject private var viewModel = OfflineMapsViewModel()
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     @State private var isCreatingRegions = false
     @State private var regionToDelete: OfflineMapRegion?
     
@@ -1703,11 +1721,12 @@ struct OfflineMapsView: View {
             }
             .task {
                 // 在 task 中配置和初始化数据
+                guard let accountId = sessionManager.currentUser?.id else { return }
                 isCreatingRegions = true
-                await viewModel.configureIfNeeded(context: modelContext)
+                await viewModel.configureIfNeeded(context: modelContext, accountId: accountId)
                 // configureIfNeeded 已经会自动创建区域，如果还是空的才手动创建
                 if viewModel.regions.isEmpty {
-                    await viewModel.createDefaultRegions(context: modelContext)
+                    await viewModel.createDefaultRegions(context: modelContext, accountId: accountId)
                 }
                 isCreatingRegions = false
             }

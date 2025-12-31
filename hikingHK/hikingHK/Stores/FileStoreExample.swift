@@ -21,6 +21,7 @@ struct PersistedJournalDTO: FileStoreDTO {
     }
 
     var id: UUID
+    var accountId: UUID // User account ID
     var title: String
     var content: String
     var hikeDate: Date
@@ -46,6 +47,7 @@ struct PersistedJournalDTO: FileStoreDTO {
     
     init(from model: HikeJournal) {
         self.id = model.id
+        self.accountId = model.accountId
         self.title = model.title
         self.content = model.content
         self.hikeDate = model.hikeDate
@@ -76,6 +78,7 @@ struct PersistedJournalDTO: FileStoreDTO {
     func toModel() -> HikeJournal {
         let journal = HikeJournal(
             id: id,
+            accountId: accountId,
             title: title,
             content: content,
             hikeDate: hikeDate,
@@ -133,6 +136,7 @@ final class JournalFileStoreRefactored: BaseFileStore<HikeJournal, PersistedJour
 /// Example DTO for OfflineMapRegion persistence.
 struct PersistedOfflineRegionDTO: FileStoreDTO {
     var id: UUID
+    var accountId: UUID // User account ID
     var name: String
     var downloadStatus: OfflineMapRegion.DownloadStatus
     var downloadProgress: Double
@@ -148,6 +152,7 @@ struct PersistedOfflineRegionDTO: FileStoreDTO {
     
     init(from model: OfflineMapRegion) {
         self.id = model.id
+        self.accountId = model.accountId
         self.name = model.name
         self.downloadStatus = model.downloadStatus
         self.downloadProgress = model.downloadProgress
@@ -160,6 +165,7 @@ struct PersistedOfflineRegionDTO: FileStoreDTO {
     func toModel() -> OfflineMapRegion {
         let region = OfflineMapRegion(
             id: id,
+            accountId: accountId,
             name: name,
             downloadStatus: downloadStatus,
             downloadProgress: downloadProgress,

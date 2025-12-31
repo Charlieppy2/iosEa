@@ -325,11 +325,12 @@ struct ShareSheet: UIViewControllerRepresentable {
 
 #Preview {
     let journal = HikeJournal(
+        accountId: UUID(),
         title: "Amazing Hike",
         content: "Today I had an amazing hike...",
         trailName: "Lion Rock"
     )
-    return JournalDetailView(journal: journal, viewModel: JournalViewModel())
+    JournalDetailView(journal: journal, viewModel: JournalViewModel())
         .modelContainer(for: [HikeJournal.self, JournalPhoto.self], inMemory: true)
         .environmentObject(LanguageManager.shared)
 }

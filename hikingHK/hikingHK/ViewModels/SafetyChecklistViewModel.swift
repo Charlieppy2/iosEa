@@ -184,7 +184,8 @@ final class SafetyChecklistViewModel: ObservableObject {
     }
     
     /// Restores missing custom items from the UserDefaults backup and reapplies completion state.
-    private func restoreCustomItemsIfNeeded() {
+    /// - Parameter accountId: The user account ID to restore items for.
+    private func restoreCustomItemsIfNeeded(accountId: UUID) {
         guard let store = safetyChecklistStore else {
             print("⚠️ SafetyChecklistViewModel: Store is nil, cannot restore custom items")
             return
@@ -209,7 +210,7 @@ final class SafetyChecklistViewModel: ObservableObject {
             if items.first(where: { $0.id == backup.id }) == nil {
                 do {
                     print("🔧 SafetyChecklistViewModel: Restoring custom item: \(backup.id) - \(backup.title)")
-                    let newItem = try store.createItem(id: backup.id, iconName: backup.iconName, title: backup.title)
+                    let newItem = try store.createItem(id: backup.id, iconName: backup.iconName, title: backup.title, accountId: accountId)
                     
                     // 套用之前保存的完成狀態（true / false）
                     if let savedCompleted = states[backup.id] {
@@ -238,7 +239,10 @@ final class SafetyChecklistViewModel: ObservableObject {
     }
     
     /// Lazily configures the underlying `SafetyChecklistStore` and seeds default items if needed.
-    func configureIfNeeded(context: ModelContext) async {
+    /// - Parameters:
+    ///   - context: The SwiftData model context.
+    ///   - accountId: The user account ID to load items for.
+    func configureIfNeeded(context: ModelContext, accountId: UUID) async {
         // If already configured, only refresh the list when items are empty.
         if let existingStore = safetyChecklistStore {
             // If items are already loaded, no need to refresh.
@@ -247,7 +251,7 @@ final class SafetyChecklistViewModel: ObservableObject {
                 return
             }
             // Only refresh if the in-memory list is empty.
-            refreshItems()
+            refreshItems(accountId: accountId)
             return
         }
         
@@ -258,7 +262,7 @@ final class SafetyChecklistViewModel: ObservableObject {
         
         do {
             print("🔧 SafetyChecklistViewModel: Seeding default items...")
-            let seededItems = try store.seedDefaultsIfNeeded()
+            let seededItems = try store.seedDefaultsIfNeeded(accountId: accountId)
             hasSeeded = true
             print("✅ SafetyChecklistViewModel: Seeding completed, got \(seededItems.count) items")
             // Filter out default items that the user has deleted.
@@ -268,7 +272,7 @@ final class SafetyChecklistViewModel: ObservableObject {
             print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count) (after filtering deleted defaults)")
             // Apply saved completion states and restore any missing custom items.
             applyCompletionStatesFromDefaults()
-            restoreCustomItemsIfNeeded()
+            restoreCustomItemsIfNeeded(accountId: accountId)
             // Apply the saved display order.
             applyItemOrder()
         } catch {
@@ -278,20 +282,21 @@ final class SafetyChecklistViewModel: ObservableObject {
     }
     
     /// Reloads checklist items from the store and reapplies completion, custom items, and order.
-    func refreshItems() {
+    /// - Parameter accountId: The user account ID to load items for.
+    func refreshItems(accountId: UUID) {
         guard let store = safetyChecklistStore else {
             print("⚠️ SafetyChecklistViewModel: Store is nil, cannot refresh")
             return
         }
         do {
-            let loadedItems = try store.loadAllItems()
+            let loadedItems = try store.loadAllItems(accountId: accountId)
             // Filter out default items that have been deleted.
             let filteredItems = filterDeletedDefaultItems(loadedItems)
             items = filteredItems
             print("✅ SafetyChecklistViewModel: Refreshed \(filteredItems.count) items (after filtering deleted defaults)")
             // Apply saved completion states and restore custom items.
             applyCompletionStatesFromDefaults()
-            restoreCustomItemsIfNeeded()
+            restoreCustomItemsIfNeeded(accountId: accountId)
             // Apply the saved display order.
             applyItemOrder()
         } catch {
@@ -301,7 +306,10 @@ final class SafetyChecklistViewModel: ObservableObject {
     }
     
     /// Ensures default checklist items exist, creating them if the list is currently empty.
-    func createDefaultItems(context: ModelContext) async {
+    /// - Parameters:
+    ///   - context: The SwiftData model context.
+    ///   - accountId: The user account ID to create items for.
+    func createDefaultItems(context: ModelContext, accountId: UUID) async {
         print("🔧 SafetyChecklistViewModel: Creating default items...")
         
         // If we already have items, do not create them again.
@@ -316,13 +324,13 @@ final class SafetyChecklistViewModel: ObservableObject {
             let newStore = SafetyChecklistStore(context: context)
             safetyChecklistStore = newStore
             do {
-                let seededItems = try newStore.seedDefaultsIfNeeded()
+                let seededItems = try newStore.seedDefaultsIfNeeded(accountId: accountId)
                 // Filter out default items that the user has deleted.
                 let filteredItems = filterDeletedDefaultItems(seededItems)
                 items = filteredItems
                 print("✅ SafetyChecklistViewModel: Created store and seeded \(filteredItems.count) items (after filtering deleted defaults)")
                 applyCompletionStatesFromDefaults()
-                restoreCustomItemsIfNeeded()
+                restoreCustomItemsIfNeeded(accountId: accountId)
                 applyItemOrder()
             } catch {
                 print("❌ SafetyChecklistViewModel: Failed to seed items: \(error)")
@@ -332,7 +340,7 @@ final class SafetyChecklistViewModel: ObservableObject {
         
         do {
             // Use the store's `seedDefaultsIfNeeded` method to get created items directly.
-            let createdItems = try store.seedDefaultsIfNeeded()
+            let createdItems = try store.seedDefaultsIfNeeded(accountId: accountId)
             // Filter out default items that the user has deleted.
             let filteredItems = filterDeletedDefaultItems(createdItems)
             print("✅ SafetyChecklistViewModel: Created \(filteredItems.count) items (after filtering deleted defaults)")
@@ -340,17 +348,21 @@ final class SafetyChecklistViewModel: ObservableObject {
             items = filteredItems
             print("✅ SafetyChecklistViewModel: Set items directly, count: \(items.count)")
             applyCompletionStatesFromDefaults()
-            restoreCustomItemsIfNeeded()
+            restoreCustomItemsIfNeeded(accountId: accountId)
             applyItemOrder()
         } catch {
             print("❌ SafetyChecklistViewModel: Failed to create items: \(error)")
             // If creation fails, fall back to refreshing from the store.
-            refreshItems()
+            refreshItems(accountId: accountId)
         }
     }
     
     /// Toggles the completion state of a checklist item and persists the change to SwiftData and UserDefaults.
-    func toggleItem(_ item: SafetyChecklistItem, context: ModelContext) {
+    /// - Parameters:
+    ///   - item: The checklist item to toggle.
+    ///   - context: The SwiftData model context.
+    ///   - accountId: The user account ID to ensure only the owner can toggle.
+    func toggleItem(_ item: SafetyChecklistItem, context: ModelContext, accountId: UUID) {
         // Directly update the item state.
         item.isCompleted.toggle()
         item.lastUpdated = Date()
@@ -382,14 +394,19 @@ final class SafetyChecklistViewModel: ObservableObject {
     }
     
     /// Adds a new custom checklist item at the top of the list and persists its metadata.
-    func addItem(title: String, iconName: String = "checkmark.circle", context: ModelContext) throws {
+    /// - Parameters:
+    ///   - title: The item title.
+    ///   - iconName: The icon name.
+    ///   - context: The SwiftData context.
+    ///   - accountId: The user account ID to associate this item with.
+    func addItem(title: String, iconName: String = "checkmark.circle", context: ModelContext, accountId: UUID) throws {
         guard let store = safetyChecklistStore else {
             throw NSError(domain: "SafetyChecklistViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Store not configured"])
         }
         
         // Generate a unique ID for the custom item.
         let newId = "custom_\(UUID().uuidString)"
-        let newItem = try store.createItem(id: newId, iconName: iconName, title: title)
+        let newItem = try store.createItem(id: newId, iconName: iconName, title: title, accountId: accountId)
         
         // Insert the new item at the top of the in-memory list.
         items.insert(newItem, at: 0)

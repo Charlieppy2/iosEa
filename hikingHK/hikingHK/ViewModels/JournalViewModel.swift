@@ -23,21 +23,28 @@ final class JournalViewModel: ObservableObject {
 
     /// For backward compatibility: context is now only used to trigger the first refresh.
     /// Actual persistence is handled by JSON.
-    func configureIfNeeded(context: ModelContext, skipRefresh: Bool = false) {
+    /// - Parameters:
+    ///   - context: The SwiftData context (for compatibility).
+    ///   - skipRefresh: Whether to skip the initial refresh.
+    ///   - accountId: The user account ID to filter journals for.
+    func configureIfNeeded(context: ModelContext, skipRefresh: Bool = false, accountId: UUID? = nil) {
         guard !isConfigured else { return }
         isConfigured = true
         print("📋 JournalViewModel: Configured (file-based)")
         if !skipRefresh {
-            refreshJournals()
+            refreshJournals(accountId: accountId)
         }
     }
 
-    /// Loads all journal entries from the JSON file store.
-    func refreshJournals() {
+    /// Loads all journal entries from the JSON file store for a specific user.
+    /// - Parameter accountId: Optional user account ID to filter journals for. If nil, loads all journals.
+    func refreshJournals(accountId: UUID? = nil) {
         do {
             let loaded = try fileStore.loadAllJournals()
-            journals = loaded
-            print("✅ JournalViewModel: Refreshed \(loaded.count) journals from JSON store")
+            // Filter by accountId if provided
+            let filtered = accountId != nil ? loaded.filter { $0.accountId == accountId } : loaded
+            journals = filtered
+            print("✅ JournalViewModel: Refreshed \(filtered.count) journals from JSON store (accountId: \(accountId?.uuidString ?? "all"))")
         } catch let err {
             self.error = "Failed to load journals: \(err.localizedDescription)"
             print("❌ JournalViewModel: Failed to refresh journals: \(err)")
@@ -45,7 +52,9 @@ final class JournalViewModel: ObservableObject {
     }
 
     /// Creates a new journal entry and saves it to the JSON file store.
+    /// - Parameter accountId: The user account ID to associate this journal with.
     func createJournal(
+        accountId: UUID,
         title: String,
         content: String,
         hikeDate: Date,
@@ -62,6 +71,7 @@ final class JournalViewModel: ObservableObject {
         print("💾 JournalViewModel: Creating journal (file-based)")
 
         let journal = HikeJournal(
+            accountId: accountId,
             title: title,
             content: content,
             hikeDate: hikeDate,
@@ -92,7 +102,9 @@ final class JournalViewModel: ObservableObject {
     }
 
     /// Compatibility overload: the version with ModelContext directly calls the context-less implementation.
+    /// - Parameter accountId: The user account ID to associate this journal with.
     func createJournal(
+        accountId: UUID,
         title: String,
         content: String,
         hikeDate: Date,
@@ -108,6 +120,7 @@ final class JournalViewModel: ObservableObject {
         context: ModelContext
     ) throws {
         try createJournal(
+            accountId: accountId,
             title: title,
             content: content,
             hikeDate: hikeDate,

@@ -13,6 +13,7 @@ import CoreLocation
 @Model
 final class HikeRecord {
     var id: UUID
+    var accountId: UUID // User account ID to associate this record with a specific user
     var trailId: UUID?
     var trailName: String?
     var startTime: Date
@@ -31,6 +32,7 @@ final class HikeRecord {
     
     init(
         id: UUID = UUID(),
+        accountId: UUID,
         trailId: UUID? = nil,
         trailName: String? = nil,
         startTime: Date = Date(),
@@ -48,6 +50,7 @@ final class HikeRecord {
         trackPoints: [HikeTrackPoint] = []
     ) {
         self.id = id
+        self.accountId = accountId
         self.trailId = trailId
         self.trailName = trailName
         self.startTime = startTime

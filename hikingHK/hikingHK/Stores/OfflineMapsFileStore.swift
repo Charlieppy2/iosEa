@@ -11,6 +11,7 @@ import Foundation
 /// DTO used for JSON persistence of an offline map region.
 struct PersistedOfflineRegion: FileStoreDTO {
     var id: UUID
+    var accountId: UUID // User account ID
     var name: String
     var downloadStatus: OfflineMapRegion.DownloadStatus
     var downloadProgress: Double
@@ -60,6 +61,7 @@ final class OfflineMapsFileStore: BaseFileStore<OfflineMapRegion, PersistedOffli
 extension PersistedOfflineRegion {
     init(from model: OfflineMapRegion) {
         self.id = model.id
+        self.accountId = model.accountId
         self.name = model.name
         self.downloadStatus = model.downloadStatus
         self.downloadProgress = model.downloadProgress
@@ -72,6 +74,7 @@ extension PersistedOfflineRegion {
     func toModel() -> OfflineMapRegion {
         let region = OfflineMapRegion(
             id: id,
+            accountId: accountId,
             name: name,
             downloadStatus: downloadStatus,
             downloadProgress: downloadProgress,

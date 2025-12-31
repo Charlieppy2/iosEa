@@ -11,6 +11,7 @@ import Foundation
 /// DTO for JSON persistence of a recommendation record.
 struct PersistedRecommendationRecord: FileStoreDTO {
     var id: UUID
+    var accountId: UUID // User account ID
     var trailId: UUID
     var recommendedAt: Date
     var userAction: RecommendationRecord.UserAction?
@@ -66,6 +67,7 @@ final class RecommendationRecordFileStore: BaseFileStore<RecommendationRecord, P
 extension PersistedRecommendationRecord {
     init(from model: RecommendationRecord) {
         self.id = model.id
+        self.accountId = model.accountId
         self.trailId = model.trailId
         self.recommendedAt = model.recommendedAt
         self.userAction = model.userAction
@@ -76,6 +78,7 @@ extension PersistedRecommendationRecord {
     func toModel() -> RecommendationRecord {
         RecommendationRecord(
             id: id,
+            accountId: accountId,
             trailId: trailId,
             recommendedAt: recommendedAt,
             userAction: userAction,

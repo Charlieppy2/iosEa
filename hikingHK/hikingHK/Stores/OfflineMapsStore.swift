@@ -17,50 +17,83 @@ final class OfflineMapsStore {
         self.context = context
     }
     
-    /// Inserts the default offline regions if none exist, and returns all regions.
-    func seedDefaultsIfNeeded() throws -> [OfflineMapRegion] {
-        let descriptor = FetchDescriptor<OfflineMapRegion>()
+    /// Inserts the default offline regions if none exist for a specific user, and returns all regions.
+    /// - Parameter accountId: The user account ID to create regions for.
+    func seedDefaultsIfNeeded(accountId: UUID) throws -> [OfflineMapRegion] {
+        let descriptor = FetchDescriptor<OfflineMapRegion>(
+            predicate: #Predicate { $0.accountId == accountId }
+        )
         let existing = try context.fetch(descriptor)
         guard existing.isEmpty else {
             print("OfflineMapsStore: Found \(existing.count) existing regions, skipping seed")
             // Return all existing regions if seeding is not needed.
-            return try loadAllRegions()
+            return try loadAllRegions(accountId: accountId)
         }
         
-        print("OfflineMapsStore: Seeding default regions...")
+        print("OfflineMapsStore: Seeding default regions for account: \(accountId)...")
         let downloadService = OfflineMapsDownloadService()
         let defaultRegions = OfflineMapRegion.availableRegions.map { name in
             let estimatedSize = downloadService.getEstimatedSize(for: name)
-            return OfflineMapRegion(name: name, totalSize: estimatedSize)
+            return OfflineMapRegion(accountId: accountId, name: name, totalSize: estimatedSize)
         }
         
         for region in defaultRegions {
             context.insert(region)
         }
         
-        try context.save()
-        print("OfflineMapsStore: Successfully seeded \(defaultRegions.count) regions")
+        do {
+            try context.save()
+            print("OfflineMapsStore: Successfully seeded \(defaultRegions.count) regions")
+        } catch {
+            print("❌ OfflineMapsStore: Failed to save seeded regions: \(error)")
+            context.processPendingChanges()
+            try context.save()
+            print("✅ OfflineMapsStore: Successfully saved after processing pending changes")
+        }
         
         // Return the inserted regions directly instead of querying again.
         print("OfflineMapsStore: Returning \(defaultRegions.count) inserted regions directly")
         return defaultRegions.sorted { $0.name < $1.name }
     }
     
-    /// Loads all offline map regions, sorted by name.
-    func loadAllRegions() throws -> [OfflineMapRegion] {
-        // First perform an unsorted fetch from SwiftData.
-        let simpleDescriptor = FetchDescriptor<OfflineMapRegion>()
-        let allRegions = try context.fetch(simpleDescriptor)
-        print("OfflineMapsStore: loadAllRegions() fetched \(allRegions.count) regions (no sort)")
-        
-        // Manually sort by name to avoid SortDescriptor limitations with @Model.
-        return allRegions.sorted { $0.name < $1.name }
+    /// Loads all offline map regions for a specific user, sorted by name.
+    /// - Parameter accountId: The user account ID to filter regions for.
+    func loadAllRegions(accountId: UUID) throws -> [OfflineMapRegion] {
+        do {
+            // First perform an unsorted fetch from SwiftData.
+            let simpleDescriptor = FetchDescriptor<OfflineMapRegion>(
+                predicate: #Predicate { $0.accountId == accountId }
+            )
+            let allRegions = try context.fetch(simpleDescriptor)
+            print("OfflineMapsStore: loadAllRegions() fetched \(allRegions.count) regions for account: \(accountId) (no sort)")
+            
+            // Manually sort by name to avoid SortDescriptor limitations with @Model.
+            return allRegions.sorted { $0.name < $1.name }
+        } catch {
+            print("❌ OfflineMapsStore: Failed to load regions: \(error)")
+            // If fetch fails, try to process pending changes and retry once
+            do {
+                context.processPendingChanges()
+                let simpleDescriptor = FetchDescriptor<OfflineMapRegion>(
+                    predicate: #Predicate { $0.accountId == accountId }
+                )
+                let allRegions = try context.fetch(simpleDescriptor)
+                print("✅ OfflineMapsStore: Successfully loaded \(allRegions.count) regions after processing pending changes")
+                return allRegions.sorted { $0.name < $1.name }
+            } catch {
+                print("❌ OfflineMapsStore: Retry also failed: \(error)")
+                throw error
+            }
+        }
     }
     
-    /// Fetches a single region by its display name.
-    func getRegion(named name: String) throws -> OfflineMapRegion? {
+    /// Fetches a single region by its display name for a specific user.
+    /// - Parameters:
+    ///   - name: The region name.
+    ///   - accountId: The user account ID to filter regions for.
+    func getRegion(named name: String, accountId: UUID) throws -> OfflineMapRegion? {
         var descriptor = FetchDescriptor<OfflineMapRegion>(
-            predicate: #Predicate { $0.name == name }
+            predicate: #Predicate { $0.name == name && $0.accountId == accountId }
         )
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
@@ -69,31 +102,51 @@ final class OfflineMapsStore {
     /// Updates the `lastUpdated` timestamp and saves a region.
     func updateRegion(_ region: OfflineMapRegion) throws {
         region.lastUpdated = Date()
-        try context.save()
+        do {
+            try context.save()
+        } catch {
+            print("❌ OfflineMapsStore: Failed to update region: \(error)")
+            context.processPendingChanges()
+            try context.save()
+        }
     }
     
     /// Deletes a region from the SwiftData context.
     func deleteRegion(_ region: OfflineMapRegion) throws {
         context.delete(region)
-        try context.save()
+        do {
+            try context.save()
+        } catch {
+            print("❌ OfflineMapsStore: Failed to delete region: \(error)")
+            context.processPendingChanges()
+            try context.save()
+        }
     }
     
     /// Force-creates all default regions even if they already exist.
     /// Primarily useful for debugging or testing seeding behaviour.
-    func forceSeedRegions() throws -> [OfflineMapRegion] {
-        print("OfflineMapsStore: Force seeding regions...")
+    /// - Parameter accountId: The user account ID to create regions for.
+    func forceSeedRegions(accountId: UUID) throws -> [OfflineMapRegion] {
+        print("OfflineMapsStore: Force seeding regions for account: \(accountId)...")
         let downloadService = OfflineMapsDownloadService()
         let defaultRegions = OfflineMapRegion.availableRegions.map { name in
             let estimatedSize = downloadService.getEstimatedSize(for: name)
-            return OfflineMapRegion(name: name, totalSize: estimatedSize)
+            return OfflineMapRegion(accountId: accountId, name: name, totalSize: estimatedSize)
         }
         
         for region in defaultRegions {
             context.insert(region)
         }
         
-        try context.save()
-        print("OfflineMapsStore: Force seeded \(defaultRegions.count) regions")
+        do {
+            try context.save()
+            print("OfflineMapsStore: Force seeded \(defaultRegions.count) regions")
+        } catch {
+            print("❌ OfflineMapsStore: Failed to save force-seeded regions: \(error)")
+            context.processPendingChanges()
+            try context.save()
+            print("✅ OfflineMapsStore: Successfully saved after processing pending changes")
+        }
         
         // Return the inserted regions directly instead of querying again.
         print("OfflineMapsStore: Returning \(defaultRegions.count) inserted regions directly")

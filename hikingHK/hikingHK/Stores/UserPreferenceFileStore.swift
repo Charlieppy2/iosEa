@@ -11,6 +11,7 @@ import Foundation
 /// DTO for JSON persistence of user preferences.
 struct PersistedUserPreference: FileStoreDTO {
     var id: UUID
+    var accountId: UUID // User account ID
     var preferredScenery: [UserPreference.SceneryType]
     var preferredDifficultyRawValue: String?
     var preferredDuration: UserPreference.TimeRange?
@@ -56,6 +57,7 @@ final class UserPreferenceFileStore: BaseFileStore<UserPreference, PersistedUser
 extension PersistedUserPreference {
     init(from model: UserPreference) {
         self.id = model.id
+        self.accountId = model.accountId
         self.preferredScenery = model.preferredScenery
         self.preferredDifficultyRawValue = model.preferredDifficultyRawValue
         self.preferredDuration = model.preferredDuration
@@ -68,6 +70,7 @@ extension PersistedUserPreference {
     func toModel() -> UserPreference {
         UserPreference(
             id: id,
+            accountId: accountId,
             preferredScenery: preferredScenery,
             preferredDifficulty: preferredDifficultyRawValue.flatMap { Trail.Difficulty(rawValue: $0) },
             preferredDuration: preferredDuration,

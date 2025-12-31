@@ -38,6 +38,7 @@ struct ContentView: View {
                 .tabItem {
                     Label(languageManager.localizedString(for: "planner.title"), systemImage: "calendar.badge.plus")
                 }
+                .environment(\.locale, Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US"))
             ProfileView()
                 .tabItem {
                     Label(languageManager.localizedString(for: "profile.title"), systemImage: "person.circle.fill")

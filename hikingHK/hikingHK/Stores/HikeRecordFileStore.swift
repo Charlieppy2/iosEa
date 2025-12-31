@@ -23,6 +23,7 @@ struct PersistedHikeRecord: FileStoreDTO {
     }
     
     var id: UUID
+    var accountId: UUID // User account ID
     var trailId: UUID?
     var trailName: String?
     var startTime: Date
@@ -68,6 +69,7 @@ final class HikeRecordFileStore: BaseFileStore<HikeRecord, PersistedHikeRecord> 
 extension PersistedHikeRecord {
     init(from model: HikeRecord) {
         self.id = model.id
+        self.accountId = model.accountId
         self.trailId = model.trailId
         self.trailName = model.trailName
         self.startTime = model.startTime
@@ -99,6 +101,7 @@ extension PersistedHikeRecord {
     func toModel() -> HikeRecord {
         let record = HikeRecord(
             id: id,
+            accountId: accountId,
             trailId: trailId,
             trailName: trailName,
             startTime: startTime,

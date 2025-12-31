@@ -86,15 +86,17 @@ final class ServicesStatusViewModel: NSObject, ObservableObject {
     }
     
     /// Updates `offlineMapsStatus` by checking both SwiftData metadata and actual files on disk.
-    /// - Parameter context: Optional SwiftData `ModelContext` used to read `OfflineMapRegion` records.
-    func checkOfflineMapsStatus(context: ModelContext? = nil) {
+    /// - Parameters:
+    ///   - context: Optional SwiftData `ModelContext` used to read `OfflineMapRegion` records.
+    ///   - accountId: Optional user account ID to filter regions for the current user.
+    func checkOfflineMapsStatus(context: ModelContext? = nil, accountId: UUID? = nil) {
         // First, try to decide based on SwiftData records for downloaded regions.
         var hasDownloaded = false
         
-        if let context = context {
+        if let context = context, let accountId = accountId {
             do {
                 let store = OfflineMapsStore(context: context)
-                let regions = try store.loadAllRegions()
+                let regions = try store.loadAllRegions(accountId: accountId)
                 
                 // 1️⃣ Check if any region in the database is marked as downloaded.
                 hasDownloaded = regions.contains { $0.downloadStatus == .downloaded }
@@ -108,7 +110,7 @@ final class ServicesStatusViewModel: NSObject, ObservableObject {
                 hasDownloaded = hasAnyOfflineMapFilesOnDisk()
             }
         } else {
-            // When no context is provided, rely only on the file system check.
+            // When no context or accountId is provided, rely only on the file system check.
             hasDownloaded = hasAnyOfflineMapFilesOnDisk()
         }
         
@@ -150,10 +152,15 @@ final class ServicesStatusViewModel: NSObject, ObservableObject {
     }
     
     /// Convenience helper to refresh all service statuses in one call.
-    func refreshAllStatuses(weatherError: String?, hasWeatherData: Bool, context: ModelContext? = nil) {
+    /// - Parameters:
+    ///   - weatherError: Optional weather API error message.
+    ///   - hasWeatherData: Whether valid weather data exists.
+    ///   - context: Optional SwiftData model context.
+    ///   - accountId: Optional user account ID to filter offline maps for.
+    func refreshAllStatuses(weatherError: String?, hasWeatherData: Bool, context: ModelContext? = nil, accountId: UUID? = nil) {
         checkWeatherServiceStatus(weatherError: weatherError, hasWeatherData: hasWeatherData)
         checkGPSStatus()
-        checkOfflineMapsStatus(context: context)
+        checkOfflineMapsStatus(context: context, accountId: accountId)
     }
 }
 

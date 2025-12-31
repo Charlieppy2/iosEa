@@ -12,6 +12,7 @@ struct TrailRecommendationView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var appViewModel: AppViewModel
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var sessionManager: SessionManager
     @StateObject private var viewModel: TrailRecommendationViewModel
     @State private var availableHours: Double = 4.0
     @State private var isExpandingPreferences = false
@@ -50,9 +51,10 @@ struct TrailRecommendationView: View {
                 .ignoresSafeArea()
             )
             .onAppear {
-                viewModel.configureIfNeeded(context: modelContext)
+                guard let accountId = sessionManager.currentUser?.id else { return }
+                viewModel.configureIfNeeded(context: modelContext, accountId: accountId)
                 Task {
-                    await viewModel.generateRecommendations(availableTime: availableHours * 3600)
+                    await viewModel.generateRecommendations(availableTime: availableHours * 3600, accountId: accountId)
                 }
             }
         }
@@ -71,8 +73,9 @@ struct TrailRecommendationView: View {
                 
                 Slider(value: $availableHours, in: 1...8, step: 0.5) { editing in
                     if !editing {
+                        guard let accountId = sessionManager.currentUser?.id else { return }
                         Task {
-                            await viewModel.generateRecommendations(availableTime: availableHours * 3600)
+                            await viewModel.generateRecommendations(availableTime: availableHours * 3600, accountId: accountId)
                         }
                     }
                 }
@@ -107,8 +110,9 @@ struct TrailRecommendationView: View {
             }
             
             Button {
+                guard let accountId = sessionManager.currentUser?.id else { return }
                 Task {
-                    await viewModel.generateRecommendations(availableTime: availableHours * 3600)
+                    await viewModel.generateRecommendations(availableTime: availableHours * 3600, accountId: accountId)
                 }
             } label: {
                 HStack {
@@ -139,8 +143,9 @@ struct TrailRecommendationView: View {
                     set: { newValue in
                         preference.fitnessLevel = newValue
                         viewModel.updateUserPreference(preference)
+                        guard let accountId = sessionManager.currentUser?.id else { return }
                         Task {
-                            await viewModel.generateRecommendations(availableTime: availableHours * 3600)
+                            await viewModel.generateRecommendations(availableTime: availableHours * 3600, accountId: accountId)
                         }
                     }
                 )) {
@@ -169,8 +174,9 @@ struct TrailRecommendationView: View {
                                     preference.preferredScenery.removeAll { $0 == scenery }
                                 }
                                 viewModel.updateUserPreference(preference)
+                                guard let accountId = sessionManager.currentUser?.id else { return }
                                 Task {
-                                    await viewModel.generateRecommendations(availableTime: availableHours * 3600)
+                                    await viewModel.generateRecommendations(availableTime: availableHours * 3600, accountId: accountId)
                                 }
                             }
                         )) {
@@ -192,8 +198,9 @@ struct TrailRecommendationView: View {
                     set: { newValue in
                         preference.preferredDifficulty = newValue
                         viewModel.updateUserPreference(preference)
+                        guard let accountId = sessionManager.currentUser?.id else { return }
                         Task {
-                            await viewModel.generateRecommendations(availableTime: availableHours * 3600)
+                            await viewModel.generateRecommendations(availableTime: availableHours * 3600, accountId: accountId)
                         }
                     }
                 )) {
@@ -249,7 +256,8 @@ struct TrailRecommendationView: View {
             
             ForEach(viewModel.recommendations.prefix(10)) { recommendation in
                 RecommendationCard(recommendation: recommendation) { action in
-                    viewModel.recordUserAction(for: recommendation, action: action)
+                    guard let accountId = sessionManager.currentUser?.id else { return }
+                    viewModel.recordUserAction(for: recommendation, action: action, accountId: accountId)
                 }
             }
         }

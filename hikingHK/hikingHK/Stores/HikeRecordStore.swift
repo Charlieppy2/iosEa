@@ -23,18 +23,23 @@ final class HikeRecordStore {
         try context.save()
     }
     
-    /// Loads all hike records, sorted by start time descending (newest first).
-    func loadAllRecords() throws -> [HikeRecord] {
+    /// Loads all hike records for a specific user, sorted by start time descending (newest first).
+    /// - Parameter accountId: The user account ID to filter records for.
+    func loadAllRecords(accountId: UUID) throws -> [HikeRecord] {
         let descriptor = FetchDescriptor<HikeRecord>(
+            predicate: #Predicate { $0.accountId == accountId },
             sortBy: [SortDescriptor(\.startTime, order: .reverse)]
         )
         return try context.fetch(descriptor)
     }
     
-    /// Loads a single hike record by its identifier.
-    func loadRecord(id: UUID) throws -> HikeRecord? {
+    /// Loads a single hike record by its identifier for a specific user.
+    /// - Parameters:
+    ///   - id: The record ID.
+    ///   - accountId: The user account ID to ensure only the owner can access.
+    func loadRecord(id: UUID, accountId: UUID) throws -> HikeRecord? {
         var descriptor = FetchDescriptor<HikeRecord>(
-            predicate: #Predicate { $0.id == id }
+            predicate: #Predicate { $0.id == id && $0.accountId == accountId }
         )
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
@@ -50,10 +55,13 @@ final class HikeRecordStore {
         try context.save()
     }
     
-    /// Loads all hike records associated with a specific trail, sorted by start time descending.
-    func loadRecordsForTrail(trailId: UUID) throws -> [HikeRecord] {
+    /// Loads all hike records associated with a specific trail for a specific user, sorted by start time descending.
+    /// - Parameters:
+    ///   - trailId: The trail ID.
+    ///   - accountId: The user account ID to filter records for.
+    func loadRecordsForTrail(trailId: UUID, accountId: UUID) throws -> [HikeRecord] {
         let descriptor = FetchDescriptor<HikeRecord>(
-            predicate: #Predicate { $0.trailId == trailId },
+            predicate: #Predicate { $0.trailId == trailId && $0.accountId == accountId },
             sortBy: [SortDescriptor(\.startTime, order: .reverse)]
         )
         return try context.fetch(descriptor)
