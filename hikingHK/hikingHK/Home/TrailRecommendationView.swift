@@ -268,7 +268,10 @@ struct RecommendationCard: View {
     let recommendation: TrailRecommendation
     let onAction: (RecommendationRecord.UserAction) -> Void
     @EnvironmentObject private var languageManager: LanguageManager
+    @EnvironmentObject private var appViewModel: AppViewModel
+    @EnvironmentObject private var sessionManager: SessionManager
     @State private var isShowingDetail = false
+    @State private var isShowingPlanner = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -352,7 +355,10 @@ struct RecommendationCard: View {
                 }
                 
                 Button {
+                    // Record the action
                     onAction(.planned)
+                    // Open planner with the recommended trail pre-selected
+                    isShowingPlanner = true
                 } label: {
                     Image(systemName: "calendar.badge.plus")
                         .font(.subheadline)
@@ -373,6 +379,14 @@ struct RecommendationCard: View {
         .sheet(isPresented: $isShowingDetail) {
             NavigationStack {
                 TrailDetailView(trail: recommendation.trail)
+            }
+        }
+        .sheet(isPresented: $isShowingPlanner) {
+            NavigationStack {
+                PlannerViewWithTrail(trail: recommendation.trail)
+                    .environmentObject(appViewModel)
+                    .environmentObject(languageManager)
+                    .environmentObject(sessionManager)
             }
         }
     }
