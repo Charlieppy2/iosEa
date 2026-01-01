@@ -37,10 +37,10 @@ struct HomeView: View {
     @State private var trailPendingPlan: Trail?
     @State private var isShowingAddPlanConfirmation = false
     @StateObject private var weatherAlertManager = WeatherAlertManager()
-    @State private var weatherCardHeight: CGFloat = 300 // 设置合理的初始高度，确保内容可见
+    @State private var weatherCardHeight: CGFloat = 300 // Set reasonable initial height to ensure content is visible
     private let featuredTimer = Timer.publish(every: 6, on: .main, in: .common).autoconnect()
 
-    /// Featured trails carousel data source – 当前简单使用所有 trails 作为精选候选。
+    /// Featured trails carousel data source – Currently uses all trails as featured candidates.
     private var featuredTrails: [Trail] {
         viewModel.trails
     }
@@ -51,7 +51,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     weatherCard
                     
-                    // 精选路线卡片轮播
+                    // Featured trail card carousel
                     if !featuredTrails.isEmpty {
                         TabView(selection: $featuredIndex) {
                             ForEach(Array(featuredTrails.enumerated()), id: \.offset) { index, trail in
@@ -84,8 +84,8 @@ struct HomeView: View {
                     Button {
                         isShowingSOSConfirmation = true
                     } label: {
-                        // 英文版：只顯示文字 "SOS"
-                        // 中文版：顯示圖標 + "緊急求救"
+                        // English version: Show only text "SOS"
+                        // Chinese version: Show icon + "緊急求救"
                         if languageManager.currentLanguage == .english {
                             Text("SOS")
                                 .foregroundStyle(.red)
@@ -265,7 +265,7 @@ struct HomeView: View {
             }
             .onReceive(featuredTimer) { _ in
                 guard !featuredTrails.isEmpty else { return }
-                // 自动每 3 秒轮播到下一个精选路线
+                // Automatically rotate to next featured trail every 6 seconds
                 let maxIndex = featuredTrails.count - 1
                 if featuredIndex >= maxIndex {
                     featuredIndex = 0
@@ -307,30 +307,30 @@ struct HomeView: View {
                     )
             }
         }
-        .frame(height: weatherCardHeight > 0 ? weatherCardHeight : 400) // 初始显示400，确保内容可见
+        .frame(height: weatherCardHeight > 0 ? weatherCardHeight : 400) // Initial display 400 to ensure content is visible
         .onPreferenceChange(WeatherCardHeightPreferenceKey.self) { height in
-            // 添加适量缓冲空间，确保长警告信息时也能完整显示
+            // Add appropriate buffer space to ensure long warning messages are fully displayed
             let newHeight = height + 40
-            // 立即更新，允许增加或减少，确保高度始终匹配内容
+            // Update immediately, allow increase or decrease to ensure height always matches content
             if abs(newHeight - weatherCardHeight) > 1 {
                 weatherCardHeight = newHeight
             }
         }
         .onAppear {
-            // 视图出现时立即计算所有snapshots的最大高度
+            // Calculate maximum height for all snapshots immediately when view appears
             calculateMaxHeightForSnapshots(snapshots)
         }
         .tabViewStyle(.page(indexDisplayMode: snapshots.count > 1 ? .automatic : .never))
         .onChange(of: viewModel.weatherSnapshots) { _, newSnapshots in
             // Update index when snapshots change, prefer nearest location based on current GPS
             updateWeatherIndexToNearestLocation(snapshots: newSnapshots)
-            // 立即重新计算高度（包括警告信息变化的情况）
+            // Immediately recalculate height (including when warning messages change)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 calculateMaxHeightForSnapshots(newSnapshots)
             }
         }
         .onChange(of: viewModel.weatherSnapshot.warningMessage) { oldValue, newValue in
-            // 当警告信息变化时（包括从有警告变为无警告），立即重新计算高度
+            // When warning message changes (including from having warning to no warning), immediately recalculate height
             let currentSnapshots = viewModel.weatherSnapshots.isEmpty ? [viewModel.weatherSnapshot] : viewModel.weatherSnapshots
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 calculateMaxHeightForSnapshots(currentSnapshots)
@@ -346,7 +346,7 @@ struct HomeView: View {
     
     private func weatherCardContent(snapshot: WeatherSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            // 位置信息 - 确保在顶部可见
+            // Location information - Ensure visible at the top
             HStack {
                 Button {
                     isShowingLocationPicker = true
@@ -374,7 +374,7 @@ struct HomeView: View {
                     .font(.title3)
                     .foregroundStyle(Color.hikingBrown)
             }
-            .padding(.top, 8) // 增加顶部空间，确保位置信息完全可见
+            .padding(.top, 8) // Add top spacing to ensure location information is fully visible
             if viewModel.isLoadingWeather {
                 ProgressView()
                     .progressViewStyle(.circular)
@@ -397,7 +397,7 @@ struct HomeView: View {
             Divider()
                 .background(Color.hikingBrown.opacity(0.2))
                     .padding(.vertical, 6)
-                // 顯示警告或建議（不重複顯示）
+                // Display warning or suggestion (no duplicate display)
             if let warning = snapshot.warningMessage, !warning.isEmpty {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -409,10 +409,10 @@ struct HomeView: View {
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                         .multilineTextAlignment(.leading)
-                        .lineLimit(nil) // 允许无限行数
+                        .lineLimit(nil) // Allow unlimited lines
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(.bottom, 4) // 添加底部间距，确保内容不会紧贴
+                .padding(.bottom, 4) // Add bottom spacing to ensure content doesn't stick together
             } else if let error = viewModel.weatherError {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "wifi.slash")
@@ -435,7 +435,7 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
-                // 查看九天天氣預報按鈕（只顯示圖標）
+                // View 9-day weather forecast button (icon only)
                 Button {
                     isShowingWeatherForecast = true
                 } label: {
@@ -455,49 +455,49 @@ struct HomeView: View {
         .hikingCard()
     }
     
-    /// 计算所有snapshots的最大高度，确保一打开就是正确大小
+    /// Calculate maximum height for all snapshots to ensure correct size when opened
     private func calculateMaxHeightForSnapshots(_ snapshots: [WeatherSnapshot]) {
-        // 平衡的高度估算，既不过大也不太小
-        var maxHeight: CGFloat = 280 // 基础高度（位置+温度+湿度+UV）
+        // Balanced height estimation, neither too large nor too small
+        var maxHeight: CGFloat = 280 // Base height (location + temperature + humidity + UV)
         
         for snapshot in snapshots {
             var estimatedHeight: CGFloat = 0
             
-            // 顶部padding
+            // Top padding
             estimatedHeight += 8
             
-            // 位置信息高度（包含padding）
+            // Location information height (including padding)
             estimatedHeight += 45
             
-            // 温度、湿度、UV指数高度
+            // Temperature, humidity, UV index height
             estimatedHeight += 85
             
-            // Divider高度
+            // Divider height
             estimatedHeight += 12
             
-            // 警告信息高度（根据文本长度估算）
+            // Warning message height (estimated based on text length)
             if let warning = snapshot.warningMessage, !warning.isEmpty {
-                // 估算：每行约30像素，根据字符数估算行数
+                // Estimate: approximately 24 pixels per line, estimate lines based on character count
                 let lines = max(1, ceil(Double(warning.count) / 40.0))
-                estimatedHeight += CGFloat(lines * 24) + 20 // 图标和间距
+                estimatedHeight += CGFloat(lines * 24) + 20 // Icon and spacing
             } else if !snapshot.suggestion.isEmpty {
-                // 建议信息通常较短
+                // Suggestion messages are usually shorter
                 estimatedHeight += 35
             }
             
-            // 按钮高度
+            // Button height
             estimatedHeight += 40
             
-            // 底部padding
+            // Bottom padding
             estimatedHeight += 20
             
             maxHeight = max(maxHeight, estimatedHeight)
         }
         
-        // 添加适量缓冲，确保内容完整显示
+        // Add appropriate buffer to ensure content is fully displayed
         maxHeight += 30
         
-        // 立即更新高度，不等待动画
+        // Update height immediately without waiting for animation
         weatherCardHeight = maxHeight
     }
     
@@ -924,10 +924,10 @@ struct HomeView: View {
                     Button {
                         guard let accountId = sessionManager.currentUser?.id else { return }
                         if trail.isFavorite {
-                            // 已经是收藏，直接取消收藏，不弹窗
+                            // Already favorited, directly unfavorite without popup
                         viewModel.markFavorite(trail, accountId: accountId)
                         } else {
-                            // 首次点亮时先弹出确认对话框
+                            // First time favoriting, show confirmation dialog first
                             trailPendingPlan = trail
                             isShowingAddPlanConfirmation = true
                         }
@@ -1276,7 +1276,7 @@ struct SafetyChecklistView: View {
                                         .foregroundStyle(isAllCompleted ? .green : .primary)
                                 }
                                 
-                                // 进度条
+                                // Progress bar
                                 ProgressView(value: Double(completedCount), total: Double(totalCount))
                                     .tint(isAllCompleted ? .green : .blue)
                                     .scaleEffect(x: 1, y: 1.5, anchor: .center)
@@ -1303,7 +1303,7 @@ struct SafetyChecklistView: View {
                                 viewModel.moveItem(from: source, to: destination, context: modelContext)
                             }
                             
-                            // 添加新项目按钮
+                            // Add new item button
                             Button {
                                 isShowingAddItem = true
                             } label: {
@@ -1434,7 +1434,7 @@ struct AddSafetyChecklistItemView: View {
     @State private var selectedIcon: String = "checkmark.circle"
     @State private var errorMessage: String?
     
-    // 可用的图标选项
+    // Available icon options
     private let iconOptions = [
         "checkmark.circle", "exclamationmark.triangle", "heart.fill",
         "star.fill", "bell.fill", "shield.fill", "bolt.fill",
@@ -1704,11 +1704,11 @@ struct TrailAlertsView: View {
             .task {
                 viewModel.updateLanguageManager(languageManager)
                 await viewModel.fetchAlerts()
-                // 启动自动刷新
+                // Start auto refresh
                 viewModel.startAutoRefresh()
             }
             .onDisappear {
-                // 停止自动刷新以节省资源
+                // Stop auto refresh to save resources
                 viewModel.stopAutoRefresh()
             }
             .onChange(of: languageManager.currentLanguage) { _, _ in
@@ -1745,7 +1745,7 @@ struct TrailAlertsView: View {
                             .foregroundStyle(.secondary)
                         Text("•")
                             .foregroundStyle(.secondary)
-                        // 顯示發佈時間
+                        // Display issue time
                         HStack(spacing: 4) {
                             Image(systemName: "clock.fill")
                                 .font(.caption2)
@@ -1753,7 +1753,7 @@ struct TrailAlertsView: View {
                             .font(.caption)
                         }
                             .foregroundStyle(.secondary)
-                        // 如果有更新時間，顯示更新時間
+                        // If there's an update time, display update time
                         if let updatedAt = alert.updatedAt {
                             Text("•")
                                 .foregroundStyle(.secondary)
@@ -1820,7 +1820,7 @@ struct TrailAlertsView: View {
         }
     }
     
-    /// 格式化發佈時間
+    /// Format issue time
     private func formatIssueTime(_ date: Date, languageManager: LanguageManager) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: languageManager.currentLanguage == .english ? "en_US" : "zh_Hant_HK")
@@ -1829,7 +1829,7 @@ struct TrailAlertsView: View {
         return "\(languageManager.localizedString(for: "alert.issued.at")) \(formatter.string(from: date))"
     }
     
-    /// 格式化更新時間
+    /// Format update time
     private func formatUpdateTime(_ date: Date, languageManager: LanguageManager) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: languageManager.currentLanguage == .english ? "en_US" : "zh_Hant_HK")
@@ -1848,7 +1848,7 @@ struct OfflineMapsView: View {
     @State private var isCreatingRegions = false
     @State private var regionToDelete: OfflineMapRegion?
     
-    // 使用 ViewModel 的 regions 而不是 @Query
+    // Use ViewModel's regions instead of @Query
     private var regions: [OfflineMapRegion] {
         viewModel.regions
     }
@@ -1867,7 +1867,7 @@ struct OfflineMapsView: View {
         NavigationStack {
             Group {
                 if regions.isEmpty && isCreatingRegions {
-                    // 加载状态：正在创建区域
+                    // Loading state: Creating regions
                     VStack {
                         Spacer()
                         ProgressView()
@@ -1917,18 +1917,18 @@ struct OfflineMapsView: View {
                 }
             }
             .task {
-                // 在 task 中配置和初始化数据
+                // Configure and initialize data in task
                 guard let accountId = sessionManager.currentUser?.id else { return }
                 isCreatingRegions = true
                 await viewModel.configureIfNeeded(context: modelContext, accountId: accountId)
-                // configureIfNeeded 已经会自动创建区域并添加缺失的区域，如果还是空的才手动创建
+                // configureIfNeeded will automatically create regions and add missing ones, only manually create if still empty
                 if viewModel.regions.isEmpty {
                     await viewModel.createDefaultRegions(context: modelContext, accountId: accountId)
                 }
                 isCreatingRegions = false
             }
             .onAppear {
-                // 每次视图出现时，刷新区域列表以确保显示所有可用区域
+                // Refresh region list each time view appears to ensure all available regions are displayed
                 guard let accountId = sessionManager.currentUser?.id else { return }
                 Task {
                     await viewModel.configureIfNeeded(context: modelContext, accountId: accountId)
