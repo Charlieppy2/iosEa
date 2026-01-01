@@ -419,7 +419,7 @@ struct ContactRow: View {
     @EnvironmentObject private var languageManager: LanguageManager
     
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(contact.name)
@@ -444,11 +444,40 @@ struct ContactRow: View {
                 }
             }
             Spacer()
+            
+            // Call button
+            Button {
+                // Open phone dialer with the contact's phone number
+                let phoneNumber = contact.phoneNumber.replacingOccurrences(of: " ", with: "")
+                    .replacingOccurrences(of: "-", with: "")
+                    .replacingOccurrences(of: "(", with: "")
+                    .replacingOccurrences(of: ")", with: "")
+                if let url = URL(string: "tel://\(phoneNumber)") {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                Image(systemName: "phone.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.hikingGreen)
+                    )
+            }
+            
+            // Delete button
             Button {
                 onDelete()
             } label: {
                 Image(systemName: "trash")
+                    .font(.title3)
                     .foregroundStyle(.red)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.red.opacity(0.1))
+                    )
             }
         }
         .padding()

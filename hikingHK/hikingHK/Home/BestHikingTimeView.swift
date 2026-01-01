@@ -136,55 +136,88 @@ struct BestHikingTimeView: View {
     }
     
     private func bestHikingTimesSection(_ bestTimes: [BestHikingTime]) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             HStack {
                 Image(systemName: "star.fill")
                     .foregroundStyle(Color.hikingGreen)
+                    .font(.title3)
                 Text(languageManager.localizedString(for: "weather.forecast.best.times"))
-                    .font(.headline.weight(.semibold))
+                    .font(.title2.weight(.bold))
                     .foregroundStyle(Color.hikingDarkGreen)
             }
+            .padding(.bottom, 4)
             
-            ForEach(bestTimes) { bestTime in
-                bestTimeCard(bestTime)
+            VStack(spacing: 12) {
+                ForEach(bestTimes) { bestTime in
+                    bestTimeCard(bestTime)
+                }
             }
         }
-        .padding()
-        .background(Color.hikingCardGradient, in: RoundedRectangle(cornerRadius: 16))
+        .padding(20)
         .hikingCard()
     }
     
     private func bestTimeCard(_ bestTime: BestHikingTime) -> some View {
         HStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(formattedDate(bestTime.date))
-                    .font(.headline)
-                    .foregroundStyle(Color.hikingDarkGreen)
-                Text(bestTime.timeSlot.displayTime)
-                    .font(.subheadline)
-                    .foregroundStyle(Color.hikingBrown)
+            // Date and time section
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: "calendar")
+                        .font(.caption)
+                        .foregroundStyle(Color.hikingGreen)
+                    Text(formattedDate(bestTime.date))
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(Color.hikingDarkGreen)
+                }
+                
+                HStack(spacing: 8) {
+                    Image(systemName: "clock.fill")
+                        .font(.caption)
+                        .foregroundStyle(Color.hikingBrown)
+                    Text(bestTime.timeSlot.displayTime)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Color.hikingBrown)
+                }
             }
             
             Spacer()
             
-            VStack(alignment: .trailing, spacing: 4) {
-                HStack(spacing: 4) {
+            // Comfort index section with progress indicator
+            VStack(alignment: .trailing, spacing: 8) {
+                HStack(spacing: 6) {
                     Text("\(Int(bestTime.comfortIndex))")
-                        .font(.title2.bold())
+                        .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(comfortIndexColor(bestTime.comfortIndex))
                     Text("/100")
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(Color.hikingStone)
                 }
+                
+                // Comfort index progress bar
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.hikingStone.opacity(0.2))
+                        .frame(width: 80, height: 6)
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(comfortIndexColor(bestTime.comfortIndex))
+                        .frame(width: 80 * CGFloat(bestTime.comfortIndex / 100), height: 6)
+                }
+                
                 Text(languageManager.localizedString(for: "weather.forecast.comfort.index"))
                     .font(.caption2)
                     .foregroundStyle(Color.hikingStone)
             }
         }
-        .padding()
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(comfortIndexColor(bestTime.comfortIndex).opacity(0.3), lineWidth: 1.5)
+                )
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
     }
     
