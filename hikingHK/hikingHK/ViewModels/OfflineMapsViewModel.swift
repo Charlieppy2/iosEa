@@ -77,9 +77,11 @@ final class OfflineMapsViewModel: ObservableObject {
             // 1️⃣ Prefer loading from JSON if we have previously persisted regions.
             // BaseFileStore will automatically recover from corrupted files by returning empty array
             let persisted = try fileStore.loadAllRegions()
-            if !persisted.isEmpty {
-                regions = persisted
-                print("✅ OfflineMapsViewModel: Loaded \(regions.count) regions from JSON store")
+            // Filter by accountId to ensure data isolation
+            let filteredPersisted = persisted.filter { $0.accountId == accountId }
+            if !filteredPersisted.isEmpty {
+                regions = filteredPersisted
+                print("✅ OfflineMapsViewModel: Loaded \(regions.count) regions from JSON store (filtered by accountId: \(accountId))")
                 
                 // Check if there are missing regions and add them
                 let seededRegions = try store.seedDefaultsIfNeeded(accountId: accountId)

@@ -51,8 +51,31 @@ final class OfflineMapsFileStore: BaseFileStore<OfflineMapRegion, PersistedOffli
     }
     
     /// Convenience method for backward compatibility (batch save).
+    /// This method merges the provided regions with existing regions from other users
+    /// to ensure data isolation across different user accounts.
     func saveRegions(_ regions: [OfflineMapRegion]) throws {
-        try saveAll(regions)
+        // If regions is empty, don't save anything (preserve existing data)
+        guard !regions.isEmpty else {
+            return
+        }
+        
+        // Get the accountId from the first region (all regions should have the same accountId)
+        let accountId = regions.first!.accountId
+        
+        // Load all existing regions from the file
+        let allExisting = try loadPersistedDTOs()
+        
+        // Filter out regions belonging to the current user
+        let otherUsersRegions = allExisting.filter { $0.accountId != accountId }
+        
+        // Convert new regions to DTOs
+        let newDTOs = regions.map { PersistedOfflineRegion(from: $0) }
+        
+        // Merge: other users' regions + current user's new regions
+        let mergedDTOs = otherUsersRegions + newDTOs
+        
+        // Save the merged data
+        try persist(dtos: mergedDTOs)
     }
 }
 

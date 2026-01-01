@@ -14,7 +14,7 @@ struct PlannerView: View {
     @EnvironmentObject private var languageManager: LanguageManager
     @EnvironmentObject private var sessionManager: SessionManager
     @State private var selectedTrail: Trail?
-    @State private var plannedDate = Date().addingTimeInterval(60 * 60 * 24)
+    @State private var plannedDate = Date()
     @State private var note = ""
     @State private var showSaveSuccess = false
     @State private var isShowingGearChecklist = false
@@ -143,7 +143,7 @@ struct PlannerView: View {
                             // Reset the form to a fresh state after saving a plan
                             note = ""
                             selectedTrail = nil
-                            plannedDate = Date().addingTimeInterval(60 * 60 * 24)
+                            plannedDate = Date() // Reset to today's date
                             showSaveSuccess = true
                         }
                     }
@@ -197,7 +197,7 @@ struct PlannerViewWithTrail: View {
     @EnvironmentObject private var languageManager: LanguageManager
     @EnvironmentObject private var sessionManager: SessionManager
     @Environment(\.dismiss) private var dismiss
-    @State private var plannedDate = Date().addingTimeInterval(60 * 60 * 24)
+    @State private var plannedDate = Date()
     @State private var note = ""
     @State private var showSaveSuccess = false
     @State private var isShowingGearChecklist = false

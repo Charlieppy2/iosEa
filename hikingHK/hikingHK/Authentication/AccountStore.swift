@@ -46,11 +46,25 @@ final class AccountStore {
 
     /// Returns the credential for the given email if it exists; otherwise `nil`.
     func credential(for email: String) throws -> UserCredential? {
+        // Ensure email is lowercased for consistent lookup
+        let lowercasedEmail = email.lowercased()
         var descriptor = FetchDescriptor<UserCredential>(
-            predicate: #Predicate { $0.email == email }
+            predicate: #Predicate { $0.email == lowercasedEmail }
         )
         descriptor.fetchLimit = 1
-        return try context.fetch(descriptor).first
+        
+        do {
+            let results = try context.fetch(descriptor)
+            if let credential = results.first {
+                print("✅ AccountStore: Found credential for \(lowercasedEmail), accountId: \(credential.accountId)")
+            } else {
+                print("⚠️ AccountStore: No credential found for \(lowercasedEmail)")
+            }
+            return results.first
+        } catch {
+            print("❌ AccountStore: Error fetching credential for \(lowercasedEmail): \(error)")
+            throw error
+        }
     }
 
     /// Creates and persists a new credential for a registered user.
@@ -62,7 +76,22 @@ final class AccountStore {
             avatarSymbol: "figure.hiking"
         )
         context.insert(credential)
-        try context.save()
+        do {
+            try context.save()
+            print("✅ AccountStore: Successfully created credential for \(email), accountId: \(credential.accountId)")
+            print("   Saved password length: \(credential.password.count), password: \"\(credential.password)\"")
+            
+            // Verify the saved credential can be retrieved immediately
+            if let verification = try? self.credential(for: email) {
+                print("   Verification: Credential can be retrieved, password length: \(verification.password.count)")
+            }
+        } catch {
+            print("❌ AccountStore: Failed to save credential: \(error)")
+            // Try to process pending changes and save again
+            context.processPendingChanges()
+            try context.save()
+            print("✅ AccountStore: Successfully saved credential after processing pending changes")
+        }
         return credential
     }
 }

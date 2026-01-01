@@ -129,6 +129,9 @@ struct HomeView: View {
                 if let accountId = sessionManager.currentUser?.id {
                     viewModel.reloadUserData(accountId: accountId)
                 }
+                // Request location permission and start location updates
+                locationManager.requestPermission()
+                locationManager.startUpdates()
                 // Refresh weather using the currently selected language
                 Task {
                     await viewModel.refreshWeather(language: languageManager.currentLanguage.rawValue)
@@ -237,7 +240,7 @@ struct HomeView: View {
                 QuickAddTrailPickerView(
                     onTrailSelected: { trail in
                         guard let accountId = sessionManager.currentUser?.id else { return }
-                        viewModel.addSavedHike(for: trail, scheduledDate: Date().addingTimeInterval(60 * 60 * 24), accountId: accountId)
+                        viewModel.addSavedHike(for: trail, scheduledDate: Date(), accountId: accountId)
                         isShowingTrailPicker = false
                     }
                 )
@@ -250,7 +253,7 @@ struct HomeView: View {
                 Button(languageManager.localizedString(for: "ok")) {
                     guard let accountId = sessionManager.currentUser?.id else { return }
                     if let trail = trailPendingPlan {
-                        let defaultDate = Date().addingTimeInterval(60 * 60 * 24)
+                        let defaultDate = Date() // Use today's date instead of tomorrow
                         viewModel.addSavedHike(for: trail, scheduledDate: defaultDate, accountId: accountId)
                         viewModel.markFavorite(trail, accountId: accountId)
                     }
@@ -300,11 +303,13 @@ struct HomeView: View {
         .frame(height: 280) // 增加高度確保所有內容都能完整顯示
         .tabViewStyle(.page(indexDisplayMode: snapshots.count > 1 ? .automatic : .never))
         .onChange(of: viewModel.weatherSnapshots) { _, newSnapshots in
-            // Update index when snapshots change, prefer Hong Kong Observatory
-            if let hkoIndex = newSnapshots.firstIndex(where: { $0.location == "Hong Kong Observatory" }) {
-                weatherIndex = hkoIndex
-            } else if !newSnapshots.isEmpty {
-                weatherIndex = 0
+            // Update index when snapshots change, prefer nearest location based on current GPS
+            updateWeatherIndexToNearestLocation(snapshots: newSnapshots)
+        }
+        .onChange(of: locationManager.currentLocation) { oldValue, newValue in
+            // Update to nearest location when GPS location changes
+            if newValue != nil {
+                updateWeatherIndexToNearestLocation(snapshots: viewModel.weatherSnapshots.isEmpty ? [viewModel.weatherSnapshot] : viewModel.weatherSnapshots)
             }
         }
     }
@@ -387,6 +392,74 @@ struct HomeView: View {
         }
         .padding(20)
         .hikingCard()
+    }
+    
+    /// Updates weatherIndex to the nearest location based on current GPS position.
+    private func updateWeatherIndexToNearestLocation(snapshots: [WeatherSnapshot]) {
+        guard !snapshots.isEmpty else { return }
+        
+        // If we have GPS location, find the nearest weather station
+        if let currentLocation = locationManager.currentLocation {
+            let nearestIndex = findNearestWeatherStationIndex(
+                snapshots: snapshots,
+                currentLocation: currentLocation
+            )
+            weatherIndex = nearestIndex
+            print("📍 HomeView: Updated weather index to nearest location: \(snapshots[nearestIndex].location)")
+        } else {
+            // Fallback: prefer Hong Kong Observatory, or first snapshot
+            if let hkoIndex = snapshots.firstIndex(where: { $0.location == "Hong Kong Observatory" }) {
+                weatherIndex = hkoIndex
+            } else {
+                weatherIndex = 0
+            }
+        }
+    }
+    
+    /// Finds the index of the nearest weather station to the current GPS location.
+    /// Weather station coordinates mapping (approximate):
+    /// - Hong Kong Observatory: 22.3027, 114.1772
+    /// - King's Park: 22.3114, 114.1697
+    /// - Wong Chuk Hang: 22.2500, 114.1667
+    /// - Ta Kwu Ling: 22.5333, 114.1667
+    /// - Lau Fau Shan: 22.4667, 113.9833
+    /// - Tai Po: 22.4500, 114.1667
+    /// - Sha Tin: 22.3833, 114.1833
+    /// - Tuen Mun: 22.3833, 113.9667
+    /// - Yuen Long Park: 22.4500, 114.0167
+    /// - Tseung Kwan O: 22.3167, 114.2667
+    /// - Sai Kung: 22.3833, 114.2667
+    /// - Cheung Chau: 22.2167, 114.0333
+    private func findNearestWeatherStationIndex(snapshots: [WeatherSnapshot], currentLocation: CLLocation) -> Int {
+        let stationCoordinates: [String: CLLocation] = [
+            "Hong Kong Observatory": CLLocation(latitude: 22.3027, longitude: 114.1772),
+            "King's Park": CLLocation(latitude: 22.3114, longitude: 114.1697),
+            "Wong Chuk Hang": CLLocation(latitude: 22.2500, longitude: 114.1667),
+            "Ta Kwu Ling": CLLocation(latitude: 22.5333, longitude: 114.1667),
+            "Lau Fau Shan": CLLocation(latitude: 22.4667, longitude: 113.9833),
+            "Tai Po": CLLocation(latitude: 22.4500, longitude: 114.1667),
+            "Sha Tin": CLLocation(latitude: 22.3833, longitude: 114.1833),
+            "Tuen Mun": CLLocation(latitude: 22.3833, longitude: 113.9667),
+            "Yuen Long Park": CLLocation(latitude: 22.4500, longitude: 114.0167),
+            "Tseung Kwan O": CLLocation(latitude: 22.3167, longitude: 114.2667),
+            "Sai Kung": CLLocation(latitude: 22.3833, longitude: 114.2667),
+            "Cheung Chau": CLLocation(latitude: 22.2167, longitude: 114.0333)
+        ]
+        
+        var nearestIndex = 0
+        var minDistance: CLLocationDistance = Double.infinity
+        
+        for (index, snapshot) in snapshots.enumerated() {
+            if let stationLocation = stationCoordinates[snapshot.location] {
+                let distance = currentLocation.distance(from: stationLocation)
+                if distance < minDistance {
+                    minDistance = distance
+                    nearestIndex = index
+                }
+            }
+        }
+        
+        return nearestIndex
     }
     
     private func localizedLocation(_ location: String) -> String {

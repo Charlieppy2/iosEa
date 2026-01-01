@@ -61,11 +61,27 @@ final class SessionManager: ObservableObject {
         }
         isAuthenticating = true
         defer { isAuthenticating = false }
+        
+        let lowercasedEmail = email.lowercased()
+        print("🔐 SessionManager: Attempting to sign in with email: \(lowercasedEmail)")
+        
         do {
-            guard let credential = try store.credential(for: email.lowercased()),
-                  credential.password == password else {
+            guard let credential = try store.credential(for: lowercasedEmail) else {
+                print("❌ SessionManager: No credential found for email: \(lowercasedEmail)")
                 throw AccountStoreError.invalidCredentials
             }
+            
+            print("✅ SessionManager: Found credential for \(lowercasedEmail), checking password...")
+            print("   Input password length: \(password.count), stored password length: \(credential.password.count)")
+            print("   Input password: \"\(password)\", stored password: \"\(credential.password)\"")
+            
+            guard credential.password == password else {
+                print("❌ SessionManager: Password mismatch for \(lowercasedEmail)")
+                print("   Password comparison failed: stored='\(credential.password)' != input='\(password)'")
+                throw AccountStoreError.invalidCredentials
+            }
+            
+            print("✅ SessionManager: Password verified, creating user session...")
             currentUser = UserAccount(
                 id: credential.accountId,
                 name: credential.name,
@@ -76,12 +92,24 @@ final class SessionManager: ObservableObject {
             authError = nil
             // Reset the sign out flag when user successfully signs in
             hasExplicitlySignedOut = false
+            print("✅ SessionManager: Successfully signed in as \(credential.email), accountId: \(credential.accountId)")
         } catch {
+            print("❌ SessionManager: Sign in failed: \(error.localizedDescription)")
             authError = error.localizedDescription
             currentUser = nil
         }
     }
 
+    /// Validates email format.
+    /// - Parameter email: The email address to validate.
+    /// - Returns: `true` if the email format is valid, `false` otherwise.
+    private func isValidEmail(_ email: String) -> Bool {
+        // Basic email validation: must contain @ and have valid domain
+        let emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+    
     /// Registers a new account and signs the user in immediately on success.
     func signUp(name: String, email: String, password: String) async {
         guard let store = accountStore else {
@@ -90,11 +118,37 @@ final class SessionManager: ObservableObject {
         }
         isAuthenticating = true
         defer { isAuthenticating = false }
+        
+        // Validate password length
+        guard password.count >= 6 else {
+            print("❌ SessionManager: Password too short (length: \(password.count))")
+            authError = AccountStoreError.passwordTooShort.localizedDescription
+            return
+        }
+        
+        // Validate email format
+        guard isValidEmail(email) else {
+            print("❌ SessionManager: Invalid email format: \(email)")
+            authError = AccountStoreError.invalidEmail.localizedDescription
+            return
+        }
+        
+        let lowercasedEmail = email.lowercased()
+        print("📝 SessionManager: Attempting to sign up with email: \(lowercasedEmail)")
+        
         do {
-            guard try store.credential(for: email.lowercased()) == nil else {
+            // Check if email already exists
+            if let existingCredential = try store.credential(for: lowercasedEmail) {
+                print("❌ SessionManager: Email already exists: \(lowercasedEmail)")
                 throw AccountStoreError.emailExists
             }
-            let credential = try store.createCredential(name: name, email: email.lowercased(), password: password)
+            
+            print("✅ SessionManager: Email available, creating credential...")
+            let credential = try store.createCredential(name: name, email: lowercasedEmail, password: password)
+            
+            // Give SwiftData a moment to ensure the save is complete
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+            
             currentUser = UserAccount(
                 id: credential.accountId,
                 name: credential.name,
@@ -105,7 +159,9 @@ final class SessionManager: ObservableObject {
             authError = nil
             // Reset the sign out flag when user successfully signs up
             hasExplicitlySignedOut = false
+            print("✅ SessionManager: Successfully signed up and signed in as \(credential.email), accountId: \(credential.accountId)")
         } catch {
+            print("❌ SessionManager: Sign up failed: \(error.localizedDescription)")
             authError = error.localizedDescription
         }
     }
@@ -177,6 +233,8 @@ final class SessionManager: ObservableObject {
 enum AccountStoreError: LocalizedError {
     case invalidCredentials
     case emailExists
+    case invalidEmail
+    case passwordTooShort
 
     var errorDescription: String? {
         switch self {
@@ -184,6 +242,10 @@ enum AccountStoreError: LocalizedError {
             return "Email or password is incorrect."
         case .emailExists:
             return "This email is already registered."
+        case .invalidEmail:
+            return "Please enter a valid email address (e.g., example@gmail.com)."
+        case .passwordTooShort:
+            return "Password must be at least 6 characters long."
         }
     }
 }

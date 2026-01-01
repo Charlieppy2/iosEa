@@ -18,6 +18,7 @@ struct AuthView: View {
     @State private var password = ""
     @State private var isRegistering = false
     @State private var showQuickAccounts = false
+    @State private var validationError: String?
     @FocusState private var focusedField: Field?
 
     /// Fields that can receive keyboard focus inside the form.
@@ -63,6 +64,13 @@ struct AuthView: View {
                         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .focused($focusedField, equals: .password)
                 }
+                // Show validation errors (orange)
+                if let error = validationError {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .font(.subheadline)
+                }
+                // Show authentication errors from SessionManager (red)
                 if let error = sessionManager.authError {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.red)
@@ -123,9 +131,40 @@ struct AuthView: View {
 }
 
 extension AuthView {
+    /// Validates the form inputs before submission.
+    private func validateForm() -> Bool {
+        validationError = nil
+        
+        if isRegistering {
+            // Validate password length
+            if password.count < 6 {
+                validationError = "Password must be at least 6 characters."
+                return false
+            }
+            
+            // Validate email format
+            let emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+            let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+            if !emailPredicate.evaluate(with: email) {
+                validationError = "Please enter a valid email address (e.g., example@gmail.com)."
+                return false
+            }
+        }
+        
+        return true
+    }
+    
     /// Primary button that triggers sign in or sign up depending on the current mode.
     private var authActionButton: some View {
         Button {
+            // Clear previous validation errors
+            validationError = nil
+            
+            // Validate form before submitting
+            guard validateForm() else {
+                return
+            }
+            
             if isRegistering {
                 Task { await sessionManager.signUp(name: name, email: email, password: password) }
             } else {
@@ -145,6 +184,18 @@ extension AuthView {
         .buttonStyle(.borderedProminent)
         .tint(Color.hikingGreen)
         .disabled(isRegistering ? (name.isEmpty || email.isEmpty || password.isEmpty || sessionManager.isAuthenticating) : (email.isEmpty || password.isEmpty || sessionManager.isAuthenticating))
+        .onChange(of: password) { oldValue, newValue in
+            // Clear validation error when user starts typing
+            if isRegistering && newValue.count >= 6 {
+                validationError = nil
+            }
+        }
+        .onChange(of: email) { oldValue, newValue in
+            // Clear validation error when user starts typing
+            if isRegistering {
+                validationError = nil
+            }
+        }
     }
 
     /// Switch between "already have an account" and "new hiker" modes.

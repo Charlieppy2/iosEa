@@ -12,10 +12,12 @@ struct HikeRecordsListView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var languageManager: LanguageManager
     @EnvironmentObject private var viewModel: AppViewModel
-    @Query(sort: \HikeRecord.startTime, order: .reverse) private var records: [HikeRecord]
+    @EnvironmentObject private var sessionManager: SessionManager
+    @State private var records: [HikeRecord] = []
     @State private var selectedRecord: HikeRecord?
     @State private var isShowingHikeTracking = false
     @StateObject private var locationManager = LocationManager()
+    private let fileStore = HikeRecordFileStore()
     
     var body: some View {
         NavigationStack {
@@ -100,6 +102,51 @@ struct HikeRecordsListView: View {
                 HikeTrackingView(locationManager: locationManager)
                     .environmentObject(languageManager)
                     .presentationDetents([.large])
+            }
+            .task {
+                loadRecords()
+            }
+            .onAppear {
+                loadRecords()
+            }
+        }
+    }
+    
+    private func loadRecords() {
+        guard let accountId = sessionManager.currentUser?.id else {
+            records = []
+            print("⚠️ HikeRecordsListView: No user logged in, clearing hike records.")
+            return
+        }
+        
+        do {
+            // Try loading from SwiftData first (primary storage)
+            let store = HikeRecordStore(context: modelContext)
+            let swiftDataRecords = try store.loadAllRecords(accountId: accountId)
+            if !swiftDataRecords.isEmpty {
+                records = swiftDataRecords
+                print("✅ HikeRecordsListView: Loaded \(swiftDataRecords.count) records from SwiftData for account: \(accountId)")
+            } else {
+                // If SwiftData is empty for this user, try loading from JSON file store as backup
+                let allRecords = try fileStore.loadAll()
+                // Filter by accountId to ensure data isolation
+                let filteredFileRecords = allRecords.filter { $0.accountId == accountId }
+                records = filteredFileRecords
+                records.sort { $0.startTime > $1.startTime } // Sort by start time descending
+                print("✅ HikeRecordsListView: SwiftData empty, loaded \(filteredFileRecords.count) records from JSON file store for account: \(accountId)")
+            }
+        } catch {
+            print("❌ HikeRecordsListView: Failed to load records from SwiftData: \(error)")
+            // Fallback to JSON file store if SwiftData fails
+            do {
+                let allRecords = try fileStore.loadAll()
+                let filteredFileRecords = allRecords.filter { $0.accountId == accountId }
+                records = filteredFileRecords
+                records.sort { $0.startTime > $1.startTime }
+                print("⚠️ HikeRecordsListView: SwiftData failed, loaded \(filteredFileRecords.count) records from JSON file store as fallback for account: \(accountId)")
+            } catch {
+                print("❌ HikeRecordsListView: Both SwiftData and JSON file store failed: \(error.localizedDescription)")
+                records = []
             }
         }
     }
