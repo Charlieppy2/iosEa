@@ -37,6 +37,7 @@ struct HomeView: View {
     @State private var trailPendingPlan: Trail?
     @State private var isShowingAddPlanConfirmation = false
     @StateObject private var weatherAlertManager = WeatherAlertManager()
+    @State private var weatherCardHeight: CGFloat = 300 // 设置合理的初始高度，确保内容可见
     private let featuredTimer = Timer.publish(every: 6, on: .main, in: .common).autoconnect()
 
     /// Featured trails carousel data source – 当前简单使用所有 trails 作为精选候选。
@@ -298,13 +299,42 @@ struct HomeView: View {
             ForEach(Array(snapshots.enumerated()), id: \.offset) { index, snapshot in
                 weatherCardContent(snapshot: snapshot)
                     .tag(index)
+                    .background(
+                        GeometryReader { geometry in
+                            Color.clear
+                                .preference(key: WeatherCardHeightPreferenceKey.self, value: geometry.size.height)
+                        }
+                    )
             }
         }
-        .frame(height: 280) // 增加高度確保所有內容都能完整顯示
+        .frame(height: weatherCardHeight > 0 ? weatherCardHeight : 400) // 初始显示400，确保内容可见
+        .onPreferenceChange(WeatherCardHeightPreferenceKey.self) { height in
+            // 添加适量缓冲空间，确保长警告信息时也能完整显示
+            let newHeight = height + 40
+            // 立即更新，允许增加或减少，确保高度始终匹配内容
+            if abs(newHeight - weatherCardHeight) > 1 {
+                weatherCardHeight = newHeight
+            }
+        }
+        .onAppear {
+            // 视图出现时立即计算所有snapshots的最大高度
+            calculateMaxHeightForSnapshots(snapshots)
+        }
         .tabViewStyle(.page(indexDisplayMode: snapshots.count > 1 ? .automatic : .never))
         .onChange(of: viewModel.weatherSnapshots) { _, newSnapshots in
             // Update index when snapshots change, prefer nearest location based on current GPS
             updateWeatherIndexToNearestLocation(snapshots: newSnapshots)
+            // 立即重新计算高度（包括警告信息变化的情况）
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                calculateMaxHeightForSnapshots(newSnapshots)
+            }
+        }
+        .onChange(of: viewModel.weatherSnapshot.warningMessage) { oldValue, newValue in
+            // 当警告信息变化时（包括从有警告变为无警告），立即重新计算高度
+            let currentSnapshots = viewModel.weatherSnapshots.isEmpty ? [viewModel.weatherSnapshot] : viewModel.weatherSnapshots
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                calculateMaxHeightForSnapshots(currentSnapshots)
+            }
         }
         .onChange(of: locationManager.currentLocation) { oldValue, newValue in
             // Update to nearest location when GPS location changes
@@ -316,24 +346,35 @@ struct HomeView: View {
     
     private func weatherCardContent(snapshot: WeatherSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 14) {
+            // 位置信息 - 确保在顶部可见
             HStack {
                 Button {
                     isShowingLocationPicker = true
                 } label: {
-                    HStack(spacing: 6) {
-                Label(localizedLocation(snapshot.location), systemImage: "location.fill")
+                    HStack(spacing: 8) {
+                        Image(systemName: "location.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.hikingGreen)
+                        Text(localizedLocation(snapshot.location))
                             .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Color.hikingDarkGreen)
+                            .foregroundStyle(Color.hikingDarkGreen)
                         Image(systemName: "chevron.down")
                             .font(.caption)
                             .foregroundStyle(Color.hikingDarkGreen)
                     }
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.hikingGreen.opacity(0.1))
+                    )
                 }
                 Spacer()
                 Image(systemName: "sun.max.fill")
                     .font(.title3)
                     .foregroundStyle(Color.hikingBrown)
             }
+            .padding(.top, 8) // 增加顶部空间，确保位置信息完全可见
             if viewModel.isLoadingWeather {
                 ProgressView()
                     .progressViewStyle(.circular)
@@ -358,20 +399,40 @@ struct HomeView: View {
                     .padding(.vertical, 6)
                 // 顯示警告或建議（不重複顯示）
             if let warning = snapshot.warningMessage, !warning.isEmpty {
-                Label(warning, systemImage: "exclamationmark.triangle.fill")
-                        .font(.body.weight(.medium))
-                    .foregroundStyle(.orange)
-                        .fixedSize(horizontal: false, vertical: true)
-            } else if let error = viewModel.weatherError {
-                    Label(localizedWeatherError(error), systemImage: "wifi.slash")
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
                         .font(.body)
-                    .foregroundStyle(Color.hikingStone)
+                        .foregroundStyle(.orange)
+                        .padding(.top, 2)
+                    Text(warning)
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(nil) // 允许无限行数
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.bottom, 4) // 添加底部间距，确保内容不会紧贴
+            } else if let error = viewModel.weatherError {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "wifi.slash")
+                        .font(.body)
+                        .foregroundStyle(Color.hikingStone)
+                        .padding(.top, 2)
+                    Text(localizedWeatherError(error))
+                        .font(.body)
+                        .foregroundStyle(Color.hikingStone)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             } else if !snapshot.suggestion.isEmpty {
                 Text(localizedWeatherSuggestion(snapshot.suggestion))
                         .font(.body)
                     .foregroundStyle(Color.hikingBrown)
                         .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
                 // 查看九天天氣預報按鈕（只顯示圖標）
@@ -392,6 +453,52 @@ struct HomeView: View {
         }
         .padding(20)
         .hikingCard()
+    }
+    
+    /// 计算所有snapshots的最大高度，确保一打开就是正确大小
+    private func calculateMaxHeightForSnapshots(_ snapshots: [WeatherSnapshot]) {
+        // 平衡的高度估算，既不过大也不太小
+        var maxHeight: CGFloat = 280 // 基础高度（位置+温度+湿度+UV）
+        
+        for snapshot in snapshots {
+            var estimatedHeight: CGFloat = 0
+            
+            // 顶部padding
+            estimatedHeight += 8
+            
+            // 位置信息高度（包含padding）
+            estimatedHeight += 45
+            
+            // 温度、湿度、UV指数高度
+            estimatedHeight += 85
+            
+            // Divider高度
+            estimatedHeight += 12
+            
+            // 警告信息高度（根据文本长度估算）
+            if let warning = snapshot.warningMessage, !warning.isEmpty {
+                // 估算：每行约30像素，根据字符数估算行数
+                let lines = max(1, ceil(Double(warning.count) / 40.0))
+                estimatedHeight += CGFloat(lines * 24) + 20 // 图标和间距
+            } else if !snapshot.suggestion.isEmpty {
+                // 建议信息通常较短
+                estimatedHeight += 35
+            }
+            
+            // 按钮高度
+            estimatedHeight += 40
+            
+            // 底部padding
+            estimatedHeight += 20
+            
+            maxHeight = max(maxHeight, estimatedHeight)
+        }
+        
+        // 添加适量缓冲，确保内容完整显示
+        maxHeight += 30
+        
+        // 立即更新高度，不等待动画
+        weatherCardHeight = maxHeight
     }
     
     /// Updates weatherIndex to the nearest location based on current GPS position.
@@ -2089,6 +2196,14 @@ struct QuickAddTrailPickerView: View {
                 }
             }
         }
+    }
+}
+
+// Preference key for tracking weather card content height
+struct WeatherCardHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 280
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
