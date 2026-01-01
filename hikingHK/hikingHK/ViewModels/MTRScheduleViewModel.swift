@@ -97,18 +97,18 @@ final class MTRScheduleViewModel: ObservableObject {
     
     /// Extract MTR station information from transportation text
     private func extractMTRStation(from text: String) -> (line: String, station: String)? {
-        // Common patterns: "港鐵XX站", "MTR XX Station", "乘港鐵到XX", "→ XX站", "至XX站"
+        // Common patterns: "MTR XX Station" (Chinese/English), "Take MTR to XX", "→ XX Station", "To XX Station"
         let patterns = [
-            "港鐵([^站→至，。；,.;]+)站",  // 港鐵XX站
-            "MTR ([A-Za-z ]+) Station",  // MTR XX Station
-            "乘港鐵到([^，。；,.;]+)",     // 乘港鐵到XX
-            "乘港鐵至([^，。；,.;]+)",     // 乘港鐵至XX
-            "→\\s*([^，。；,.;]+)站",      // → XX站
-            "至\\s*([^，。；,.;]+)站",      // 至XX站
-            "港鐵([^，。；,.;]+)",          // 港鐵XX
-            "MTR ([A-Za-z ]+)",           // MTR XX
-            "([^，。；,.;]+)站",            // XX站 (通用模式，放在最後)
-            "([^，。；,.;]+) Station"      // XX Station (通用模式，放在最後)
+            "港鐵([^站→至，。；,.;]+)站",  // MTR XX Station (Chinese)
+            "MTR ([A-Za-z ]+) Station",  // MTR XX Station (English)
+            "乘港鐵到([^，。；,.;]+)",     // Take MTR to XX
+            "乘港鐵至([^，。；,.;]+)",     // Take MTR to XX (alternative)
+            "→\\s*([^，。；,.;]+)站",      // → XX Station
+            "至\\s*([^，。；,.;]+)站",      // To XX Station
+            "港鐵([^，。；,.;]+)",          // MTR XX
+            "MTR ([A-Za-z ]+)",           // MTR XX (English)
+            "([^，。；,.;]+)站",            // XX Station (generic pattern, placed last)
+            "([^，。；,.;]+) Station"      // XX Station (generic pattern, placed last)
         ]
         
         for pattern in patterns {

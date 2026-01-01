@@ -184,11 +184,11 @@ struct JournalDetailView: View {
         }
     }
     
-    /// 本地化標題：將 "Day 1", "Day 2" 等轉換為本地化版本
+    /// Localize title: Convert "Day 1", "Day 2", etc. to localized version
     private var localizedTitle: String {
         let title = journal.title
         
-        // 檢查是否是 "Day X" 格式
+        // Check if it's in "Day X" format
         if title.lowercased().hasPrefix("day ") {
             let dayNumber = title.replacingOccurrences(of: "day ", with: "", options: .caseInsensitive).trimmingCharacters(in: .whitespaces)
             
@@ -201,11 +201,11 @@ struct JournalDetailView: View {
             }
         }
         
-        // 如果不是 "Day X" 格式，返回原始標題
+        // If not in "Day X" format, return original title
         return title
     }
     
-    /// 格式化日期
+    /// Format date
     private var formattedDate: String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: languageManager.currentLanguage == .traditionalChinese ? "zh_Hant_HK" : "en_US")
@@ -214,48 +214,48 @@ struct JournalDetailView: View {
         return formatter.string(from: journal.hikeDate)
     }
     
-    /// 獲取本地化的路線名稱
+    /// Get localized trail name
     private var localizedTrailName: String? {
-        // 優先從 AppViewModel 中查找對應的 Trail 對象
+        // First try to find corresponding Trail object from AppViewModel
         if let trailId = journal.trailId,
            let trail = appViewModel.trails.first(where: { $0.id == trailId }) {
             return trail.localizedName(languageManager: languageManager)
         }
         
-        // 如果找不到 Trail 對象，嘗試從本地化字符串中獲取
+        // If Trail object not found, try to get from localized strings
         if let trailName = journal.trailName {
             if let trailId = journal.trailId {
                 let trailNameKey = "trail.\(trailId.uuidString.lowercased()).name"
                 let localizedName = languageManager.localizedString(for: trailNameKey)
                 
-                // 如果找到了本地化版本（不是原始 key），使用它
+                // If localized version found (not the original key), use it
                 if localizedName != trailNameKey {
                     return localizedName
                 }
             }
             
-            // 否則使用原始名稱
+            // Otherwise use original name
             return trailName
         }
         
         return nil
     }
     
-    /// 獲取本地化的位置名稱
+    /// Get localized location name
     private var localizedLocationName: String? {
         guard let locationName = journal.locationName else { return nil }
         
-        // 嘗試從本地化字符串中獲取位置名稱
-        // 常見位置名稱的本地化
+        // Try to get location name from localized strings
+        // Localization for common location names
         let locationKey = "trail.district.\(locationName.lowercased().replacingOccurrences(of: " ", with: "."))"
         let localizedName = languageManager.localizedString(for: locationKey)
         
-        // 如果找到了本地化版本（不是原始 key），使用它
+        // If localized version found (not the original key), use it
         if localizedName != locationKey {
             return localizedName
         }
         
-        // 否則使用原始名稱
+        // Otherwise use original name
         return locationName
     }
     
