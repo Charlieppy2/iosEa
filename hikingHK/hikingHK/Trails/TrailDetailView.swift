@@ -1045,23 +1045,17 @@ struct TrailDetailView: View {
                                     Spacer()
                                     
                                     // Arrival time badge
-                                    HStack(spacing: 4) {
-                                        Text(formatTrainTime(train.formattedTime))
-                                            .font(.headline.weight(.bold))
-                                        if train.formattedTime != "Arr" {
-                                            Text(languageManager.localizedString(for: "mtr.minutes"))
-                                                .font(.caption)
-                                        }
-                                    }
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        Capsule()
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [Color.hikingGreen, Color.hikingDarkGreen],
-                                                    startPoint: .leading,
+                                    Text(formatTrainTime(train.formattedTime))
+                                        .font(.headline.weight(.bold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 8)
+                                        .background(
+                                            Capsule()
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [Color.hikingGreen, Color.hikingDarkGreen],
+                                                        startPoint: .leading,
                                                     endPoint: .trailing
                                                 )
                                             )
@@ -1116,23 +1110,17 @@ struct TrailDetailView: View {
                                     Spacer()
                                     
                                     // Arrival time badge
-                                    HStack(spacing: 4) {
-                                        Text(formatTrainTime(train.formattedTime))
-                                            .font(.headline.weight(.bold))
-                                        if train.formattedTime != "Arr" {
-                                            Text(languageManager.localizedString(for: "mtr.minutes"))
-                                                .font(.caption)
-                                        }
-                                    }
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        Capsule()
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [Color.hikingGreen, Color.hikingDarkGreen],
-                                                    startPoint: .leading,
+                                    Text(formatTrainTime(train.formattedTime))
+                                        .font(.headline.weight(.bold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 8)
+                                        .background(
+                                            Capsule()
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [Color.hikingGreen, Color.hikingDarkGreen],
+                                                        startPoint: .leading,
                                                     endPoint: .trailing
                                                 )
                                             )
@@ -1180,9 +1168,25 @@ struct TrailDetailView: View {
         if time.lowercased().contains("arriving") || time == "Arr" || time == "0" {
             return languageManager.localizedString(for: "mtr.arriving")
         }
-        if let minutes = Int(time) {
+        
+        // Check if time already contains unit (min, 分鐘, etc.)
+        let timeLower = time.lowercased().trimmingCharacters(in: .whitespaces)
+        if timeLower.contains("min") || timeLower.contains("分鐘") || timeLower.contains("分钟") {
+            // Already has unit, return as is
+            return time
+        }
+        
+        // Extract numeric value
+        let numericString = time.trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: "min", with: "", options: .caseInsensitive)
+            .replacingOccurrences(of: "分鐘", with: "")
+            .replacingOccurrences(of: "分钟", with: "")
+            .trimmingCharacters(in: .whitespaces)
+        
+        if let minutes = Int(numericString) {
             return "\(minutes) \(languageManager.localizedString(for: "mtr.minutes"))"
         }
+        
         return time
     }
     
